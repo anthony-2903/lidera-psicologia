@@ -26,6 +26,9 @@ const AppLayout = () => {
 
   return (
     <div className="flex min-h-screen w-full bg-background">
+      {/* Sidebar - Left side */}
+      <AppSidebar />
+
       {/* Main Content - 80% */}
       <main className="flex-1 flex flex-col min-w-0">
         {/* Header with breadcrumb */}
@@ -42,9 +45,6 @@ const AppLayout = () => {
           <Outlet />
         </div>
       </main>
-
-      {/* Sidebar - Right side */}
-      <AppSidebar />
     </div>
   );
 };
