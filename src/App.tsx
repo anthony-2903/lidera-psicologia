@@ -3,10 +3,40 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Index from "./pages/Index.tsx";
-import NotFound from "./pages/NotFound.tsx";
+import { lazy, Suspense } from "react";
 
-const queryClient = new QueryClient();
+const LandingPage = lazy(() => import("./pages/LandingPage"));
+const LoginPage = lazy(() => import("./pages/LoginPage"));
+const RecoveryPage = lazy(() => import("./pages/RecoveryPage"));
+const AppLayout = lazy(() => import("./components/layout/AppLayout"));
+const DashboardPage = lazy(() => import("./pages/app/DashboardPage"));
+const PresentationPage = lazy(() => import("./pages/app/PresentationPage"));
+const GroupsPage = lazy(() => import("./pages/app/GroupsPage"));
+const EvaluatedPage = lazy(() => import("./pages/app/EvaluatedPage"));
+const EvaluationsPage = lazy(() => import("./pages/app/EvaluationsPage"));
+const DiagramPage = lazy(() => import("./pages/app/DiagramPage"));
+const ParticipantsPage = lazy(() => import("./pages/app/ParticipantsPage"));
+const DiagnosticPage = lazy(() => import("./pages/app/DiagnosticPage"));
+const ImprovementPage = lazy(() => import("./pages/app/ImprovementPage"));
+const ActionPlanPage = lazy(() => import("./pages/app/ActionPlanPage"));
+const ResultsPage = lazy(() => import("./pages/app/ResultsPage"));
+const FinalDashboardPage = lazy(() => import("./pages/app/FinalDashboardPage"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      retry: 1,
+    },
+  },
+});
+
+const Loading = () => (
+  <div className="flex items-center justify-center min-h-screen bg-background">
+    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -14,11 +44,28 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <Suspense fallback={<Loading />}>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/recovery" element={<RecoveryPage />} />
+            <Route path="/app" element={<AppLayout />}>
+              <Route path="dashboard" element={<DashboardPage />} />
+              <Route path="presentation" element={<PresentationPage />} />
+              <Route path="groups" element={<GroupsPage />} />
+              <Route path="evaluated" element={<EvaluatedPage />} />
+              <Route path="evaluations" element={<EvaluationsPage />} />
+              <Route path="diagram" element={<DiagramPage />} />
+              <Route path="participants" element={<ParticipantsPage />} />
+              <Route path="diagnostic" element={<DiagnosticPage />} />
+              <Route path="improvement" element={<ImprovementPage />} />
+              <Route path="action-plan" element={<ActionPlanPage />} />
+              <Route path="results" element={<ResultsPage />} />
+              <Route path="final-dashboard" element={<FinalDashboardPage />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
