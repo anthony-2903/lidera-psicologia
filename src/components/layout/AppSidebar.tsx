@@ -20,6 +20,7 @@ import {
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import logo from "@/assets/logo.png";
 
 const navItems = [
   { label: "Presentación", icon: Presentation, path: "/app/presentation" },
@@ -44,15 +45,13 @@ const AppSidebar = () => {
   return (
     <aside
       className={cn(
-        "h-screen sticky top-0 flex flex-col gradient-primary transition-all duration-300 border-l border-sidebar-border",
+        "h-screen sticky top-0 flex flex-col gradient-primary transition-all duration-300 border-r border-sidebar-border",
         collapsed ? "w-16" : "w-64"
       )}
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
-        <div className="w-8 h-8 rounded-lg gradient-gold flex items-center justify-center shrink-0">
-          <HardHat className="w-5 h-5 text-primary" />
-        </div>
+        <img src={logo} alt="LideraMina" className="w-8 h-8 rounded-lg shrink-0 object-contain" />
         {!collapsed && (
           <span className="text-base font-bold text-sidebar-foreground tracking-tight">
             LideraMina
@@ -89,7 +88,7 @@ const AppSidebar = () => {
           onClick={() => setCollapsed(!collapsed)}
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-foreground/5 w-full transition-all duration-200"
         >
-          {collapsed ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+          {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
           {!collapsed && <span>Colapsar</span>}
         </button>
         <button

@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { HardHat, Mail, ArrowLeft, CheckCircle } from "lucide-react";
+import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
+import logo from "@/assets/logo.png";
 
 const RecoveryPage = () => {
   const navigate = useNavigate();
@@ -34,12 +34,7 @@ const RecoveryPage = () => {
         <div className="absolute top-20 right-10 w-72 h-72 rounded-full bg-accent blur-3xl animate-float" />
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md relative z-10"
-      >
+      <div className="w-full max-w-md relative z-10 animate-fade-in">
         <button
           onClick={() => navigate("/login")}
           className="flex items-center gap-2 text-primary-foreground/60 hover:text-primary-foreground mb-8 transition-colors text-sm"
@@ -50,9 +45,7 @@ const RecoveryPage = () => {
 
         <Card className="shadow-2xl border-0">
           <CardHeader className="text-center pb-2">
-            <div className="mx-auto w-14 h-14 rounded-xl gradient-gold flex items-center justify-center mb-4">
-              <HardHat className="w-8 h-8 text-primary" />
-            </div>
+            <img src={logo} alt="LideraMina" className="mx-auto w-14 h-14 rounded-xl object-contain mb-4" />
             <CardTitle className="text-2xl font-bold">Recuperar Contraseña</CardTitle>
             <CardDescription>
               {sent
@@ -94,7 +87,7 @@ const RecoveryPage = () => {
             )}
           </CardContent>
         </Card>
-      </motion.div>
+      </div>
     </div>
   );
 };
