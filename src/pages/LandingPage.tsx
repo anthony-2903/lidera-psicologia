@@ -1,7 +1,7 @@
-import { Shield, Brain, Users, TrendingUp, Target, ChevronRight, HardHat, Activity } from "lucide-react";
+import { Shield, Brain, Users, TrendingUp, Target, ChevronRight, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import logo from "@/assets/logo.png";
 
 const features = [
   {
@@ -33,15 +33,6 @@ const stats = [
   { value: "4.8/5", label: "Satisfacción promedio" },
 ];
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.1, duration: 0.5, ease: "easeOut" as const },
-  }),
-};
-
 const LandingPage = () => {
   const navigate = useNavigate();
 
@@ -56,9 +47,7 @@ const LandingPage = () => {
 
         <nav className="relative z-10 container mx-auto px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg gradient-gold flex items-center justify-center">
-              <HardHat className="w-6 h-6 text-primary" />
-            </div>
+            <img src={logo} alt="LideraMina" className="w-10 h-10 rounded-lg object-contain" />
             <span className="text-xl font-bold text-primary-foreground tracking-tight">
               LideraMina
             </span>
@@ -73,12 +62,7 @@ const LandingPage = () => {
         </nav>
 
         <div className="relative z-10 container mx-auto px-6 py-24 md:py-32">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="max-w-3xl"
-          >
+          <div className="max-w-3xl animate-fade-in">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/20 text-accent text-sm font-medium mb-6">
               <Activity className="w-4 h-4" />
               Programa de Liderazgo en Seguridad Minera
@@ -107,24 +91,20 @@ const LandingPage = () => {
                 Conocer Metodología
               </Button>
             </div>
-          </motion.div>
+          </div>
         </div>
 
         {/* Stats bar */}
         <div className="relative z-10 container mx-auto px-6 pb-16">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {stats.map((stat, i) => (
-              <motion.div
+            {stats.map((stat) => (
+              <div
                 key={stat.label}
-                custom={i}
-                initial="hidden"
-                animate="visible"
-                variants={fadeUp}
-                className="text-center bg-primary-foreground/5 backdrop-blur-sm rounded-xl py-5 px-4 border border-primary-foreground/10"
+                className="text-center bg-primary-foreground/5 backdrop-blur-sm rounded-xl py-5 px-4 border border-primary-foreground/10 animate-fade-in"
               >
                 <div className="text-3xl md:text-4xl font-extrabold text-accent mb-1">{stat.value}</div>
                 <div className="text-sm text-primary-foreground/60">{stat.label}</div>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -142,14 +122,9 @@ const LandingPage = () => {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {features.map((feature, i) => (
-            <motion.div
+          {features.map((feature) => (
+            <div
               key={feature.title}
-              custom={i}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={fadeUp}
               className="group bg-card rounded-xl p-6 shadow-md border border-border hover:shadow-lg hover:border-primary/20 transition-all duration-200"
             >
               <div className="w-12 h-12 rounded-lg gradient-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
@@ -157,7 +132,7 @@ const LandingPage = () => {
               </div>
               <h3 className="font-semibold text-lg text-foreground mb-2">{feature.title}</h3>
               <p className="text-muted-foreground text-sm leading-relaxed">{feature.description}</p>
-            </motion.div>
+            </div>
           ))}
         </div>
       </section>
@@ -180,20 +155,12 @@ const LandingPage = () => {
               { step: "02", title: "Plan de Acción", desc: "Diseño personalizado de intervenciones con metodología 70-20-10." },
               { step: "03", title: "Intervención", desc: "Ejecución de sesiones experienciales, sociales y formales." },
               { step: "04", title: "Evaluación POST", desc: "Medición de impacto y comparativa con resultados iniciales." },
-            ].map((phase, i) => (
-              <motion.div
-                key={phase.step}
-                custom={i}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={fadeUp}
-                className="relative"
-              >
+            ].map((phase) => (
+              <div key={phase.step} className="relative">
                 <div className="text-6xl font-black text-primary/10 mb-2">{phase.step}</div>
                 <h3 className="font-bold text-lg text-foreground mb-2">{phase.title}</h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">{phase.desc}</p>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -225,7 +192,7 @@ const LandingPage = () => {
       <footer className="border-t border-border py-8">
         <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <HardHat className="w-5 h-5 text-primary" />
+            <img src={logo} alt="LideraMina" className="w-5 h-5 object-contain" />
             <span className="font-semibold text-foreground">LideraMina</span>
           </div>
           <p className="text-sm text-muted-foreground">

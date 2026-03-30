@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { HardHat, Mail, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
+import logo from "@/assets/logo.png";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -22,7 +22,6 @@ const LoginPage = () => {
       return;
     }
     setLoading(true);
-    // Simulate login - replace with Supabase auth
     setTimeout(() => {
       setLoading(false);
       toast.success("Inicio de sesión exitoso");
@@ -37,12 +36,7 @@ const LoginPage = () => {
         <div className="absolute bottom-10 right-20 w-96 h-96 rounded-full bg-info blur-3xl animate-float" style={{ animationDelay: "3s" }} />
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md relative z-10"
-      >
+      <div className="w-full max-w-md relative z-10 animate-fade-in">
         <button
           onClick={() => navigate("/")}
           className="flex items-center gap-2 text-primary-foreground/60 hover:text-primary-foreground mb-8 transition-colors text-sm"
@@ -53,9 +47,7 @@ const LoginPage = () => {
 
         <Card className="shadow-2xl border-0">
           <CardHeader className="text-center pb-2">
-            <div className="mx-auto w-14 h-14 rounded-xl gradient-gold flex items-center justify-center mb-4">
-              <HardHat className="w-8 h-8 text-primary" />
-            </div>
+            <img src={logo} alt="LideraMina" className="mx-auto w-14 h-14 rounded-xl object-contain mb-4" />
             <CardTitle className="text-2xl font-bold">Bienvenido</CardTitle>
             <CardDescription>Ingresa tus credenciales para acceder al sistema</CardDescription>
           </CardHeader>
@@ -111,7 +103,7 @@ const LoginPage = () => {
             </form>
           </CardContent>
         </Card>
-      </motion.div>
+      </div>
     </div>
   );
 };
