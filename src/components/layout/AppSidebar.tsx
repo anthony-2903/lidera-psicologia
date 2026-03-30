@@ -20,6 +20,7 @@ import {
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import logo from "@/assets/logo.png";
 
 const navItems = [
   { label: "Presentación", icon: Presentation, path: "/app/presentation" },
