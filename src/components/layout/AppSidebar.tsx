@@ -51,9 +51,7 @@ const AppSidebar = () => {
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
-        <div className="w-8 h-8 rounded-lg gradient-gold flex items-center justify-center shrink-0">
-          <HardHat className="w-5 h-5 text-primary" />
-        </div>
+        <img src={logo} alt="LideraMina" className="w-8 h-8 rounded-lg shrink-0 object-contain" />
         {!collapsed && (
           <span className="text-base font-bold text-sidebar-foreground tracking-tight">
             LideraMina
