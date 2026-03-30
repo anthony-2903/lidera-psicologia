@@ -45,7 +45,7 @@ const AppSidebar = () => {
   return (
     <aside
       className={cn(
-        "h-screen sticky top-0 flex flex-col gradient-primary transition-all duration-300 border-l border-sidebar-border",
+        "h-screen sticky top-0 flex flex-col gradient-primary transition-all duration-300 border-r border-sidebar-border",
         collapsed ? "w-16" : "w-64"
       )}
     >
