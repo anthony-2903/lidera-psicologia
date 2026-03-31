@@ -12,6 +12,7 @@ const AppLayout = lazy(() => import("./components/layout/AppLayout"));
 const DashboardPage = lazy(() => import("./pages/app/DashboardPage"));
 const PresentationPage = lazy(() => import("./pages/app/PresentationPage"));
 const GroupsPage = lazy(() => import("./pages/app/GroupsPage"));
+const TestApplicationPage = lazy(() => import("./pages/app/TestApplicationPage"));
 const EvaluatedPage = lazy(() => import("./pages/app/EvaluatedPage"));
 const EvaluationsPage = lazy(() => import("./pages/app/EvaluationsPage"));
 const DiagramPage = lazy(() => import("./pages/app/DiagramPage"));
@@ -53,7 +54,7 @@ const App = () => (
               <Route path="dashboard" element={<DashboardPage />} />
               <Route path="presentation" element={<PresentationPage />} />
               <Route path="groups" element={<GroupsPage />} />
-              <Route path="evaluated" element={<EvaluatedPage />} />
+              <Route path="test-application" element={<TestApplicationPage />} />
               <Route path="evaluations" element={<EvaluationsPage />} />
               <Route path="diagram" element={<DiagramPage />} />
               <Route path="participants" element={<ParticipantsPage />} />
