@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
-import { Users, UserPlus, UsersRound, Plus, Save, Trash2, Search, Filter } from "lucide-react";
+import { Users, UserPlus, UsersRound, Plus, Save, Trash2, Search, Filter, Mail, Phone } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const GroupsPage = () => {
@@ -19,8 +19,8 @@ const GroupsPage = () => {
   ]);
 
   const [evaluated, setEvaluated] = useState([
-    { id: 1, name: "Juan", lastName: "Pérez", position: "Operador de Pala", gender: "Masculino", age: 34, group: "Operaciones Mina" },
-    { id: 2, name: "María", lastName: "García", position: "Ingeniera de Seguridad", gender: "Femenino", age: 29, group: "Seguridad Industrial" },
+    { id: 1, name: "Juan", lastName: "Pérez", position: "Operador de Pala", gender: "Masculino", age: 34, group: "Operaciones Mina", email: "juan.perez@mina.com", phone: "+51 987 654 321" },
+    { id: 2, name: "María", lastName: "García", position: "Ingeniera de Seguridad", gender: "Femenino", age: 29, group: "Seguridad Industrial", email: "maria.garcia@mina.com", phone: "+51 912 345 678" },
   ]);
 
   const [newGroupName, setNewGroupName] = useState("");
@@ -31,6 +31,8 @@ const GroupsPage = () => {
     gender: "",
     age: "",
     group: "",
+    email: "",
+    phone: "",
   });
 
   const handleCreateGroup = (e: React.FormEvent) => {
@@ -63,7 +65,7 @@ const GroupsPage = () => {
     };
 
     setEvaluated([...evaluated, person as any]);
-    setNewEvaluated({ name: "", lastName: "", position: "", gender: "", age: "", group: "" });
+    setNewEvaluated({ name: "", lastName: "", position: "", gender: "", age: "", group: "", email: "", phone: "" });
     toast({
       title: "Evaluado registrado",
       description: `${newEvaluated.name} ${newEvaluated.lastName} ha sido añadido.`,
@@ -202,16 +204,43 @@ const GroupsPage = () => {
                     </div>
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="eval-pos">Cargo</Label>
-                    <Input
-                      id="eval-pos"
-                      placeholder="Ej. Operador A"
-                      value={newEvaluated.position}
-                      onChange={(e) => setNewEvaluated({...newEvaluated, position: e.target.value})}
-                      className="bg-background/50"
-                    />
-                  </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="eval-pos">Cargo</Label>
+                      <Input
+                        id="eval-pos"
+                        placeholder="Ej. Operador A"
+                        value={newEvaluated.position}
+                        onChange={(e) => setNewEvaluated({...newEvaluated, position: e.target.value})}
+                        className="bg-background/50"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="eval-email" className="flex items-center gap-2">
+                        <Mail className="w-3 h-3" /> Correo Electrónico
+                      </Label>
+                      <Input
+                        id="eval-email"
+                        type="email"
+                        placeholder="usuario@mina.com"
+                        value={newEvaluated.email}
+                        onChange={(e) => setNewEvaluated({...newEvaluated, email: e.target.value})}
+                        className="bg-background/50"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="eval-phone" className="flex items-center gap-2">
+                        <Phone className="w-3 h-3" /> Teléfono
+                      </Label>
+                      <Input
+                        id="eval-phone"
+                        placeholder="+51 000 000 000"
+                        value={newEvaluated.phone}
+                        onChange={(e) => setNewEvaluated({...newEvaluated, phone: e.target.value})}
+                        className="bg-background/50"
+                      />
+                    </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -289,6 +318,7 @@ const GroupsPage = () => {
                   <TableHeader>
                     <TableRow className="border-border/40">
                       <TableHead>Nombre Completo</TableHead>
+                      <TableHead>Contacto</TableHead>
                       <TableHead>Cargo</TableHead>
                       <TableHead>Grupo</TableHead>
                       <TableHead>Género / Edad</TableHead>
@@ -300,6 +330,18 @@ const GroupsPage = () => {
                       <TableRow key={person.id} className="border-border/40 hover:bg-muted/30 transition-colors">
                         <TableCell>
                           <div className="font-medium text-sm">{person.name} {person.lastName}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium">
+                              <Mail className="w-2.5 h-2.5" />
+                              {(person as any).email}
+                            </div>
+                            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium">
+                              <Phone className="w-2.5 h-2.5" />
+                              {(person as any).phone}
+                            </div>
+                          </div>
                         </TableCell>
                         <TableCell className="text-xs">{person.position}</TableCell>
                         <TableCell>

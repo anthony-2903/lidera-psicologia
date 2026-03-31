@@ -24,7 +24,6 @@ const navItems = [
   { label: "Grupos", icon: UsersRound, path: "/app/groups" },
   { label: "Aplicación de Pruebas", icon: ClipboardCheck, path: "/app/test-application" },
   { label: "Dashboard General", icon: LayoutDashboard, path: "/app/dashboard" },
-  { label: "Conteo Participantes", icon: PieChart, path: "/app/participants" },
   { label: "Dashboard Diagnóstico", icon: BarChart3, path: "/app/diagnostic" },
   { label: "Mejora Conductual", icon: Target, path: "/app/improvement" },
   { label: "Plan de Acción", icon: CheckSquare, path: "/app/action-plan" },
