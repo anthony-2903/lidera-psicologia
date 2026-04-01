@@ -13,6 +13,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  FileText,
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -22,6 +23,7 @@ import logo from "@/assets/logo.png";
 const navItems = [
   { label: "Presentación", icon: Presentation, path: "/app/presentation" },
   { label: "Grupos", icon: UsersRound, path: "/app/groups" },
+  { label: "Evaluación", icon: FileText, path: "/app/evaluations" },
   { label: "Aplicación de Pruebas", icon: ClipboardCheck, path: "/app/test-application" },
   { label: "Dashboard General", icon: LayoutDashboard, path: "/app/dashboard" },
   { label: "Dashboard Diagnóstico", icon: BarChart3, path: "/app/diagnostic" },

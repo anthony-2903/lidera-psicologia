@@ -7,12 +7,9 @@ import {
   ChevronRight, 
   ChevronLeft, 
   Search,
-  CheckCircle2,
   Clock,
-  AlertCircle,
   BrainCircuit,
   Activity,
-  ShieldAlert,
   ArrowRight
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -20,27 +17,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { groups, teamMembers } from "@/data/mockData";
 
 type Step = 'group' | 'member' | 'config' | 'timeline';
-
-const groups = [
-  { id: '1', name: 'Operaciones Mina', icon: Activity, count: 24, color: 'text-blue-600 bg-blue-50' },
-  { id: '2', name: 'Seguridad Industrial', icon: ShieldAlert, count: 12, color: 'text-emerald-600 bg-emerald-50' },
-  { id: '3', name: 'Mantenimiento Planta', icon: BrainCircuit, count: 18, color: 'text-amber-600 bg-amber-50' },
-  { id: '4', name: 'Logística', icon: ClipboardList, count: 15, color: 'text-indigo-600 bg-indigo-50' },
-];
-
-const teamMembers = [
-  { id: 'm1', name: 'Carlos Rodríguez', role: 'Operador de Jumbo', risk: 'Medio', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Carlos' },
-  { id: 'm2', name: 'Juan Pérez', role: 'Perforista', risk: 'Alto', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Juan' },
-  { id: 'm3', name: 'Miguel Ángel', role: 'Ayudante', risk: 'Bajo', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Miguel' },
-  { id: 'm4', name: 'Roberto Díaz', role: 'Operador de Scoop', risk: 'Medio', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Roberto' },
-];
 
 const ActionPlanPage = () => {
   const [step, setStep] = useState<Step>('group');
@@ -107,8 +90,8 @@ const ActionPlanPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {groups.map((g) => (
                 <Card 
-                  key={g.id}
-                  className={cn(
+                   key={g.id}
+                   className={cn(
                     "cursor-pointer transition-all border-2 group hover:shadow-2xl",
                     selectedGroup === g.id ? "border-primary bg-primary/5 ring-4 ring-primary/10 shadow-xl" : "border-border/40 hover:border-primary/40 bg-card/40 backdrop-blur-md"
                   )}
@@ -212,7 +195,7 @@ const ActionPlanPage = () => {
                 <CardContent className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Tipo de Intervención</Label>
+                       <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Tipo de Intervención</Label>
                       <Select defaultValue="conductual">
                         <SelectTrigger className="font-bold bg-background/40">
                           <SelectValue placeholder="Seleccione tipo" />

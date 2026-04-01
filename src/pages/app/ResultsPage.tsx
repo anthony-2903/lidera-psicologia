@@ -6,10 +6,8 @@ import {
   MoreHorizontal, 
   FileText, 
   Eye, 
-  User, 
   ArrowUpDown,
   Table as TableIcon,
-  LayoutGrid,
   FileDown,
   Printer
 } from "lucide-react";
@@ -21,7 +19,7 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,17 +34,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-
-const resultsData = [
-  { id: "1", name: "Carlos Rodríguez", group: "Operaciones Mina", score: 85, status: "Completado", date: "2024-03-28", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Carlos" },
-  { id: "2", name: "Juan Pérez", group: "Seguridad Industrial", score: 92, status: "Completado", date: "2024-03-27", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Juan" },
-  { id: "3", name: "Miguel Ángel", group: "Mantenimiento Planta", score: 68, status: "En Revisión", date: "2024-03-26", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Miguel" },
-  { id: "4", name: "Ana Torres", group: "Operaciones Mina", score: 74, status: "Completado", date: "2024-03-25", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Ana" },
-  { id: "5", name: "Roberto Díaz", group: "Logística", score: 81, status: "Completado", date: "2024-03-25", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Roberto" },
-  { id: "6", name: "Elena Gómez", group: "Geología", score: 88, status: "Completado", date: "2024-03-24", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Elena" },
-  { id: "7", name: "Luis Martínez", group: "Mantenimiento Planta", score: 55, status: "En Progreso", date: "2024-03-24", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Luis" },
-  { id: "8", name: "Sofía Rojas", group: "Seguridad Industrial", score: 95, status: "Completado", date: "2024-03-23", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sofia" },
-];
+import { ResultItem } from "@/types";
+import { resultsData } from "@/data/mockData";
 
 const ResultsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
