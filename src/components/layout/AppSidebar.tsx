@@ -45,13 +45,44 @@ const AppSidebar = () => {
         collapsed ? "w-16" : "w-64"
       )}
     >
-      {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
-        <img src={logo} alt="LideraMina" className="w-8 h-8 rounded-lg shrink-0 object-contain" />
+      {/* Logo Section - Premium Design */}
+      <div className={cn(
+        "flex flex-col items-center justify-center py-10 px-4 border-b border-sidebar-border relative overflow-hidden transition-all duration-500",
+        collapsed ? "py-6" : "py-10"
+      )}>
+        {/* Subtle background glow */}
+        <div className="absolute -top-10 -left-10 w-32 h-32 bg-primary/20 rounded-full blur-3xl opacity-50" />
+        <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-accent/20 rounded-full blur-3xl opacity-50" />
+        
+        <div className={cn(
+          "relative group transition-all duration-500",
+          collapsed ? "mb-0" : "mb-5"
+        )}>
+          {/* Outer ring for elegance */}
+          <div className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-primary/30 to-accent/30 blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+          
+          <div className="relative bg-white/5 backdrop-blur-xl rounded-[28px] p-2 border border-white/10 shadow-2xl ring-1 ring-white/5 overflow-hidden">
+             <img 
+               src={logo} 
+               alt="LideraMina" 
+               className={cn(
+                 "transition-all duration-500 rounded-[20px] object-contain",
+                 collapsed ? "w-10 h-10" : "w-20 h-20"
+               )}
+             />
+          </div>
+        </div>
+
         {!collapsed && (
-          <span className="text-base font-bold text-sidebar-foreground tracking-tight">
-            LideraMina
-          </span>
+          <div className="flex flex-col items-center gap-1 animate-in fade-in slide-in-from-top-2 duration-700">
+            <span className="text-xl font-black text-sidebar-foreground tracking-[-0.05em] uppercase italic bg-clip-text">
+              Lidera<span className="text-accent italic">Mina</span>
+            </span>
+            <div className="h-[2px] w-8 bg-gradient-to-r from-transparent via-accent/60 to-transparent rounded-full" />
+            <span className="text-[9px] font-black uppercase tracking-[0.4em] text-sidebar-foreground/40 mt-1">
+              Safety Leadership
+            </span>
+          </div>
         )}
       </div>
 

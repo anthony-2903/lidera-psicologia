@@ -47,7 +47,7 @@ const LoginPage = () => {
 
         <Card className="shadow-2xl border-0">
           <CardHeader className="text-center pb-2">
-            <img src={logo} alt="LideraMina" className="mx-auto w-14 h-14 rounded-xl object-contain mb-4" />
+            <img src={logo} alt="LideraMina" className="mx-auto w-24 h-24 rounded-2xl object-contain mb-6 shadow-lg" />
             <CardTitle className="text-2xl font-bold">Bienvenido</CardTitle>
             <CardDescription>Ingresa tus credenciales para acceder al sistema</CardDescription>
           </CardHeader>

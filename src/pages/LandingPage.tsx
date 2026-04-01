@@ -46,8 +46,8 @@ const LandingPage = () => {
         </div>
 
         <nav className="relative z-10 container mx-auto px-6 py-5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src={logo} alt="LideraMina" className="w-10 h-10 rounded-lg object-contain" />
+          <div className="flex items-center gap-4">
+            <img src={logo} alt="LideraMina" className="w-16 h-16 rounded-xl object-contain shadow-sm" />
             <span className="text-xl font-bold text-primary-foreground tracking-tight">
               LideraMina
             </span>
@@ -191,9 +191,9 @@ const LandingPage = () => {
       {/* Footer */}
       <footer className="border-t border-border py-8">
         <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <img src={logo} alt="LideraMina" className="w-5 h-5 object-contain" />
-            <span className="font-semibold text-foreground">LideraMina</span>
+          <div className="flex items-center gap-3">
+            <img src={logo} alt="LideraMina" className="w-8 h-8 object-contain" />
+            <span className="font-bold text-foreground">LideraMina</span>
           </div>
           <p className="text-sm text-muted-foreground">
             © 2026 Programa de Liderazgo en Seguridad Minera. Todos los derechos reservados.
