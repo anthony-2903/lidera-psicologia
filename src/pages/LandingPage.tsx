@@ -67,11 +67,11 @@ const LandingPage = () => {
               <Activity className="w-4 h-4" />
               Programa de Liderazgo en Seguridad Minera
             </div>
-            <h1 className="text-4xl md:text-6xl font-extrabold text-primary-foreground leading-tight mb-6">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold text-primary-foreground leading-tight mb-6">
               Transforma el liderazgo,{" "}
               <span className="text-accent">protege vidas</span>
             </h1>
-            <p className="text-lg md:text-xl text-primary-foreground/70 mb-10 max-w-2xl leading-relaxed">
+            <p className="text-base sm:text-lg md:text-xl text-primary-foreground/70 mb-10 max-w-2xl leading-relaxed">
               Plataforma integral de evaluación psicológica y desarrollo de competencias de liderazgo para la industria minera. Diagnóstico, intervención y medición de impacto en seguridad conductual.
             </p>
             <div className="flex flex-wrap gap-4">

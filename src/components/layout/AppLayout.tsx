@@ -1,7 +1,10 @@
 import { Outlet, useLocation } from "react-router-dom";
-import AppSidebar from "./AppSidebar";
-import { ChevronRight, Home } from "lucide-react";
+import AppSidebar, { SidebarContent } from "./AppSidebar";
+import { ChevronRight, Home, Menu } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 const breadcrumbMap: Record<string, string> = {
   presentation: "Presentación",
@@ -20,29 +23,61 @@ const breadcrumbMap: Record<string, string> = {
 
 const AppLayout = () => {
   const location = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
   const pathSegments = location.pathname.split("/").filter(Boolean);
   const currentSegment = pathSegments[pathSegments.length - 1];
   const currentLabel = breadcrumbMap[currentSegment] || currentSegment;
 
   return (
-    <div className="flex min-h-screen w-full bg-background">
-      {/* Sidebar - Left side */}
+    <div className="flex min-h-screen w-full bg-background overflow-hidden">
+      {/* Desktop Sidebar */}
       <AppSidebar />
 
-      {/* Main Content - 80% */}
-      <main className="flex-1 flex flex-col min-w-0">
-        {/* Header with breadcrumb */}
-        <header className="h-14 border-b border-border bg-card px-6 flex items-center gap-2 shrink-0">
-          <Link to="/app/dashboard" className="text-muted-foreground hover:text-foreground transition-colors">
-            <Home className="w-4 h-4" />
-          </Link>
-          <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
-          <span className="text-sm font-medium text-foreground">{currentLabel}</span>
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col min-w-0 relative">
+        {/* Header / Top Navigation */}
+        <header className="h-16 md:h-20 border-b border-border/40 bg-card/80 backdrop-blur-md px-4 md:px-8 flex items-center justify-between sticky top-0 z-30 transition-all">
+          <div className="flex items-center gap-4">
+            {/* Mobile Menu Trigger */}
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden hover:bg-primary/10 hover:text-primary">
+                  <Menu className="w-6 h-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 border-r-0 w-72 bg-transparent overflow-hidden">
+                <div className="h-full gradient-primary">
+                   <SidebarContent onItemClick={() => setIsMobileMenuOpen(false)} />
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            <nav className="flex items-center gap-2 md:gap-3">
+              <Link to="/app/dashboard" className="p-2 rounded-xl text-muted-foreground hover:bg-primary/5 hover:text-primary transition-all">
+                <Home className="w-5 h-5" />
+              </Link>
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30" />
+              <span className="text-sm md:text-base font-bold text-foreground tracking-tight px-3 py-1 rounded-lg bg-muted text-muted-foreground">
+                {currentLabel}
+              </span>
+            </nav>
+          </div>
+
+          <div className="flex items-center gap-4">
+            {/* Additional header items could go here */}
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-wider">Sistema Activo</span>
+            </div>
+          </div>
         </header>
 
-        {/* Content */}
-        <div className="flex-1 p-6 overflow-auto">
-          <Outlet />
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden">
+          <div className="container mx-auto p-4 md:p-8 max-w-7xl">
+            <Outlet />
+          </div>
         </div>
       </main>
     </div>

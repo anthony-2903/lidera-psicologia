@@ -30,74 +30,74 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen gradient-hero flex items-center justify-center p-6 relative overflow-hidden">
+    <div className="min-h-screen gradient-hero flex items-center justify-center p-4 md:p-6 relative overflow-hidden">
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-20 left-10 w-72 h-72 rounded-full bg-accent blur-3xl animate-float" />
         <div className="absolute bottom-10 right-20 w-96 h-96 rounded-full bg-info blur-3xl animate-float" style={{ animationDelay: "3s" }} />
       </div>
 
-      <div className="w-full max-w-md relative z-10 animate-fade-in">
+      <div className="w-full max-w-md relative z-10 animate-fade-in space-y-6 md:space-y-8">
         <button
           onClick={() => navigate("/")}
-          className="flex items-center gap-2 text-primary-foreground/60 hover:text-primary-foreground mb-8 transition-colors text-sm"
+          className="flex items-center gap-2 text-white/60 hover:text-white mb-4 transition-colors text-sm font-bold bg-white/10 px-4 py-2 rounded-full w-fit backdrop-blur-sm"
         >
           <ArrowLeft className="w-4 h-4" />
           Volver al inicio
         </button>
 
-        <Card className="shadow-2xl border-0">
-          <CardHeader className="text-center pb-2">
-            <img src={logo} alt="LideraMina" className="mx-auto w-24 h-24 rounded-2xl object-contain mb-6 shadow-lg" />
-            <CardTitle className="text-2xl font-bold">Bienvenido</CardTitle>
-            <CardDescription>Ingresa tus credenciales para acceder al sistema</CardDescription>
+        <Card className="shadow-2xl border-0 overflow-hidden rounded-2xl md:rounded-3xl">
+          <CardHeader className="text-center pb-2 pt-8 md:pt-12">
+            <img src={logo} alt="LideraMina" className="mx-auto w-20 h-20 md:w-28 md:h-28 rounded-2xl md:rounded-3xl object-contain mb-6 shadow-xl" />
+            <CardTitle className="text-2xl md:text-3xl font-black tracking-tighter">Bienvenido</CardTitle>
+            <CardDescription className="font-bold text-muted-foreground/60">Ingresa tus credenciales para acceder</CardDescription>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
+          <CardContent className="p-6 md:p-10 pt-4 md:pt-6">
+            <form onSubmit={handleLogin} className="space-y-5 md:space-y-6 text-left">
               <div className="space-y-2">
-                <Label htmlFor="email">Correo electrónico</Label>
+                <Label htmlFor="email" className="font-black uppercase text-[10px] tracking-widest text-primary">Correo electrónico</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/40" />
                   <Input
                     id="email"
                     type="email"
                     placeholder="correo@ejemplo.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
+                    className="pl-12 h-14 rounded-xl md:rounded-2xl bg-muted/30 border-0 focus-visible:ring-primary shadow-inner font-bold"
                   />
                 </div>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Contraseña</Label>
+                  <Label htmlFor="password" className="font-black uppercase text-[10px] tracking-widest text-primary">Contraseña</Label>
                   <button
                     type="button"
                     onClick={() => navigate("/recovery")}
-                    className="text-xs text-info hover:underline"
+                    className="text-[10px] font-black uppercase text-accent hover:underline tracking-tighter"
                   >
                     ¿Olvidaste tu contraseña?
                   </button>
                 </div>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/40" />
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 pr-10"
+                    className="pl-12 pr-12 h-14 rounded-xl md:rounded-2xl bg-muted/30 border-0 focus-visible:ring-primary shadow-inner font-bold"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
               </div>
-              <Button type="submit" className="w-full gradient-primary text-primary-foreground" disabled={loading}>
+              <Button type="submit" className="w-full h-14 md:h-16 rounded-xl md:rounded-2xl gradient-primary text-primary-foreground font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/20 hover:scale-[1.01] active:scale-[0.99] transition-all" disabled={loading}>
                 {loading ? "Ingresando..." : "Iniciar Sesión"}
               </Button>
             </form>

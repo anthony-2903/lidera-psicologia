@@ -132,50 +132,50 @@ const BelbinQuestionnaire = ({ scores, onScoreChange, onFinish }: BelbinQuestion
   const isFormValid = belbinStages.every(s => getStageTotal(s.id) === 10);
 
   return (
-    <div className="space-y-16 py-10">
+    <div className="space-y-10 md:space-y-16 py-6 md:py-10">
       {belbinStages.map((stage) => {
         const total = getStageTotal(stage.id);
         const isOver = total > 10;
         const isCorrect = total === 10;
 
         return (
-          <div key={stage.id} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="flex items-end justify-between border-b-2 border-primary/10 pb-4">
-              <div className="space-y-2">
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60 text-left">Etapa {stage.id} de 7</span>
-                <h3 className="text-2xl font-black tracking-tight text-foreground text-left">{stage.title}</h3>
+          <div key={stage.id} className="space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between border-b-2 border-primary/10 pb-4 gap-4">
+              <div className="space-y-1 md:space-y-2 text-left">
+                <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-primary/60">Etapa {stage.id} de 7</span>
+                <h3 className="text-xl md:text-2xl font-black tracking-tight text-foreground">{stage.title}</h3>
               </div>
-              <div className="flex flex-col items-end gap-2">
+              <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between gap-2">
                 <span className={cn(
-                  "text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full",
+                  "text-[8px] md:text-[10px] font-black uppercase tracking-widest px-2 md:px-3 py-1 rounded-full",
                   isOver ? "bg-destructive/10 text-destructive" : isCorrect ? "bg-emerald-500/10 text-emerald-500" : "bg-primary/10 text-primary"
                 )}>
-                  {isOver ? "Exceso Detectado" : isCorrect ? "Completado" : "Pendiente"}
+                  {isOver ? "Exceso" : isCorrect ? "Correcto" : "Pendiente"}
                 </span>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 md:gap-4">
                   <span className={cn(
-                    "text-3xl font-black tabular-nums tracking-tighter",
+                    "text-2xl md:text-3xl font-black tabular-nums tracking-tighter",
                     isOver ? "text-destructive" : isCorrect ? "text-emerald-500" : "text-primary"
-                  )}>{total} <span className="text-lg opacity-40">/ 10</span></span>
+                  )}>{total} <span className="text-sm md:text-lg opacity-40">/ 10</span></span>
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 gap-3 md:gap-4">
               {stage.options.map((opt) => (
-                <div key={opt.id} className="flex items-center gap-6 p-6 rounded-[24px] bg-card/40 backdrop-blur-md border border-border/10 hover:border-primary/30 transition-all group shadow-sm hover:shadow-xl hover:shadow-primary/5">
-                  <div className="w-12 h-12 rounded-2xl bg-background border-2 border-border/20 flex items-center justify-center font-black text-xl text-primary/40 group-hover:text-primary group-hover:border-primary/40 transition-all shrink-0">
+                <div key={opt.id} className="flex items-center gap-3 md:gap-6 p-4 md:p-6 rounded-2xl md:rounded-[24px] bg-card/40 backdrop-blur-md border border-border/10 hover:border-primary/30 transition-all group shadow-sm">
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-background border-2 border-border/20 flex items-center justify-center font-black text-lg md:text-xl text-primary/40 group-hover:text-primary transition-all shrink-0">
                     {opt.id}
                   </div>
-                  <p className="flex-1 text-base font-bold leading-snug text-muted-foreground group-hover:text-foreground transition-colors pr-8 text-left">
+                  <p className="flex-1 text-sm md:text-base font-bold leading-tight md:leading-snug text-muted-foreground group-hover:text-foreground transition-colors pr-2 md:pr-8 text-left">
                     {opt.text}
                   </p>
-                  <div className="w-24 shrink-0">
+                  <div className="w-16 md:w-24 shrink-0">
                     <Input 
                       type="number"
                       min="0"
                       max="10"
-                      className="h-14 rounded-2xl bg-background/60 border-2 border-border/20 text-center font-black text-2xl focus:ring-primary/20 focus:border-primary transition-all"
+                      className="h-10 md:h-14 rounded-xl md:rounded-2xl bg-background/60 border-2 border-border/20 text-center font-black text-xl md:text-2xl focus:ring-primary/20 focus:border-primary transition-all p-0"
                       value={scores[`${stage.id}-${opt.id}`] || ""}
                       onChange={(e) => onScoreChange(stage.id, opt.id, e.target.value)}
                       placeholder="0"
@@ -187,12 +187,12 @@ const BelbinQuestionnaire = ({ scores, onScoreChange, onFinish }: BelbinQuestion
 
             {!isCorrect && total > 0 && (
               <div className={cn(
-                "p-6 rounded-3xl flex items-center justify-center gap-4 border-2 border-dashed",
-                isOver ? "bg-destructive/5 border-destructive/20 text-destructive" : "bg-amber-500/5 border-amber-500/20 text-amber-600"
+                "p-4 md:p-6 rounded-2xl md:rounded-3xl flex items-center justify-center gap-3 md:gap-4 border-2 border-dashed",
+                isOver ? "bg-destructive/5 border-destructive/20 text-destructive font-black" : "bg-amber-500/5 border-amber-500/20 text-amber-600 font-bold"
               )}>
-                <AlertCircle className="w-6 h-6 shrink-0" />
-                <span className="text-sm font-black uppercase tracking-[0.1em]">
-                  {isOver ? "HA EXCEDIDO LOS 10 PUNTOS PERMITIDOS" : `LE FALTAN ${10 - total} PUNTOS POR ASIGNAR EN ESTA ETAPA`}
+                <AlertCircle className="w-5 h-5 md:w-6 md:h-6 shrink-0" />
+                <span className="text-[10px] md:text-sm uppercase tracking-wide">
+                  {isOver ? "HA EXCEDIDO LOS 10 PUNTOS PERMITIDOS" : `LE FALTAN ${10 - total} PUNTOS POR ASIGNAR`}
                 </span>
               </div>
             )}
@@ -200,13 +200,13 @@ const BelbinQuestionnaire = ({ scores, onScoreChange, onFinish }: BelbinQuestion
         );
       })}
 
-      <div className="flex justify-center pt-10">
+      <div className="flex justify-center pt-6 md:pt-10">
         <Button 
-          className="w-full max-w-2xl h-20 rounded-[32px] bg-primary font-black uppercase tracking-[0.3em] text-lg shadow-[0_20px_50px_rgba(var(--primary),0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all gap-4 border-4 border-white/20"
+          className="w-full max-w-2xl h-16 md:h-20 rounded-2xl md:rounded-[32px] bg-primary font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-base md:text-lg shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all gap-3 md:gap-4 border-2 md:border-4 border-white/20"
           disabled={!isFormValid}
           onClick={onFinish}
         >
-          <ClipboardCheck className="w-8 h-8" />
+          <ClipboardCheck className="w-6 h-6 md:w-8 md:h-8" />
           Finalizar Evaluación
         </Button>
       </div>
