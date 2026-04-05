@@ -14,7 +14,7 @@ const breadcrumbMap: Record<string, string> = {
   diagram: "Diagrama Individual",
   dashboard: "Dashboard General",
   participants: "Conteo de Participantes",
-  diagnostic: "Dashboard Diagnóstico",
+  diagnostic: "Seguimiento de Aplicación",
   improvement: "Mejora Conductual",
   "action-plan": "Plan de Acción",
   results: "Resultados",

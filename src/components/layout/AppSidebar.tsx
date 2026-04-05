@@ -24,7 +24,7 @@ export const navItems = [
   { label: "Evaluación", icon: FileText, path: "/app/evaluations" },
   { label: "Aplicación de Pruebas", icon: ClipboardCheck, path: "/app/test-application" },
   { label: "Dashboard General", icon: LayoutDashboard, path: "/app/dashboard" },
-  { label: "Dashboard Diagnóstico", icon: BarChart3, path: "/app/diagnostic" },
+  { label: "Seguimiento de Aplicación", icon: BarChart3, path: "/app/diagnostic" },
   { label: "Mejora Conductual", icon: Target, path: "/app/improvement" },
   { label: "Plan de Acción", icon: CheckSquare, path: "/app/action-plan" },
   { label: "Resultados", icon: TrendingUp, path: "/app/results" },
