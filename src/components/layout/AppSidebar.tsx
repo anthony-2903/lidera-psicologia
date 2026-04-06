@@ -31,9 +31,50 @@ export const navItems = [
   { label: "Dashboard Final", icon: LayoutDashboard, path: "/app/final-dashboard" },
 ];
 
+import { useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+
 export const SidebarContent = ({ collapsed = false, onItemClick }: { collapsed?: boolean, onItemClick?: () => void }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [allowedViews, setAllowedViews] = useState<string[] | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    checkUserPermissions();
+  }, []);
+
+  const checkUserPermissions = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setAllowedViews(navItems.map(i => i.path)); // Falla elegante si no hay auth
+        return;
+      }
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('allowed_views, is_admin')
+        .eq('id', session.user.id)
+        .single();
+        
+      if (error || !data) {
+        setAllowedViews(navItems.map(i => i.path));
+      } else {
+        setAllowedViews(data.allowed_views || []);
+        setIsAdmin(data.is_admin || false);
+      }
+    } catch (e) {
+      setAllowedViews(navItems.map(i => i.path));
+    }
+  };
+
+  // Filtrar los nav items según lo que tenga permitido
+  // Si no ha cargado los permisos, mostrar todo temporalmente o mostrar esqueleto
+  const visibleNavItems = navItems.filter((item) => {
+    if (!allowedViews) return true; // Mientras carga
+    return allowedViews.includes(item.path);
+  });
 
   return (
     <div className="flex flex-col h-full">
@@ -72,7 +113,7 @@ export const SidebarContent = ({ collapsed = false, onItemClick }: { collapsed?:
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-1">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
             <NavLink
@@ -92,6 +133,20 @@ export const SidebarContent = ({ collapsed = false, onItemClick }: { collapsed?:
             </NavLink>
           );
         })}
+        {isAdmin && (
+          <NavLink
+            to="/app/admin"
+            onClick={onItemClick}
+            className={cn(
+              "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-300 mt-4 border border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10",
+              location.pathname === "/app/admin" && "bg-emerald-500/20 shadow-lg ring-1 ring-emerald-500/50"
+            )}
+            title={collapsed ? "Admin Panel" : undefined}
+          >
+            <UsersRound className={cn("shrink-0 transition-transform duration-300")} />
+            {!collapsed && <span className="truncate">Panel de Accesos</span>}
+          </NavLink>
+        )}
       </nav>
 
       {/* Bottom */}

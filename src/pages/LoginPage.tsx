@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Mail, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
+import { supabase } from "@/lib/supabase";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -22,11 +23,24 @@ const LoginPage = () => {
       return;
     }
     setLoading(true);
-    setTimeout(() => {
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        toast.error("Credenciales incorrectas o usuario no encontrado");
+      } else if (data.session) {
+        toast.success("Inicio de sesión exitoso");
+        navigate("/app/dashboard");
+      }
+    } catch (err) {
+      toast.error("Error al conectar con el servidor");
+    } finally {
       setLoading(false);
-      toast.success("Inicio de sesión exitoso");
-      navigate("/app/dashboard");
-    }, 1000);
+    }
   };
 
   return (
