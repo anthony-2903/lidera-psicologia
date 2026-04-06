@@ -13,6 +13,17 @@ export interface ChartData {
   [key: string]: string | number;
 }
 
+export interface IndividualEvaluation {
+  id: number;
+  name: string;
+  personality: { name: string; value: string }[];
+  motivational: { name: string; value: string }[];
+  teamwork: { name: string; value: string }[];
+  projective: { name: string; value: string }[];
+  leadership: string;
+  behavioral: string;
+}
+
 export interface FinalDashboardData {
   totalEvaluated: number;
   // Personalidad (5 ejes x 5 niveles) - Ideal para Radar
@@ -27,6 +38,8 @@ export interface FinalDashboardData {
   leadership: ChartData[];
   // Conductual (1 eje x 3 niveles) - Ideal para SemiCircle Gauge (Pie)
   behavioral: ChartData[];
+  // Datos individuales para la vista de listado
+  individuals: IndividualEvaluation[];
 }
 
 export interface SheetRow {
@@ -218,7 +231,6 @@ export const fetchFinalDashboardData = async (sheetId: string): Promise<FinalDas
         const totalRows = Math.max(0, rows.length - 2); // Omitimos las filas de título/cabeceras
         
         // --- Estructuras Base ---
-        // { Eje: { 'MUY BAJO': 0, 'BAJO': 0, ... } }
         const personalityCounter: Record<string, QualityCount> = {
           'Energía': {}, 'Tesón': {}, 'Afabilidad': {}, 'Esta. Emocional': {}, 'Apertura': {}
         };
@@ -236,6 +248,7 @@ export const fetchFinalDashboardData = async (sheetId: string): Promise<FinalDas
         
         const leadCounter: QualityCount = {};
         const behCounter: QualityCount = {};
+        const individuals: IndividualEvaluation[] = [];
 
         // Función Helper para sumar ocurrencias
         const addOccurrence = (counter: Record<string, QualityCount> | QualityCount, category: string, value: string) => {
@@ -243,29 +256,25 @@ export const fetchFinalDashboardData = async (sheetId: string): Promise<FinalDas
           const val = value.toUpperCase().trim();
           
           if (typeof category === 'string' && counter[category] !== undefined) {
-            // Es un récord anidado
             const inner = (counter as Record<string, QualityCount>)[category];
             inner[val] = (inner[val] || 0) + 1;
           } else {
-            // Es un quality array base
             const flatCounter = counter as QualityCount;
             flatCounter[val] = (flatCounter[val] || 0) + 1;
           }
         };
 
-        // Procesar Filas (Empezamos en el index 2 porque la 0 y 1 son cabeceras en G-Sheets con merged cells)
+        // Procesar Filas
         for (let i = 2; i < rows.length; i++) {
           const r = rows[i];
-          if (!r[1] || r[1] === '') continue; // Si no hay nombre, saltar
+          if (!r[1] || r[1] === '') continue;
 
-          // PERSONALIDAD (3 al 7)
+          // Aggregates
           addOccurrence(personalityCounter, 'Energía', r[3]);
           addOccurrence(personalityCounter, 'Tesón', r[4]);
           addOccurrence(personalityCounter, 'Afabilidad', r[5]);
           addOccurrence(personalityCounter, 'Esta. Emocional', r[6]);
           addOccurrence(personalityCounter, 'Apertura', r[7]);
-
-          // MOTIVACIONAL (8 al 17)
           addOccurrence(motivationalCounter, 'Afiliación', r[8]);
           addOccurrence(motivationalCounter, 'Poder', r[9]);
           addOccurrence(motivationalCounter, 'Logro', r[10]);
@@ -276,8 +285,6 @@ export const fetchFinalDashboardData = async (sheetId: string): Promise<FinalDas
           addOccurrence(motivationalCounter, 'Hedonismo', r[15]);
           addOccurrence(motivationalCounter, 'Seguridad', r[16]);
           addOccurrence(motivationalCounter, 'Conservación', r[17]);
-
-          // EQUIPO (18 al 26)
           addOccurrence(teamCounter, 'Creativo', r[18]);
           addOccurrence(teamCounter, 'Evaluador', r[19]);
           addOccurrence(teamCounter, 'Especialista', r[20]);
@@ -287,16 +294,56 @@ export const fetchFinalDashboardData = async (sheetId: string): Promise<FinalDas
           addOccurrence(teamCounter, 'Impulsor', r[24]);
           addOccurrence(teamCounter, 'Implementador', r[25]);
           addOccurrence(teamCounter, 'Finalizador', r[26]);
-
-          // PROYECTIVO (27 al 30)
           addOccurrence(projCounter, 'Manejo Emo.', r[27]);
           addOccurrence(projCounter, 'Relaciones', r[28]);
           addOccurrence(projCounter, 'Impulsos', r[29]);
           addOccurrence(projCounter, 'Adaptación', r[30]);
-
-          // DIRECTOS (31, 32)
           addOccurrence(leadCounter, '', r[31]);
           addOccurrence(behCounter, '', r[32]);
+
+          // Individual Data
+          individuals.push({
+            id: i,
+            name: r[1],
+            personality: [
+              { name: 'Energía', value: r[3] },
+              { name: 'Tesón', value: r[4] },
+              { name: 'Afabilidad', value: r[5] },
+              { name: 'Esta. Emocional', value: r[6] },
+              { name: 'Apertura', value: r[7] }
+            ],
+            motivational: [
+              { name: 'Afiliación', value: r[8] },
+              { name: 'Poder', value: r[9] },
+              { name: 'Logro', value: r[10] },
+              { name: 'Exploración', value: r[11] },
+              { name: 'Contribución', value: r[12] },
+              { name: 'Autonomía', value: r[13] },
+              { name: 'Cooperación', value: r[14] },
+              { name: 'Hedonismo', value: r[15] },
+              { name: 'Seguridad', value: r[16] },
+              { name: 'Conservación', value: r[17] }
+            ],
+            teamwork: [
+              { name: 'Creativo', value: r[18] },
+              { name: 'Evaluador', value: r[19] },
+              { name: 'Especialista', value: r[20] },
+              { name: 'Coordinador', value: r[21] },
+              { name: 'Cohesionador', value: r[22] },
+              { name: 'Recursos', value: r[23] },
+              { name: 'Impulsor', value: r[24] },
+              { name: 'Implementador', value: r[25] },
+              { name: 'Finalizador', value: r[26] }
+            ],
+            projective: [
+              { name: 'Manejo Emo.', value: r[27] },
+              { name: 'Relaciones', value: r[28] },
+              { name: 'Impulsos', value: r[29] },
+              { name: 'Adaptación', value: r[30] }
+            ],
+            leadership: r[31],
+            behavioral: r[32]
+          });
         }
 
         // --- Transformar a ChartData ---
@@ -320,6 +367,7 @@ export const fetchFinalDashboardData = async (sheetId: string): Promise<FinalDas
           projective: mapToChartData(projCounter),
           leadership: mapSingleToPie(leadCounter),
           behavioral: mapSingleToPie(behCounter),
+          individuals: individuals
         });
       },
       error: reject
