@@ -37,38 +37,33 @@ export const SidebarContent = ({ collapsed = false, onItemClick }: { collapsed?:
 
   return (
     <div className="flex flex-col h-full">
-      {/* Logo Section - Premium Design */}
+      {/* Logo Section - Compact horizontal strip */}
       <div className={cn(
-        "flex flex-col items-center justify-center py-10 px-4 border-b border-sidebar-border relative overflow-hidden transition-all duration-500",
-        collapsed ? "py-6" : "py-10"
+        "flex items-center gap-3 px-4 py-3 border-b border-sidebar-border relative overflow-hidden transition-all duration-500",
+        collapsed ? "justify-center px-2" : ""
       )}>
-        <div className="absolute -top-10 -left-10 w-32 h-32 bg-primary/20 rounded-full blur-3xl opacity-50" />
-        <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-accent/20 rounded-full blur-3xl opacity-50" />
-        
-        <div className={cn(
-          "relative group transition-all duration-500",
-          collapsed ? "mb-0" : "mb-5"
-        )}>
-          <div className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-primary/30 to-accent/30 blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-          <div className="relative bg-white/5 backdrop-blur-xl rounded-[28px] p-2 border border-white/10 shadow-2xl ring-1 ring-white/5 overflow-hidden">
-             <img 
-               src={logo} 
-               alt="LideraMina" 
-               className={cn(
-                 "transition-all duration-500 rounded-[20px] object-contain",
-                 collapsed ? "w-10 h-10" : "w-16 h-16"
-               )}
-             />
+        <div className="absolute -top-6 -left-6 w-20 h-20 bg-accent/20 rounded-full blur-2xl opacity-30 pointer-events-none" />
+
+        <div className="relative shrink-0 group">
+          <div className="absolute inset-0 rounded-xl bg-gradient-to-tr from-primary/30 to-accent/30 blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="relative bg-white/5 backdrop-blur-xl rounded-xl p-1.5 border border-white/10 shadow-lg ring-1 ring-white/5">
+            <img
+              src={logo}
+              alt="LideraMina"
+              className={cn(
+                "transition-all duration-500 rounded-lg object-contain",
+                collapsed ? "w-8 h-8" : "w-9 h-9"
+              )}
+            />
           </div>
         </div>
 
         {!collapsed && (
-          <div className="flex flex-col items-center gap-1 animate-in fade-in slide-in-from-top-2 duration-700">
-            <span className="text-xl font-black text-sidebar-foreground tracking-[-0.05em] uppercase italic">
-              Lidera<span className="text-accent italic">Mina</span>
+          <div className="flex flex-col min-w-0 animate-in fade-in slide-in-from-left-2 duration-500">
+            <span className="text-sm font-black text-sidebar-foreground tracking-[-0.04em] uppercase italic leading-tight truncate">
+              Lidera<span className="text-accent">Mina</span>
             </span>
-            <div className="h-[2px] w-8 bg-gradient-to-r from-transparent via-accent/60 to-transparent rounded-full" />
-            <span className="text-[9px] font-black uppercase tracking-[0.4em] text-sidebar-foreground/40 mt-1">
+            <span className="text-[8px] font-bold uppercase tracking-[0.3em] text-sidebar-foreground/40 leading-tight">
               Safety Leadership
             </span>
           </div>

@@ -11,7 +11,7 @@ export interface SheetRow {
   'BATERIAS PSICOLOGICAS': string;
   'ENTREVISTA POR COMPETENCIAS': string;
   ESTADO: string;
-  OBSERVACION: string;
+  'FECHA DE EVALUACION': string;
 }
 
 export interface StatGroup {
@@ -138,6 +138,30 @@ export const fetchSheetData = async (sheetId: string): Promise<GroupMetric[]> =>
         });
         
         resolve(Object.values(groups));
+      },
+      error: (error: any) => {
+        reject(error);
+      }
+    });
+  });
+};
+
+export const fetchRawRows = async (sheetId: string): Promise<SheetRow[]> => {
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error('Failed to fetch Google Sheet data');
+  }
+
+  const csvText = await response.text();
+
+  return new Promise((resolve, reject) => {
+    Papa.parse<SheetRow>(csvText, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        resolve(results.data);
       },
       error: (error: any) => {
         reject(error);
