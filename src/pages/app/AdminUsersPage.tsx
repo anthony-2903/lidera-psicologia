@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { ShieldCheck, UserCog, Edit, Check, X } from "lucide-react";
 import { navItems } from "@/components/layout/AppSidebar";
+import { toast } from "sonner";
 
 type Profile = {
   id: string;
   email: string;
   is_admin: boolean;
+  is_active?: boolean;
   allowed_views: string[];
 };
 
@@ -22,6 +24,7 @@ export default function AdminUsersPage() {
   const [newUserPassword, setNewUserPassword] = useState("");
   const [newUserViews, setNewUserViews] = useState<string[]>([]);
   const [isCreating, setIsCreating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -67,9 +70,15 @@ export default function AdminUsersPage() {
     setSelectedUser({ ...selectedUser, is_admin: !selectedUser.is_admin });
   };
 
+  const toggleActive = () => {
+    if (!selectedUser) return;
+    const currentActiveState = selectedUser.is_active !== undefined ? selectedUser.is_active : true;
+    setSelectedUser({ ...selectedUser, is_active: !currentActiveState });
+  };
+
   const handleCreateUser = async () => {
     if (!newUserEmail || !newUserPassword) {
-      alert("Por favor ingresa correo y contraseña.");
+      toast.warning("Datos incompletos", { description: "Por favor ingresa correo y contraseña." });
       return;
     }
     setIsCreating(true);
@@ -77,6 +86,7 @@ export default function AdminUsersPage() {
     // Aquí llamamos a la Edge Function de Supabase que construimos
     const { data, error } = await supabase.functions.invoke('clever-function', {
       body: {
+        action: 'create',
         email: newUserEmail,
         password: newUserPassword,
         allowed_views: newUserViews
@@ -87,9 +97,9 @@ export default function AdminUsersPage() {
 
     if (error) {
       console.error(error);
-      alert("Error al crear usuario. Verifica los comandos de la Edge Function.");
+      toast.error("Error al registrar", { description: "Verifica los comandos de la Edge Function." });
     } else {
-      alert(`Usuario ${newUserEmail} creado con éxito.`);
+      toast.success("¡Usuario creado!", { description: `El usuario ${newUserEmail} ha sido dado de alta exitosamente.` });
       setIsCreateModalOpen(false);
       setNewUserEmail("");
       setNewUserPassword("");
@@ -106,6 +116,43 @@ export default function AdminUsersPage() {
     }
   };
 
+  const executeDelete = async (userId: string) => {
+    setIsDeleting(true);
+    const { error } = await supabase.functions.invoke('clever-function', {
+      body: {
+        action: 'delete',
+        id: userId
+      }
+    });
+    setIsDeleting(false);
+
+    if (error) {
+      console.error(error);
+      toast.error("Error al eliminar", { description: "No se pudo borrar al usuario de la base de datos." });
+    } else {
+      toast.success("Usuario borrado", { description: "La cuenta y sus accesos han sido eliminados permanentemente." });
+      closeEdit();
+      fetchUsers();
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+    
+    toast("¿ZONA DE RIESGO: Eliminar Usuario?", {
+      description: `Esta acción no se puede deshacer. ¿Deseas eliminar a ${selectedUser.email}?`,
+      action: {
+        label: "Eliminar definitivamente",
+        onClick: () => executeDelete(selectedUser.id)
+      },
+      cancel: {
+        label: "Cancelar",
+        onClick: () => console.log('Borrado cancelado')
+      },
+      className: "border-red-500/30 bg-red-500/5",
+    });
+  };
+
   const saveChanges = async () => {
     if (!selectedUser) return;
     
@@ -113,14 +160,16 @@ export default function AdminUsersPage() {
       .from("profiles")
       .update({ 
         allowed_views: selectedUser.allowed_views, 
-        is_admin: selectedUser.is_admin 
+        is_admin: selectedUser.is_admin,
+        is_active: selectedUser.is_active !== undefined ? selectedUser.is_active : true
       })
       .eq("id", selectedUser.id);
       
     if (error) {
-      alert("Error guardando cambios. ¿Eres administrador realmente?");
+      toast.error("Fallo al guardar", { description: "No tienes permisos de Administrador o hubo un problema de red." });
       console.error(error);
     } else {
+      toast.success("¡Cambios guardados!", { description: `El perfil de ${selectedUser.email} se actualizó.` });
       fetchUsers();
       closeEdit();
     }
@@ -154,6 +203,7 @@ export default function AdminUsersPage() {
             <thead className="text-xs uppercase bg-muted/50 text-muted-foreground">
               <tr>
                 <th className="px-6 py-4 font-bold">Email</th>
+                <th className="px-6 py-4 font-bold text-center">Estado</th>
                 <th className="px-6 py-4 font-bold text-center">Rol</th>
                 <th className="px-6 py-4 font-bold text-center">Vistas Permitidas</th>
                 <th className="px-6 py-4 font-bold text-right">Acciones</th>
@@ -161,13 +211,20 @@ export default function AdminUsersPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={4} className="text-center py-8">Cargando usuarios...</td></tr>
+                <tr><td colSpan={5} className="text-center py-8">Cargando usuarios...</td></tr>
               ) : users.length === 0 ? (
-                <tr><td colSpan={4} className="text-center py-8">No se encontraron perfiles. ¿Ya creaste un usuario en auth?</td></tr>
+                <tr><td colSpan={5} className="text-center py-8">No se encontraron perfiles. ¿Ya creaste un usuario en auth?</td></tr>
               ) : (
-                users.map(user => (
-                  <tr key={user.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                users.map(user => {
+                  const isActive = user.is_active !== false; // Si no existe es true
+                  return (
+                  <tr key={user.id} className={`border-b border-border/50 transition-colors hover:bg-muted/30 ${!isActive ? 'opacity-50' : ''}`}>
                     <td className="px-6 py-4 font-medium">{user.email}</td>
+                    <td className="px-6 py-4 text-center">
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${isActive ? 'bg-emerald-500/10 text-emerald-600' : 'bg-red-500/10 text-red-600'}`}>
+                        {isActive ? 'Activo' : 'Suspendido'}
+                      </span>
+                    </td>
                     <td className="px-6 py-4 text-center">
                       <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${user.is_admin ? 'bg-primary/10 text-primary' : 'bg-secondary/20 text-secondary-foreground'}`}>
                         {user.is_admin ? 'Admin' : 'Usuario'}
@@ -184,7 +241,7 @@ export default function AdminUsersPage() {
                       </button>
                     </td>
                   </tr>
-                ))
+                )})
               )}
             </tbody>
           </table>
@@ -212,18 +269,34 @@ export default function AdminUsersPage() {
             
             <div className="p-6 overflow-y-auto flex-1 space-y-6">
               
-              {/* Role Toggle */}
-              <div className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-muted/10">
-                <div>
-                  <h4 className="font-bold text-sm">Privilegios de Administrador</h4>
-                  <p className="text-xs text-muted-foreground">Otorga o quita la capacidad de entrar a esta pantalla.</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Role Toggle */}
+                <div className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-muted/10">
+                  <div>
+                    <h4 className="font-bold text-sm">Administrador</h4>
+                    <p className="text-xs text-muted-foreground">Otorga el acceso a esta pantalla.</p>
+                  </div>
+                  <button 
+                    onClick={toggleAdmin}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${selectedUser.is_admin ? 'bg-primary' : 'bg-muted'}`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${selectedUser.is_admin ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
                 </div>
-                <button 
-                  onClick={toggleAdmin}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${selectedUser.is_admin ? 'bg-primary' : 'bg-muted'}`}
-                >
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${selectedUser.is_admin ? 'translate-x-6' : 'translate-x-1'}`} />
-                </button>
+
+                {/* Active Toggle */}
+                <div className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-muted/10">
+                  <div>
+                    <h4 className="font-bold text-sm">Estado Activo</h4>
+                    <p className="text-xs text-muted-foreground">Si se apaga, no podrá acceder.</p>
+                  </div>
+                  <button 
+                    onClick={toggleActive}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${(selectedUser.is_active !== false) ? 'bg-emerald-500' : 'bg-red-500'}`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${(selectedUser.is_active !== false) ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
+                </div>
               </div>
 
               {/* Views Checklist */}
@@ -256,13 +329,23 @@ export default function AdminUsersPage() {
               
             </div>
 
-            <div className="p-6 border-t border-border/50 bg-muted/20 flex justify-end gap-3">
-              <button onClick={closeEdit} className="px-5 py-2 text-sm font-bold text-muted-foreground hover:text-foreground transition-colors">
-                Cancelar
+            <div className="p-6 border-t border-border/50 bg-muted/20 flex justify-between items-center gap-3">
+              <button 
+                onClick={handleDeleteUser} 
+                disabled={isDeleting}
+                className="px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-500/10 rounded-xl transition-colors border border-red-500/30"
+              >
+                {isDeleting ? "Borrando..." : "Eliminar Permanentemente"}
               </button>
-              <button onClick={saveChanges} className="px-6 py-2 bg-primary text-primary-foreground text-sm font-bold rounded-xl shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
-                Guardar Cambios
-              </button>
+
+              <div className="flex gap-2">
+                <button onClick={closeEdit} className="px-5 py-2 text-sm font-bold text-muted-foreground hover:text-foreground transition-colors">
+                  Cancelar
+                </button>
+                <button onClick={saveChanges} className="px-6 py-2 bg-primary text-primary-foreground text-sm font-bold rounded-xl shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
+                  Guardar Cambios
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -301,7 +384,7 @@ export default function AdminUsersPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-black uppercase text-primary tracking-wider">Contraseña Temporal</label>
+                  <label className="text-xs font-black uppercase text-primary tracking-wider">Contraseña</label>
                   <input 
                     type="text" 
                     value={newUserPassword}

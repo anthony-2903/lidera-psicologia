@@ -54,15 +54,21 @@ export const SidebarContent = ({ collapsed = false, onItemClick }: { collapsed?:
       
       const { data, error } = await supabase
         .from('profiles')
-        .select('allowed_views, is_admin')
+        .select('allowed_views, is_admin, is_active')
         .eq('id', session.user.id)
         .single();
         
       if (error || !data) {
         setAllowedViews(navItems.map(i => i.path));
       } else {
-        setAllowedViews(data.allowed_views || []);
-        setIsAdmin(data.is_admin || false);
+        if (data.is_active === false) {
+          // Si está inactivo, no puede ver NADA
+          setAllowedViews([]);
+          setIsAdmin(false);
+        } else {
+          setAllowedViews(data.allowed_views || []);
+          setIsAdmin(data.is_admin || false);
+        }
       }
     } catch (e) {
       setAllowedViews(navItems.map(i => i.path));

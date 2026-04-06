@@ -1,3 +1,3 @@
-# Welcome to your Lovable project
+# Lidera Psicología - Dashboard Evaluaciones
 
 TODO: Document your project here

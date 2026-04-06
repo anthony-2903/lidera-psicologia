@@ -39,8 +39,18 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero */}
-      <header className="gradient-hero relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
+      <header className="relative overflow-hidden bg-background">
+        {/* Animated Background Image */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <img 
+            src="/mountains.png" 
+            alt="Montañas mineras" 
+            className="w-full h-full object-cover animate-slow-pan opacity-60 mix-blend-luminosity" 
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#1a2942]/90 via-[#1a2942]/60 to-background"></div>
+        </div>
+
+        <div className="absolute inset-0 opacity-20 z-0 mix-blend-color-dodge">
           <div className="absolute top-20 left-10 w-72 h-72 rounded-full bg-accent blur-3xl animate-float" />
           <div className="absolute bottom-10 right-20 w-96 h-96 rounded-full bg-info blur-3xl animate-float" style={{ animationDelay: "3s" }} />
         </div>
@@ -54,7 +64,7 @@ const LandingPage = () => {
           </div>
           <Button
             variant="outline"
-            className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10"
+            className="bg-transparent backdrop-blur-sm border-white/40 text-white hover:bg-white/10 hover:text-white"
             onClick={() => navigate("/login")}
           >
             Iniciar Sesión
@@ -86,7 +96,7 @@ const LandingPage = () => {
               <Button
                 size="lg"
                 variant="outline"
-                className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 text-base"
+                className="bg-transparent backdrop-blur-sm border-white/40 text-white hover:bg-white/10 hover:text-white text-base"
               >
                 Conocer Metodología
               </Button>
