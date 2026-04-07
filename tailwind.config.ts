@@ -100,12 +100,31 @@ export default {
           from: { opacity: "0", transform: "translateX(20px)" },
           to: { opacity: "1", transform: "translateX(0)" },
         },
+        "float": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-10px)" },
+        },
+        "slow-pan": {
+          "0%, 100%": { transform: "translate(-5%, -5%) scale(1.1)" },
+          "50%": { transform: "translate(5%, 5%) scale(1.2)" },
+        },
+        "pulse-glow": {
+          "0%, 100%": { opacity: "1", transform: "scale(1)" },
+          "50%": { opacity: "0.5", transform: "scale(1.05)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.5s ease-out forwards",
         "slide-in-right": "slide-in-right 0.4s ease-out forwards",
+        "float": "float 6s ease-in-out infinite",
+        "bounce-slow": "bounce 3s infinite",
+        "slow-pan": "slow-pan 20s ease-in-out infinite",
+        "pulse-glow": "pulse-glow 4s ease-in-out infinite",
+      },
+      transitionTimingFunction: {
+        "out-expo": "cubic-bezier(0.19, 1, 0.22, 1)",
       },
     },
   },

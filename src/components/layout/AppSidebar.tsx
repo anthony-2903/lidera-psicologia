@@ -175,18 +175,26 @@ const AppSidebar = () => {
   return (
     <aside
       className={cn(
-        "h-screen sticky top-0 hidden md:flex flex-col gradient-primary transition-all duration-500 border-r border-sidebar-border shadow-2xl relative z-40",
+        "h-[calc(100vh-3rem)] sticky top-6 hidden md:flex flex-col ml-6 my-6 transition-all duration-700 ease-mac z-40 group",
         collapsed ? "w-20" : "w-72"
       )}
     >
-      <SidebarContent collapsed={collapsed} />
-      
+      <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/90 to-primary/80 rounded-[2.5rem] shadow-2xl shadow-black/30 overflow-hidden border border-white/5 ring-1 ring-white/10">
+         {/* Animated Background Pulse */}
+         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.05),transparent)] animate-pulse" />
+         <div className="absolute -inset-[100%] bg-gradient-to-tr from-transparent via-white/5 to-transparent rotate-12 -translate-x-[50%] animate-[slow-pan_15s_infinite_linear]" />
+         
+         <div className="relative h-full flex flex-col backdrop-blur-2xl">
+            <SidebarContent collapsed={collapsed} />
+         </div>
+      </div>
       {/* Collapse Toggle Button - Desktop Only */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-sidebar-border border border-sidebar-border flex items-center justify-center text-sidebar-foreground hover:bg-primary transition-colors shadow-lg z-50"
+        className="absolute -right-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/10 backdrop-blur-3xl border border-white/20 flex items-center justify-center text-sidebar-foreground hover:bg-white/20 transition-all shadow-2xl z-50 group/toggle"
       >
-        {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        <div className="absolute inset-0 rounded-full bg-primary/20 blur-md opacity-0 group-hover/toggle:opacity-100 transition-opacity" />
+        {collapsed ? <ChevronRight className="w-5 h-5 relative z-10" /> : <ChevronLeft className="w-5 h-5 relative z-10" />}
       </button>
     </aside>
   );

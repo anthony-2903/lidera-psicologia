@@ -228,7 +228,7 @@ export const fetchFinalDashboardData = async (sheetId: string): Promise<FinalDas
       skipEmptyLines: true,
       complete: (results) => {
         const rows = results.data;
-        const totalRows = Math.max(0, rows.length - 2); // Omitimos las filas de título/cabeceras
+        const totalRows = Math.max(0, rows.length - 1); // Solo hay una fila de cabecera real
         
         // --- Estructuras Base ---
         const personalityCounter: Record<string, QualityCount> = {
@@ -250,22 +250,53 @@ export const fetchFinalDashboardData = async (sheetId: string): Promise<FinalDas
         const behCounter: QualityCount = {};
         const individuals: IndividualEvaluation[] = [];
 
-        // Función Helper para sumar ocurrencias
+        // Helper para extraer el estado limpio de una cadena (ej: 'ENERGIA PROMEDIO' -> 'PROMEDIO')
+        const extractState = (text: string): string => {
+          if (!text) return '';
+          const upperText = text.toUpperCase();
+          const VALID_STATES = [
+            'MUY ALTO', 'MUY BAJO', 'PROMEDIO', 'REGULAR', 
+            'EN OBSERVACION', 'EN OBSERVACIÓN', 'EN DESARROLLO', 
+            'ADECUADO', 'RIESGO', 'ALTO', 'BAJO', 'MEDIO', 
+            'AUTORITARIO FLEXIBLE', 'AUTORITARIO', 'CONSULTIVO', 'PARTICIPATIVO'
+          ];
+          
+          // Ordenar por longitud descendente para evitar 'ALTO' antes de 'MUY ALTO'
+          const sortedStates = [...VALID_STATES].sort((a, b) => b.length - a.length);
+          
+          // Buscar el estado en la cadena. Si hay múltiples separados por comas, tomamos el primero para el panel individual
+          // Pero para agregados sumamos todos (esto se maneja en addOccurrence)
+          for (const state of sortedStates) {
+            if (upperText.includes(state)) {
+              if (state === 'EN OBSERVACIÓN') return 'EN OBSERVACION';
+              return state;
+            }
+          }
+          return upperText; // Fallback al original si no se encuentra match
+        };
+
+        // Función Helper para sumar ocurrencias (soporta múltiples valores por celda)
         const addOccurrence = (counter: Record<string, QualityCount> | QualityCount, category: string, value: string) => {
           if (!value || value.trim() === '') return;
-          const val = value.toUpperCase().trim();
+          const upperValue = value.toUpperCase();
+          const parts = upperValue.split(',').map(p => p.trim());
           
-          if (typeof category === 'string' && counter[category] !== undefined) {
-            const inner = (counter as Record<string, QualityCount>)[category];
-            inner[val] = (inner[val] || 0) + 1;
-          } else {
-            const flatCounter = counter as QualityCount;
-            flatCounter[val] = (flatCounter[val] || 0) + 1;
-          }
+          parts.forEach(part => {
+             const cleanVal = extractState(part);
+             if (!cleanVal) return;
+             
+             if (typeof category === 'string' && category !== '' && (counter as Record<string, QualityCount>)[category] !== undefined) {
+               const inner = (counter as Record<string, QualityCount>)[category];
+               inner[cleanVal] = (inner[cleanVal] || 0) + 1;
+             } else {
+               const flatCounter = counter as QualityCount;
+               flatCounter[cleanVal] = (flatCounter[cleanVal] || 0) + 1;
+             }
+          });
         };
 
         // Procesar Filas
-        for (let i = 2; i < rows.length; i++) {
+        for (let i = 1; i < rows.length; i++) {
           const r = rows[i];
           if (!r[1] || r[1] === '') continue;
 
@@ -306,43 +337,43 @@ export const fetchFinalDashboardData = async (sheetId: string): Promise<FinalDas
             id: i,
             name: r[1],
             personality: [
-              { name: 'Energía', value: r[3] },
-              { name: 'Tesón', value: r[4] },
-              { name: 'Afabilidad', value: r[5] },
-              { name: 'Esta. Emocional', value: r[6] },
-              { name: 'Apertura', value: r[7] }
+              { name: 'Energía', value: extractState(r[3]) },
+              { name: 'Tesón', value: extractState(r[4]) },
+              { name: 'Afabilidad', value: extractState(r[5]) },
+              { name: 'Esta. Emocional', value: extractState(r[6]) },
+              { name: 'Apertura', value: extractState(r[7]) }
             ],
             motivational: [
-              { name: 'Afiliación', value: r[8] },
-              { name: 'Poder', value: r[9] },
-              { name: 'Logro', value: r[10] },
-              { name: 'Exploración', value: r[11] },
-              { name: 'Contribución', value: r[12] },
-              { name: 'Autonomía', value: r[13] },
-              { name: 'Cooperación', value: r[14] },
-              { name: 'Hedonismo', value: r[15] },
-              { name: 'Seguridad', value: r[16] },
-              { name: 'Conservación', value: r[17] }
+              { name: 'Afiliación', value: extractState(r[8]) },
+              { name: 'Poder', value: extractState(r[9]) },
+              { name: 'Logro', value: extractState(r[10]) },
+              { name: 'Exploración', value: extractState(r[11]) },
+              { name: 'Contribución', value: extractState(r[12]) },
+              { name: 'Autonomía', value: extractState(r[13]) },
+              { name: 'Cooperación', value: extractState(r[14]) },
+              { name: 'Hedonismo', value: extractState(r[15]) },
+              { name: 'Seguridad', value: extractState(r[16]) },
+              { name: 'Conservación', value: extractState(r[17]) }
             ],
             teamwork: [
-              { name: 'Creativo', value: r[18] },
-              { name: 'Evaluador', value: r[19] },
-              { name: 'Especialista', value: r[20] },
-              { name: 'Coordinador', value: r[21] },
-              { name: 'Cohesionador', value: r[22] },
-              { name: 'Recursos', value: r[23] },
-              { name: 'Impulsor', value: r[24] },
-              { name: 'Implementador', value: r[25] },
-              { name: 'Finalizador', value: r[26] }
+              { name: 'Creativo', value: extractState(r[18]) },
+              { name: 'Evaluador', value: extractState(r[19]) },
+              { name: 'Especialista', value: extractState(r[20]) },
+              { name: 'Coordinador', value: extractState(r[21]) },
+              { name: 'Cohesionador', value: extractState(r[22]) },
+              { name: 'Recursos', value: extractState(r[23]) },
+              { name: 'Impulsor', value: extractState(r[24]) },
+              { name: 'Implementador', value: extractState(r[25]) },
+              { name: 'Finalizador', value: extractState(r[26]) }
             ],
             projective: [
-              { name: 'Manejo Emo.', value: r[27] },
-              { name: 'Relaciones', value: r[28] },
-              { name: 'Impulsos', value: r[29] },
-              { name: 'Adaptación', value: r[30] }
+              { name: 'Manejo Emo.', value: extractState(r[27]) },
+              { name: 'Relaciones', value: extractState(r[28]) },
+              { name: 'Impulsos', value: extractState(r[29]) },
+              { name: 'Adaptación', value: extractState(r[30]) }
             ],
-            leadership: r[31],
-            behavioral: r[32]
+            leadership: extractState(r[31]),
+            behavioral: extractState(r[32])
           });
         }
 

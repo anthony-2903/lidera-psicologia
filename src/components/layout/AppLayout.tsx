@@ -30,14 +30,14 @@ const AppLayout = () => {
   const currentLabel = breadcrumbMap[currentSegment] || currentSegment;
 
   return (
-    <div className="flex min-h-screen w-full bg-background overflow-hidden">
-      {/* Desktop Sidebar */}
+    <div className="flex min-h-screen w-full bg-background selection:bg-primary/10">
+      {/* Desktop Sidebar Container - Fixed/Sticky Wrapper */}
       <AppSidebar />
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 relative">
-        {/* Header / Top Navigation */}
-        <header className="h-16 md:h-20 border-b border-border/40 bg-card/80 backdrop-blur-md px-4 md:px-8 flex items-center justify-between sticky top-0 z-30 transition-all">
+        {/* Header / Top Navigation - Now Sticky but Floating style optionally */}
+        <header className="h-16 md:h-20 border-b border-border/10 bg-background/60 backdrop-blur-xl px-4 md:px-8 flex items-center justify-between sticky top-0 z-30 transition-all border-none">
           <div className="flex items-center gap-4">
             {/* Mobile Menu Trigger */}
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
@@ -73,9 +73,9 @@ const AppLayout = () => {
           </div>
         </header>
 
-        {/* Content Area */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden">
-          <div className="container mx-auto p-4 md:p-8 max-w-7xl">
+        {/* Content Area - Now part of the main scroll */}
+        <div className="flex-1">
+          <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in slide-in-from-bottom-4 duration-700">
             <Outlet />
           </div>
         </div>
