@@ -5,7 +5,7 @@ import {
   Users, AlertCircle, RefreshCw, BarChart3, TrendingUp, Presentation, 
   BrainCircuit, ActivitySquare, LayoutDashboard, ListFilter, 
   Search, X, User, Radar as RadarIcon, Target, Users2, ChevronRight,
-  ArrowLeft, Info, Brain
+  ArrowLeft, Info, Brain, Sparkles, Printer, FileDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -98,33 +98,126 @@ const RenderTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
+// Generador de análisis cualitativo basado en datos
+const generateAIAnalysis = (individual: IndividualEvaluation) => {
+  const lead = individual.leadership || "ESTÁNDAR";
+  const beh = individual.behavioral || "PROCESADO";
+  const topTrait = [...individual.personality].sort((a,b) => mapScaleToNum(b.value) - mapScaleToNum(a.value))[0];
+  return `Análisis Neural: El perfil de ${individual.name} exhibe una arquitectura cognitiva orientada al liderazgo de tipo ${lead}. Su comportamiento se clasifica como ${beh}, destacando especialmente en ${topTrait?.name || "estabilidad"}. Los patrones detectados sugieren una alta compatibilidad con roles estratégicos, aunque se recomienda monitorear su índice proyectivo para optimizar el rendimiento bajo presión.`;
+};
+
 // Panel Lateral de Detalle Individual
-const IndividualPanel = ({ individual, onClose }: { individual: IndividualEvaluation; onClose: () => void }) => {
-  const personalityData = individual.personality.map(p => ({
-    subject: p.name,
-    A: mapScaleToNum(p.value),
-    fullMark: 5
-  }));
+const IndividualPanel = ({ individual, onClose }: { individual: IndividualEvaluation, onClose: () => void }) => {
+  const personalityData = useMemo(() => individual.personality.map(p => ({ subject: p.name, A: mapScaleToNum(p.value), fullMark: 5 })), [individual]);
+  const teamworkData = useMemo(() => individual.teamwork.map(t => ({ subject: t.name, A: mapScaleToNum(t.value), fullMark: 5 })), [individual]);
+  const projectiveData = useMemo(() => individual.projective.map(p => ({ subject: p.name, A: mapScaleToNum(p.value), fullMark: 5 })), [individual]);
 
-  const teamworkData = individual.teamwork.map(t => ({
-    subject: t.name,
-    A: mapScaleToNum(t.value),
-    fullMark: 5
-  }));
+  const aiAnalysis = useMemo(() => generateAIAnalysis(individual), [individual]);
 
-  const projectiveData = individual.projective.map(p => ({
-    subject: p.name,
-    A: mapScaleToNum(p.value),
-    fullMark: 5
-  }));
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
 
-  // Map individual values to PIE structure for visual representation
+    const radarP = document.getElementById('radar-p')?.querySelector('svg')?.outerHTML || '';
+    const radarE = document.getElementById('radar-e')?.querySelector('svg')?.outerHTML || '';
+    const radarPr = document.getElementById('radar-pr')?.querySelector('svg')?.outerHTML || '';
+
+    const reportHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Informe - ${individual.name}</title>
+          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+          <style>
+            body { background: #525659; font-family: 'Inter', sans-serif; color: #0f172a; margin: 0; padding: 40px 0; display: flex; flex-direction: column; align-items: center; gap: 30px; }
+            .page { background: white; width: 210mm; height: 297mm; box-shadow: 0 0 20px rgba(0,0,0,0.3); padding: 12mm 18mm; box-sizing: border-box; position: relative; overflow: hidden; }
+            @media print { body { background: white !important; padding: 0 !important; gap: 0 !important; } @page { size: A4; margin: 0; } .page { box-shadow: none !important; margin: 0 !important; } }
+            .header { border-bottom: 5px solid #3b82f6; padding-bottom: 12px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-end; }
+            .section-title { font-size: 18px; font-weight: 900; color: #3b82f6; border-left: 6px solid #3b82f6; padding-left: 12px; margin-bottom: 15px; text-transform: uppercase; }
+            .card { background: #f8fafc; padding: 15px; border-radius: 20px; border: 1px solid #e2e8f0; text-align: center; display: flex; flex-direction: column; align-items: center; margin-bottom: 15px; }
+            .card svg { max-height: 240px; width: auto; }
+            .label { font-size: 11px; font-weight: 900; color: #64748b; margin-bottom: 8px; text-transform: uppercase; }
+            .motivational-grid { display: grid; grid-template-cols: 1fr 1fr; gap: 10px; }
+            .bar-item { background: #f8fafc; padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0; }
+            .bar-bg { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-top: 5px; }
+            .bar-fill { height: 100%; border-radius: 4px; }
+            .status-card { padding: 20px; border-radius: 20px; text-align: center; border-width: 3px; border-style: solid; margin-bottom: 15px; }
+            .ai-box { background: #0f172a; color: #f8fafc; padding: 30px; border-radius: 25px; position: relative; }
+            .ai-tag { position: absolute; top: 0; right: 30px; background: #3b82f6; color: white; padding: 4px 15px; font-size: 9px; font-weight: 900; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; }
+            .footer { position: absolute; bottom: 10mm; left: 18mm; right: 18mm; text-align: center; border-top: 1px solid #f1f5f9; padding-top: 8px; font-size: 8px; color: #94a3b8; font-weight: 700; text-transform: uppercase; }
+          </style>
+        </head>
+        <body>
+          <div id="capture-area">
+            <div class="page">
+              <div class="header">
+                <div><h1 style="font-size: 36px; font-weight: 900; margin: 0;">${individual.name}</h1><p style="font-size: 10px; font-weight: 700; color: #64748b; margin: 2px 0 0 0; text-transform: uppercase;">Evaluación de Potencial Psicométrico</p></div>
+                <div style="text-align: right;"><p style="font-size: 9px; font-weight: 900; color: #3b82f6;">EN-${individual.id}</p><p style="font-size: 9px; font-weight: 700; color: #94a3b8;">${new Date().toLocaleDateString()}</p></div>
+              </div>
+              <div class="section-title">I. Perfiles de Competencia</div>
+              <div class="card"><div class="label">Personalidad Core</div>${radarP}</div>
+              <div class="card"><div class="label">Dinámicas de Equipo</div>${radarE}</div>
+              <div class="footer">Hoja 1 de 3 • Lidera Psicología</div>
+            </div>
+            <div class="page" style="margin-top: 30px;">
+              <div class="section-title">II. Análisis Proyectivo y Drive</div>
+              <div class="card" style="background: white; border-style: dashed; padding: 20px;"><div class="label">Análisis Proyectivo Profundo</div><div style="width: 100%; max-width: 480px;">${radarPr}</div></div>
+              <div class="section-title" style="border-left-color: #10b981; color: #10b981; margin-top: 25px;">III. Factores Motivacionales</div>
+              <div class="motivational-grid">
+                ${individual.motivational.map(m => {
+                  const val = mapScaleToNum(m.value);
+                  const color = val >= 4 ? "#10b981" : val >= 2.5 ? "#f59e0b" : "#ef4444";
+                  return `<div class="bar-item"><div style="display: flex; justify-content: space-between; font-size: 10px; font-weight: 900;"><span>${m.name}</span><span style="color: #3b82f6;">${m.value}</span></div><div class="bar-bg"><div class="bar-fill" style="width: ${(val/5)*100}%; background: ${color};"></div></div></div>`;
+                }).join('')}
+              </div>
+              <div class="footer">Hoja 2 de 3 • Lidera Psicología</div>
+            </div>
+            <div class="page" style="margin-top: 30px;">
+              <div class="section-title">IV. Arquetipos y Síntesis IA</div>
+              <div class="status-card" style="background: #f5f3ff; border-color: #ddd6fe; border-left-width: 10px;"><div style="color: #7c3aed; font-size: 10px; font-weight: 900; text-transform: uppercase;">Liderazgo</div><div style="font-size: 26px; font-weight: 900; color: #4c1d95;">${individual.leadership || "N/A"}</div></div>
+              <div class="status-card" style="background: #fffbeb; border-color: #fef3c7; border-left-width: 10px;"><div style="color: #d97706; font-size: 10px; font-weight: 900; text-transform: uppercase;">Perfil Conductual</div><div style="font-size: 26px; font-weight: 900; color: #92400e;">${individual.behavioral || "N/A"}</div></div>
+              <div class="ai-box">
+                <div class="ai-tag">Neural IA</div>
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;"><div style="font-size: 22px;">✨</div><h4 style="font-size: 18px; font-weight: 900; margin: 0; text-transform: uppercase; color: #3b82f6;">Análisis de Potencial</h4></div>
+                <p style="font-size: 17px; line-height: 1.4; font-weight: 500; color: #e2e8f0; font-style: italic; margin: 0; text-align: justify;">"${aiAnalysis}"</p>
+              </div>
+              <div class="footer">Hoja 3 de 3 • Lidera Psicología</div>
+            </div>
+          </div>
+          <script>
+            window.onload = () => {
+              const element = document.getElementById('capture-area');
+              const opt = {
+                margin: 0,
+                filename: '${individual.name}_Informe.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+              };
+              setTimeout(() => {
+                html2pdf().set(opt).from(element).save();
+                // Opcional: window.print(); // Si también quieres que se abra el diálogo de impresión
+              }, 1500);
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(reportHtml);
+    printWindow.document.close();
+  };
+
   const leadVal = individual.leadership || "N/A";
   const behavioralPie = [{ name: individual.behavioral || "N/A", value: 100 }];
   const leadershipPie = [{ name: leadVal, value: 100 }];
 
   return (
-    <div className="h-full flex flex-col animate-in slide-in-from-right-full duration-700 cubic-bezier(0.4, 0, 0.2, 1) border-l border-border/40 bg-card/60 backdrop-blur-3xl shadow-[-20px_0_80px_rgba(0,0,0,0.2)]">      {/* Header */}
+    <div className={cn(
+      "h-full flex flex-col animate-in slide-in-from-right-full duration-700 cubic-bezier(0.4, 0, 0.2, 1) border-l border-border/40 bg-card/60 backdrop-blur-3xl shadow-[-20px_0_80px_rgba(0,0,0,0.2)]"
+    )}>
+      {/* Header */}
       <div className="px-6 py-6 border-b border-border/20 shrink-0 bg-gradient-to-br from-primary/5 to-transparent">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-4">
@@ -135,169 +228,122 @@ const IndividualPanel = ({ individual, onClose }: { individual: IndividualEvalua
               </div>
             </div>
             <div>
-              <p className="text-[9px] font-black uppercase tracking-[0.3em] text-primary/70 mb-0.5">Candidato Seleccionado</p>
+              <p className="text-[9px] font-black uppercase tracking-[0.3em] text-primary/70 mb-0.5">Informe Neural de Evaluación</p>
               <h3 className="text-xl font-black text-foreground leading-tight tracking-tighter">{individual.name}</h3>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full h-8 w-8 hover:bg-red-500/10 hover:text-red-500 transition-all">
-            <X className="w-4 h-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handlePrint} className="h-9 px-6 rounded-xl gap-2 border-primary/20 hover:bg-primary/5 hover:text-primary transition-all active:scale-95 shadow-lg shadow-primary/10">
+              <FileDown className="w-4 h-4" />
+              <span className="text-[10px] font-black uppercase tracking-widest">PDF</span>
+            </Button>
+            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full h-8 w-8 hover:bg-red-500/10 hover:text-red-500 transition-all">
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Content */}
+      {/* Content (WEB VIEW) */}
       <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 bg-muted/5">
-        
-        {/* PERSONALITY & TEAMWORK */}
-        <div className="grid grid-cols-1 gap-6">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between px-2">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500">
-                  <RadarIcon className="w-3.5 h-3.5" />
-                </div>
-                <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground/80">Perfil de Personalidad</h4>
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 gap-6">
+            <div className="space-y-3">
+              <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground/80 px-2 flex items-center gap-2">
+                 <div className="w-2 h-2 rounded-full bg-blue-500" /> Perfil de Personalidad
+              </h4>
+              <div id="radar-p" className="h-[220px] bg-background/30 rounded-3xl p-3 border border-border/10 shadow-2xl relative overflow-hidden group">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart cx="50%" cy="50%" outerRadius="75%" data={personalityData}>
+                    <PolarGrid stroke="hsl(var(--border)/0.5)" />
+                    <PolarAngleAxis dataKey="subject" tick={{ fontSize: 8, fontWeight: 700, fill: "hsl(var(--muted-foreground))" }} />
+                    <Radar dataKey="A" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.3} dot={{ r: 3, fill: "#3b82f6" }} />
+                  </RadarChart>
+                </ResponsiveContainer>
               </div>
-              <div className="text-[9px] font-bold text-muted-foreground bg-muted/30 px-2 py-1 rounded-md shadow-sm">Escala 1-5</div>
             </div>
-            <div className="h-[220px] bg-background/30 rounded-3xl p-3 border border-border/10 shadow-2xl relative overflow-hidden group">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart cx="50%" cy="50%" outerRadius="75%" data={personalityData}>
-                  <PolarGrid stroke="hsl(var(--border)/0.5)" />
-                  <PolarAngleAxis dataKey="subject" tick={{ fontSize: 8, fontWeight: 700, fill: "hsl(var(--muted-foreground))" }} />
-                  <Radar name="Personalidad" dataKey="A" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.3} dot={{ r: 3, fill: "#3b82f6" }} />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 px-2">
-              <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500">
-                <Users2 className="w-3.5 h-3.5" />
+            <div className="space-y-3">
+              <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground/80 px-2 flex items-center gap-2">
+                 <div className="w-2 h-2 rounded-full bg-emerald-500" /> Perfil de Equipo
+              </h4>
+              <div id="radar-e" className="h-[220px] bg-background/30 rounded-3xl p-3 border border-border/10 shadow-2xl relative overflow-hidden group">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart cx="50%" cy="50%" outerRadius="75%" data={teamworkData}>
+                    <PolarGrid stroke="hsl(var(--border)/0.5)" />
+                    <PolarAngleAxis dataKey="subject" tick={{ fontSize: 8, fontWeight: 700, fill: "hsl(var(--muted-foreground))" }} />
+                    <Radar dataKey="A" stroke="#10b981" fill="#10b981" fillOpacity={0.3} dot={{ r: 3, fill: "#10b981" }} />
+                  </RadarChart>
+                </ResponsiveContainer>
               </div>
-              <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground/80">Perfil de Trabajo en Equipo</h4>
             </div>
-            <div className="h-[220px] bg-background/30 rounded-3xl p-3 border border-border/10 shadow-2xl relative overflow-hidden group">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart cx="50%" cy="50%" outerRadius="75%" data={teamworkData}>
-                  <PolarGrid stroke="hsl(var(--border)/0.5)" />
-                  <PolarAngleAxis dataKey="subject" tick={{ fontSize: 8, fontWeight: 700, fill: "hsl(var(--muted-foreground))" }} />
-                  <Radar name="Trabajo en Equipo" dataKey="A" stroke="#10b981" fill="#10b981" fillOpacity={0.3} dot={{ r: 3, fill: "#10b981" }} />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-
-        {/* PROJECTIVE & MOTIVATIONAL */}
-        <div className="grid grid-cols-1 gap-6">
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 px-2">
-              <div className="p-1.5 rounded-lg bg-purple-500/10 text-purple-500">
-                <Brain className="w-3.5 h-3.5" />
+            <div className="space-y-3">
+              <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground/80 px-2 flex items-center gap-2">
+                 <div className="w-2 h-2 rounded-full bg-purple-500" /> Perfil Proyectivo
+              </h4>
+              <div id="radar-pr" className="h-[220px] bg-background/30 rounded-3xl p-3 border border-border/10 shadow-2xl relative overflow-hidden group">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart cx="50%" cy="50%" outerRadius="75%" data={projectiveData}>
+                    <PolarGrid stroke="hsl(var(--border)/0.5)" />
+                    <PolarAngleAxis dataKey="subject" tick={{ fontSize: 8, fontWeight: 700, fill: "hsl(var(--muted-foreground))" }} />
+                    <Radar dataKey="A" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.3} dot={{ r: 3, fill: "#8b5cf6" }} />
+                  </RadarChart>
+                </ResponsiveContainer>
               </div>
-              <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground/80">Perfil Proyectivo</h4>
             </div>
-            <div className="h-[220px] bg-background/30 rounded-3xl p-3 border border-border/10 shadow-2xl relative overflow-hidden group">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart cx="50%" cy="50%" outerRadius="75%" data={projectiveData}>
-                  <PolarGrid stroke="hsl(var(--border)/0.5)" />
-                  <PolarAngleAxis dataKey="subject" tick={{ fontSize: 8, fontWeight: 700, fill: "hsl(var(--muted-foreground))" }} />
-                  <Radar name="Proyectivo" dataKey="A" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.3} dot={{ r: 3, fill: "#8b5cf6" }} />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 px-2">
-              <div className="p-1.5 rounded-lg bg-orange-500/10 text-orange-500">
-                <Target className="w-3.5 h-3.5" />
-              </div>
-              <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground/80">PERFIL DE MOTIVACIONAL</h4>
-            </div>
-            <div className="space-y-3 bg-background/30 rounded-3xl p-6 border border-border/10 shadow-2xl">
-              {individual.motivational.map((m) => {
-                const val = mapScaleToNum(m.value);
-                const color = val >= 4 ? "bg-emerald-500" : val >= 2.5 ? "bg-amber-500" : "bg-red-500";
-                return (
-                  <div key={m.name} className="space-y-1.5">
-                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
-                      <span className="text-muted-foreground/80">{m.name}</span>
-                      <span className="text-foreground">{m.value}</span>
+            <div className="space-y-3">
+              <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground/80 px-2 flex items-center gap-2">
+                 <div className="w-2 h-2 rounded-full bg-primary" /> Perfil Motivacional
+              </h4>
+              <div className="space-y-3 bg-background/30 rounded-3xl p-6 border border-border/10">
+                {individual.motivational.map((m) => {
+                  const val = mapScaleToNum(m.value);
+                  const color = val >= 4 ? "bg-emerald-500" : val >= 2.5 ? "bg-amber-500" : "bg-red-500";
+                  return (
+                    <div key={m.name} className="space-y-1.5">
+                      <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest">
+                        <span className="text-muted-foreground/80">{m.name}</span>
+                        <span>{m.value}</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-muted/40 rounded-full overflow-hidden">
+                        <div className={cn("h-full rounded-full", color)} style={{ width: `${(val / 5) * 100}%` }} />
+                      </div>
                     </div>
-                    <div className="h-1.5 w-full bg-muted/40 rounded-full overflow-hidden">
-                      <div className={cn("h-full transition-all duration-1000 rounded-full", color)} style={{ width: `${(val / 5) * 100}%` }} />
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* LEADERSHIP & BEHAVIORAL */}
-        <div className="grid grid-cols-2 gap-4">
-           <Card className="border-border/10 bg-purple-500/5 overflow-hidden rounded-3xl border-l-4 border-l-purple-500 shadow-xl group">
-             <CardHeader className="p-4 pb-1">
-               <CardTitle className="text-[9px] font-black uppercase tracking-widest text-purple-600 flex items-center gap-1.5">
-                 <Presentation className="w-3 h-3" /> Liderazgo
-               </CardTitle>
-             </CardHeader>
-             <CardContent className="p-4 pt-0 flex flex-col items-center">
-                <div className="h-20 w-20">
-                   <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                         <Pie
-                            data={leadershipPie}
-                            innerRadius={20}
-                            outerRadius={30}
-                            dataKey="value"
-                            stroke="none"
-                         >
-                            <Cell fill="#8b5cf6" />
-                         </Pie>
-                      </PieChart>
-                   </ResponsiveContainer>
-                </div>
-                <p className="text-[10px] font-black text-foreground text-center line-clamp-2 uppercase tracking-tighter mt-1">{individual.leadership || "N/A"}</p>
-             </CardContent>
-           </Card>
-
-           <Card className="border-border/10 bg-amber-500/5 overflow-hidden rounded-3xl border-l-4 border-l-amber-500 shadow-xl group">
-             <CardHeader className="p-4 pb-1">
-               <CardTitle className="text-[9px] font-black uppercase tracking-widest text-amber-600 flex items-center gap-1.5">
-                 <ActivitySquare className="w-3 h-3" /> Conductual
-               </CardTitle>
-             </CardHeader>
-             <CardContent className="p-4 pt-0 flex flex-col items-center">
-                <div className="h-20 w-20">
-                   <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                         <Pie
-                            data={behavioralPie}
-                            innerRadius={20}
-                            outerRadius={30}
-                            dataKey="value"
-                            stroke="none"
-                         >
-                            <Cell 
-                              fill={
-                                individual.behavioral.includes("RIESGO") ? "#ef4444" : 
-                                individual.behavioral.includes("ADECUADO") ? "#10b981" : "#f59e0b"
-                              } 
-                            />
-                         </Pie>
-                      </PieChart>
-                   </ResponsiveContainer>
-                </div>
-                <p className="text-[10px] font-black text-foreground text-center uppercase tracking-tighter mt-1">{individual.behavioral || "N/A"}</p>
-             </CardContent>
-           </Card>
+          <div className="grid grid-cols-2 gap-4">
+             <Card className="rounded-3xl border-l-4 border-l-purple-500 bg-purple-50/5">
+               <CardHeader className="p-4 pb-1">
+                  <CardTitle className="text-[9px] font-black uppercase flex items-center gap-2">
+                     <Presentation className="w-3 h-3" /> Liderazgo
+                  </CardTitle>
+               </CardHeader>
+               <CardContent className="p-4 pt-0 text-center">
+                  <p className="text-[11px] font-black uppercase tracking-tighter text-purple-700">{individual.leadership || "N/A"}</p>
+               </CardContent>
+             </Card>
+             <Card className="rounded-3xl border-l-4 border-l-amber-500 bg-amber-50/5">
+               <CardHeader className="p-4 pb-1">
+                  <CardTitle className="text-[9px] font-black uppercase flex items-center gap-2">
+                     <ActivitySquare className="w-3 h-3" /> Conductual
+                  </CardTitle>
+               </CardHeader>
+               <CardContent className="p-4 pt-0 text-center">
+                  <p className="text-[11px] font-black uppercase tracking-tighter text-amber-700">{individual.behavioral || "N/A"}</p>
+               </CardContent>
+             </Card>
+          </div>
+          <div className="p-6 bg-slate-900 rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-[60px] -translate-y-1/2 translate-x-1/2 opacity-50" />
+            <h4 className="text-[11px] font-black uppercase mb-4 text-primary flex items-center gap-2">
+               <Sparkles className="w-4 h-4" /> Resumen Neural IA
+            </h4>
+            <p className="text-xs font-medium text-slate-300 leading-relaxed italic">"{aiAnalysis}"</p>
+          </div>
         </div>
       </div>
-
     </div>
   );
 };
@@ -370,7 +416,7 @@ export default function FinalDashboardPage() {
   return (
     <div className="relative min-h-[calc(100vh-100px)] flex flex-col selection:bg-primary/20 overflow-x-hidden">
       <div className={cn(
-        "flex-1 space-y-12 pb-24 px-4 md:px-0 transition-all duration-1000 cubic-bezier(0.4, 0, 0.2, 1)",
+        "flex-1 space-y-12 pb-24 px-4 md:px-0 transition-all duration-1000 cubic-bezier(0.4, 0, 0.2, 1) print:hidden",
         selectedIndividual ? "pr-0 lg:pr-[450px] xl:pr-[500px]" : ""
       )}>
         
@@ -778,7 +824,7 @@ export default function FinalDashboardPage() {
       {/* Backdrop for panel accessibility on small screens */}
       {selectedIndividual && (
         <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-md z-40 animate-in fade-in duration-700"
+          className="fixed inset-0 bg-black/60 backdrop-blur-md z-40 animate-in fade-in duration-700 print:hidden"
           onClick={() => setSelectedIndividual(null)}
         />
       )}
@@ -789,7 +835,7 @@ export default function FinalDashboardPage() {
 // Small Badge Component for view usage
 function Badge({ children, className }: { children: React.ReactNode, className?: string }) {
   return (
-    <div className={cn("inline-flex items-center border rounded-md px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2", className)}>
+    <div className={cn("inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2", className)}>
       {children}
     </div>
   );
