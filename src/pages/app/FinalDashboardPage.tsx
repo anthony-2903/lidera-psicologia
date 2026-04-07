@@ -39,6 +39,27 @@ const mapScaleToNum = (val: string) => {
   return 0;
 };
 
+// Helper para calcular porcentaje de rellenado
+const calculateCompletion = (ind: IndividualEvaluation) => {
+  const fields = [
+    ...ind.personality.map(v => v.value),
+    ...ind.motivational.map(v => v.value),
+    ...ind.teamwork.map(v => v.value),
+    ...ind.projective.map(v => v.value),
+    ind.leadership,
+    ind.behavioral
+  ];
+  const total = fields.length;
+  const completed = fields.filter(v => 
+    v && 
+    v.trim() !== "" && 
+    v.trim() !== "N/A" && 
+    !v.toUpperCase().includes("SIN DATOS") && 
+    !v.toUpperCase().includes("NO DETERMINADO")
+  ).length;
+  return Math.round((completed / total) * 100);
+};
+
 // --- Componentes Internos ---
 
 const RenderLegend = ({ payload }: any) => {
@@ -85,6 +106,25 @@ const IndividualPanel = ({ individual, onClose }: { individual: IndividualEvalua
     fullMark: 5
   }));
 
+  const teamworkData = individual.teamwork.map(t => ({
+    subject: t.name,
+    A: mapScaleToNum(t.value),
+    fullMark: 5
+  }));
+
+  const projectiveData = individual.projective.map(p => ({
+    subject: p.name,
+    A: mapScaleToNum(p.value),
+    fullMark: 5
+  }));
+
+  // Map individual values to PIE structure for visual representation
+  const leadVal = individual.leadership || "N/A";
+  const behVal = individual.behavioral || "N/A";
+
+  const leadershipPie = [{ name: leadVal, value: 100 }];
+  const behavioralPie = [{ name: behVal, value: 100 }];
+
   return (
     <div className="h-full flex flex-col animate-in slide-in-from-right-full duration-700 cubic-bezier(0.4, 0, 0.2, 1) border-l border-border/40 bg-card/60 backdrop-blur-3xl shadow-[-20px_0_80px_rgba(0,0,0,0.2)]">
       {/* Header */}
@@ -123,19 +163,79 @@ const IndividualPanel = ({ individual, onClose }: { individual: IndividualEvalua
             </div>
             <div className="text-[10px] font-bold text-muted-foreground bg-muted/30 px-2 py-1 rounded-md shadow-sm">Escala 1-5</div>
           </div>
-          <div className="h-[320px] bg-background/30 rounded-[2.5rem] p-6 border border-border/10 shadow-2xl relative overflow-hidden group">
+          <div className="h-[280px] bg-background/30 rounded-[2.5rem] p-4 border border-border/10 shadow-2xl relative overflow-hidden group">
              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent pointer-events-none"></div>
             <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="80%" data={personalityData}>
+              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={personalityData}>
+                <PolarGrid stroke="hsl(var(--border)/0.4)" />
+                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 8, fontWeight: 800, fill: "hsl(var(--foreground))" }} />
+                <Radar
+                   name="Nivel"
+                   dataKey="A"
+                   stroke="#3b82f6"
+                   fill="#3b82f6"
+                   fillOpacity={0.4}
+                   strokeWidth={3}
+                />
+                <Tooltip content={<RenderTooltip />} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+
+        {/* TRABAJADOR (TEAM ROLES) RADAR */}
+        <section className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500">
+                <Users2 className="w-4 h-4" />
+              </div>
+              <h4 className="text-xs font-black uppercase tracking-[0.2em] text-foreground/80">Perfil de Trabajador (Roles)</h4>
+            </div>
+          </div>
+          <div className="h-[280px] bg-background/30 rounded-[2.5rem] p-4 border border-border/10 shadow-2xl relative overflow-hidden group">
+             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none"></div>
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={teamworkData}>
+                <PolarGrid stroke="hsl(var(--border)/0.4)" />
+                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 7, fontWeight: 800, fill: "hsl(var(--foreground))" }} />
+                <Radar
+                   name="Idoneidad"
+                   dataKey="A"
+                   stroke="#10b981"
+                   fill="#10b981"
+                   fillOpacity={0.4}
+                   strokeWidth={3}
+                />
+                <Tooltip content={<RenderTooltip />} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+
+        {/* PROYECTIVO RADAR */}
+        <section className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-pink-500/10 text-pink-500">
+                <BrainCircuit className="w-4 h-4" />
+              </div>
+              <h4 className="text-xs font-black uppercase tracking-[0.2em] text-foreground/80">Perfil Proyectivo</h4>
+            </div>
+          </div>
+          <div className="h-[250px] bg-background/30 rounded-[2.5rem] p-4 border border-border/10 shadow-2xl relative overflow-hidden group">
+             <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-transparent pointer-events-none"></div>
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={projectiveData}>
                 <PolarGrid stroke="hsl(var(--border)/0.4)" />
                 <PolarAngleAxis dataKey="subject" tick={{ fontSize: 9, fontWeight: 800, fill: "hsl(var(--foreground))" }} />
                 <Radar
-                  name="Nivel"
-                  dataKey="A"
-                  stroke="hsl(var(--primary))"
-                  fill="hsl(var(--primary))"
-                  fillOpacity={0.4}
-                  strokeWidth={4}
+                   name="Estado"
+                   dataKey="A"
+                   stroke="#ec4899"
+                   fill="#ec4899"
+                   fillOpacity={0.4}
+                   strokeWidth={3}
                 />
                 <Tooltip content={<RenderTooltip />} />
               </RadarChart>
@@ -173,32 +273,64 @@ const IndividualPanel = ({ individual, onClose }: { individual: IndividualEvalua
           </div>
         </section>
 
-        {/* SUMMARY CARDS */}
-        <div className="grid grid-cols-1 gap-6">
-          <Card className="border-border/10 bg-primary/5 overflow-hidden rounded-[2.5rem] border-l-4 border-l-primary shadow-xl">
-            <CardHeader className="p-8 pb-2">
-              <CardTitle className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                <BrainCircuit className="w-4 h-4" /> Perfil Ejecutivo
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-8 space-y-5">
-              <div className="p-5 rounded-3xl bg-background/40 border border-border/5 space-y-1 shadow-sm group hover:border-primary/20 transition-colors">
-                <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">Estilo de Gerencia</p>
-                <p className="text-sm font-black text-foreground tracking-tight">{individual.leadership || "No determinado"}</p>
-              </div>
-              <div className="p-5 rounded-3xl bg-background/40 border border-border/5 space-y-1 shadow-sm group hover:border-primary/20 transition-colors">
-                <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">Perfil Conductual</p>
-                <div className="flex items-center gap-3">
-                   <div className={cn(
-                     "w-2.5 h-2.5 rounded-full shadow-lg",
-                     individual.behavioral.includes("RIESGO") ? "bg-red-500 animate-pulse" : 
-                     individual.behavioral.includes("DESARROLLO") ? "bg-amber-500" : "bg-emerald-500"
-                   )} />
-                   <p className="text-sm font-black text-foreground tracking-tight">{individual.behavioral || "No determinado"}</p>
+        {/* LEADERSHIP & BEHAVIORAL */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+           <Card className="border-border/10 bg-purple-500/5 overflow-hidden rounded-[2.5rem] border-l-4 border-l-purple-500 shadow-xl group">
+             <CardHeader className="p-6 pb-2">
+               <CardTitle className="text-[10px] font-black uppercase tracking-widest text-purple-600 flex items-center gap-2">
+                 <Presentation className="w-3 h-3" /> Liderazgo
+               </CardTitle>
+             </CardHeader>
+             <CardContent className="p-6 pt-0 flex flex-col items-center">
+                <div className="h-24 w-24">
+                   <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                         <Pie
+                            data={leadershipPie}
+                            innerRadius={25}
+                            outerRadius={35}
+                            dataKey="value"
+                            stroke="none"
+                         >
+                            <Cell fill="#8b5cf6" />
+                         </Pie>
+                      </PieChart>
+                   </ResponsiveContainer>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+                <p className="text-xs font-black text-foreground text-center line-clamp-2 uppercase tracking-tighter mt-2">{individual.leadership || "N/A"}</p>
+             </CardContent>
+           </Card>
+
+           <Card className="border-border/10 bg-amber-500/5 overflow-hidden rounded-[2.5rem] border-l-4 border-l-amber-500 shadow-xl group">
+             <CardHeader className="p-6 pb-2">
+               <CardTitle className="text-[10px] font-black uppercase tracking-widest text-amber-600 flex items-center gap-2">
+                 <ActivitySquare className="w-3 h-3" /> Conductual
+               </CardTitle>
+             </CardHeader>
+             <CardContent className="p-6 pt-0 flex flex-col items-center">
+                <div className="h-24 w-24">
+                   <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                         <Pie
+                            data={behavioralPie}
+                            innerRadius={25}
+                            outerRadius={35}
+                            dataKey="value"
+                            stroke="none"
+                         >
+                            <Cell 
+                              fill={
+                                individual.behavioral.includes("RIESGO") ? "#ef4444" : 
+                                individual.behavioral.includes("ADECUADO") ? "#10b981" : "#f59e0b"
+                              } 
+                            />
+                         </Pie>
+                      </PieChart>
+                   </ResponsiveContainer>
+                </div>
+                <p className="text-xs font-black text-foreground text-center uppercase tracking-tighter mt-2">{individual.behavioral || "N/A"}</p>
+             </CardContent>
+           </Card>
         </div>
       </div>
     </div>
@@ -554,74 +686,98 @@ export default function FinalDashboardPage() {
                  </div>
               </div>
             </div>
-            <Card className="border-border/40 bg-card/40 backdrop-blur-3xl shadow-2xl rounded-[3rem] overflow-hidden border-2">
-              <Table>
-                <TableHeader className="bg-muted/50">
-                  <TableRow className="border-border/40 hover:bg-transparent">
-                    <TableHead className="w-[80px] font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 py-8 pl-10">ID</TableHead>
-                    <TableHead className="font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 py-8">Nombre del Evaluado</TableHead>
-                    <TableHead className="font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 py-8">Estilo Liderazgo</TableHead>
-                    <TableHead className="font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 py-8">Perfil Conductual</TableHead>
-                    <TableHead className="font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 py-8">Estado Neural</TableHead>
-                    <TableHead className="text-right font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 py-8 pr-10">Acción</TableHead>
-                  </TableRow>
-                </TableHeader>
+            <Card className="border-border/40 bg-card/40 backdrop-blur-3xl shadow-2xl rounded-[3rem] border-2">
+              <div className="overflow-x-auto custom-scrollbar">
+                <Table>
+                  <TableHeader className="bg-muted/50">
+                    <TableRow className="border-border/40 hover:bg-transparent">
+                      <TableHead className="w-[80px] font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 py-8 pl-10">ID</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 py-8">Nombre del Evaluado</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 py-8">Progreso</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 py-8">Estilo Liderazgo</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 py-8">Perfil Conductual</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 py-8">Estado Neural</TableHead>
+                      <TableHead className="text-right font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 py-8 pr-10">Acción</TableHead>
+                    </TableRow>
+                  </TableHeader>
                 <TableBody>
                   {filteredIndividuals.length > 0 ? (
-                    filteredIndividuals.map((individual, i) => (
-                      <TableRow 
-                        key={individual.id}
-                        onClick={() => setSelectedIndividual(individual)}
-                        className={cn(
-                          "cursor-pointer border-border/20 transition-all hover:bg-primary/5 group",
-                          selectedIndividual?.id === individual.id ? "bg-primary/10 border-l-4 border-l-primary" : ""
-                        )}
-                      >
-                        <TableCell className="py-6 pl-10">
-                           <span className="font-mono text-[10px] font-bold text-muted-foreground/40 group-hover:text-primary transition-colors">#{individual.id}</span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-all shadow-inner">
-                               <User className="w-5 h-5" />
+                    filteredIndividuals.map((individual) => {
+                      const completion = calculateCompletion(individual);
+                      return (
+                        <TableRow 
+                          key={individual.id}
+                          onClick={() => setSelectedIndividual(individual)}
+                          className={cn(
+                            "cursor-pointer border-border/20 transition-all hover:bg-primary/5 group",
+                            selectedIndividual?.id === individual.id ? "bg-primary/10 border-l-4 border-l-primary" : ""
+                          )}
+                        >
+                          <TableCell className="py-6 pl-10">
+                             <span className="font-mono text-[10px] font-bold text-muted-foreground/40 group-hover:text-primary transition-colors">#{individual.id}</span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-all shadow-inner">
+                                 <User className="w-5 h-5" />
+                              </div>
+                              <span className="text-sm font-black text-foreground group-hover:translate-x-1 transition-transform italic uppercase tracking-tight">{individual.name}</span>
                             </div>
-                            <span className="text-sm font-black text-foreground group-hover:translate-x-1 transition-transform italic uppercase tracking-tight">{individual.name}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                           <Badge className="bg-purple-500/10 text-purple-600 border-purple-500/20 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest">
-                             {individual.leadership || "ESTÁNDAR"}
-                           </Badge>
-                        </TableCell>
-                        <TableCell>
-                           <div className="flex items-center gap-3">
-                              <div className={cn(
-                                "w-2.5 h-2.5 rounded-full shadow-[0_0_10px_currentColor]",
-                                individual.behavioral.includes("RIESGO") ? "bg-red-500 text-red-500 animate-pulse" : 
-                                individual.behavioral.includes("ADECUADO") ? "bg-emerald-500 text-emerald-500" : "bg-amber-500 text-amber-500"
-                              )} />
-                              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">{individual.behavioral || "PROCESADO"}</span>
-                           </div>
-                        </TableCell>
-                        <TableCell>
-                           <div className="flex items-center gap-2">
-                             {individual.personality.slice(0, 2).map((p, idx) => (
-                               <div key={idx} className="px-3 py-1 rounded-lg bg-background/50 border border-border/5 text-[8px] font-black uppercase tracking-widest text-muted-foreground/60">
-                                 {p.name}: {p.value}
+                          </TableCell>
+                          <TableCell>
+                             <div className="w-full max-w-[100px] space-y-1.5">
+                               <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-muted-foreground mb-1">
+                                 <span className={cn(
+                                   completion === 100 ? "text-emerald-500" : completion > 50 ? "text-primary" : "text-amber-500"
+                                 )}>{completion}%</span>
                                </div>
-                             ))}
-                           </div>
-                        </TableCell>
-                        <TableCell className="text-right pr-10">
-                           <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10 hover:text-primary group-hover:scale-110 transition-all">
-                              <ChevronRight className="w-5 h-5" />
-                           </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
+                               <div className="h-1.5 w-full bg-muted/40 rounded-full overflow-hidden">
+                                 <div 
+                                   className={cn(
+                                     "h-full transition-all duration-1000",
+                                     completion === 100 ? "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]" : 
+                                     completion > 50 ? "bg-primary shadow-[0_0_10px_rgba(59,130,246,0.3)]" : "bg-amber-500 shadow-[0_0_10_rgba(245,158,11,0.3)]"
+                                   )}
+                                   style={{ width: `${completion}%` }}
+                                 />
+                               </div>
+                             </div>
+                          </TableCell>
+                          <TableCell>
+                             <Badge className="bg-purple-500/10 text-purple-600 border-purple-500/20 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest">
+                               {individual.leadership || "ESTÁNDAR"}
+                             </Badge>
+                          </TableCell>
+                          <TableCell>
+                             <div className="flex items-center gap-3">
+                                <div className={cn(
+                                  "w-2.5 h-2.5 rounded-full shadow-[0_0_10px_currentColor]",
+                                  individual.behavioral.includes("RIESGO") ? "bg-red-500 text-red-500 animate-pulse" : 
+                                  individual.behavioral.includes("ADECUADO") ? "bg-emerald-500 text-emerald-500" : "bg-amber-500 text-amber-500"
+                                )} />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">{individual.behavioral || "PROCESADO"}</span>
+                             </div>
+                          </TableCell>
+                          <TableCell>
+                             <div className="flex items-center gap-2">
+                               {individual.personality.slice(0, 2).map((p, idx) => (
+                                 <div key={idx} className="px-3 py-1 rounded-lg bg-background/50 border border-border/5 text-[8px] font-black uppercase tracking-widest text-muted-foreground/60">
+                                   {p.name}: {p.value}
+                                 </div>
+                               ))}
+                             </div>
+                          </TableCell>
+                          <TableCell className="text-right pr-10">
+                             <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10 hover:text-primary group-hover:scale-110 transition-all">
+                                <ChevronRight className="w-5 h-5" />
+                             </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="py-40 text-center">
+                      <TableCell colSpan={7} className="py-40 text-center">
                         <div className="flex flex-col items-center justify-center space-y-6">
                           <div className="w-24 h-24 rounded-full bg-primary/5 flex items-center justify-center border-2 border-primary/10 shadow-inner">
                             <Search className="w-10 h-10 text-primary opacity-40" />
@@ -636,7 +792,8 @@ export default function FinalDashboardPage() {
                   )}
                 </TableBody>
               </Table>
-            </Card>
+            </div>
+          </Card>
           </div>
         )}
       </div>
