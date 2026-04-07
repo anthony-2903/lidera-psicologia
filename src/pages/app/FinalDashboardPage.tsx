@@ -383,7 +383,7 @@ export default function FinalDashboardPage() {
             <div className="space-y-6 max-w-3xl">
               
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter text-foreground leading-tight italic group-hover:scale-[1.01] transition-transform duration-700">
-                {view === 'charts' ? <>Deep <span className="text-primary not-italic">Matrix</span></> : <>Talent <span className="text-emerald-500 not-italic">Vault</span></>}
+                {view === 'charts' ? <>Dashboard <span className="text-primary not-italic">  Competencias</span></> : <>Talent <span className="text-emerald-500 not-italic">Vault</span></>}
               </h1>
               <p className="text-muted-foreground text-lg font-medium leading-relaxed max-w-xl">
                 Arquitectura de análisis conductual y métricas de desempeño grupal en tiempo real.
