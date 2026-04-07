@@ -5,7 +5,7 @@ import {
   Users, AlertCircle, RefreshCw, BarChart3, TrendingUp, Presentation, 
   BrainCircuit, ActivitySquare, LayoutDashboard, ListFilter, 
   Search, X, User, Radar as RadarIcon, Target, Users2, ChevronRight,
-  ArrowLeft, Info
+  ArrowLeft, Info, Brain
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -120,175 +120,139 @@ const IndividualPanel = ({ individual, onClose }: { individual: IndividualEvalua
 
   // Map individual values to PIE structure for visual representation
   const leadVal = individual.leadership || "N/A";
-  const behVal = individual.behavioral || "N/A";
-
+  const behavioralPie = [{ name: individual.behavioral || "N/A", value: 100 }];
   const leadershipPie = [{ name: leadVal, value: 100 }];
-  const behavioralPie = [{ name: behVal, value: 100 }];
 
   return (
-    <div className="h-full flex flex-col animate-in slide-in-from-right-full duration-700 cubic-bezier(0.4, 0, 0.2, 1) border-l border-border/40 bg-card/60 backdrop-blur-3xl shadow-[-20px_0_80px_rgba(0,0,0,0.2)]">
-      {/* Header */}
-      <div className="px-8 py-8 border-b border-border/20 shrink-0 bg-gradient-to-br from-primary/5 to-transparent">
+    <div className="h-full flex flex-col animate-in slide-in-from-right-full duration-700 cubic-bezier(0.4, 0, 0.2, 1) border-l border-border/40 bg-card/60 backdrop-blur-3xl shadow-[-20px_0_80px_rgba(0,0,0,0.2)]">      {/* Header */}
+      <div className="px-6 py-6 border-b border-border/20 shrink-0 bg-gradient-to-br from-primary/5 to-transparent">
         <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-4">
             <div className="relative">
-              <div className="absolute inset-0 bg-primary/20 blur-xl rounded-2xl animate-pulse"></div>
-              <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-inner relative z-10 overflow-hidden group">
-                <User className="w-8 h-8 group-hover:scale-110 transition-transform duration-500" />
-                <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="absolute inset-0 bg-primary/20 blur-lg rounded-xl animate-pulse"></div>
+              <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-inner relative z-10 overflow-hidden group">
+                <User className="w-6 h-6 group-hover:scale-110 transition-transform duration-500" />
               </div>
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/70 mb-1">Candidato Seleccionado</p>
-              <h3 className="text-2xl font-black text-foreground leading-tight tracking-tighter">{individual.name}</h3>
+              <p className="text-[9px] font-black uppercase tracking-[0.3em] text-primary/70 mb-0.5">Candidato Seleccionado</p>
+              <h3 className="text-xl font-black text-foreground leading-tight tracking-tighter">{individual.name}</h3>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full hover:bg-red-500/10 hover:text-red-500 transition-all">
-            <X className="w-5 h-5" />
+          <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full h-8 w-8 hover:bg-red-500/10 hover:text-red-500 transition-all">
+            <X className="w-4 h-4" />
           </Button>
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-8 py-10 space-y-12 custom-scrollbar pb-24">
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 bg-muted/5">
         
-        {/* PERSONALITY RADAR */}
-        <section className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/10 text-blue-500">
-                <RadarIcon className="w-4 h-4" />
-              </div>
-              <h4 className="text-xs font-black uppercase tracking-[0.2em] text-foreground/80">Espectro Big Five</h4>
-            </div>
-            <div className="text-[10px] font-bold text-muted-foreground bg-muted/30 px-2 py-1 rounded-md shadow-sm">Escala 1-5</div>
-          </div>
-          <div className="h-[280px] bg-background/30 rounded-[2.5rem] p-4 border border-border/10 shadow-2xl relative overflow-hidden group">
-             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent pointer-events-none"></div>
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={personalityData}>
-                <PolarGrid stroke="hsl(var(--border)/0.4)" />
-                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 8, fontWeight: 800, fill: "hsl(var(--foreground))" }} />
-                <Radar
-                   name="Nivel"
-                   dataKey="A"
-                   stroke="#3b82f6"
-                   fill="#3b82f6"
-                   fillOpacity={0.4}
-                   strokeWidth={3}
-                />
-                <Tooltip content={<RenderTooltip />} />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
-
-        {/* TRABAJADOR (TEAM ROLES) RADAR */}
-        <section className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500">
-                <Users2 className="w-4 h-4" />
-              </div>
-              <h4 className="text-xs font-black uppercase tracking-[0.2em] text-foreground/80">Perfil de Trabajador (Roles)</h4>
-            </div>
-          </div>
-          <div className="h-[280px] bg-background/30 rounded-[2.5rem] p-4 border border-border/10 shadow-2xl relative overflow-hidden group">
-             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none"></div>
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={teamworkData}>
-                <PolarGrid stroke="hsl(var(--border)/0.4)" />
-                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 7, fontWeight: 800, fill: "hsl(var(--foreground))" }} />
-                <Radar
-                   name="Idoneidad"
-                   dataKey="A"
-                   stroke="#10b981"
-                   fill="#10b981"
-                   fillOpacity={0.4}
-                   strokeWidth={3}
-                />
-                <Tooltip content={<RenderTooltip />} />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
-
-        {/* PROYECTIVO RADAR */}
-        <section className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-pink-500/10 text-pink-500">
-                <BrainCircuit className="w-4 h-4" />
-              </div>
-              <h4 className="text-xs font-black uppercase tracking-[0.2em] text-foreground/80">Perfil Proyectivo</h4>
-            </div>
-          </div>
-          <div className="h-[250px] bg-background/30 rounded-[2.5rem] p-4 border border-border/10 shadow-2xl relative overflow-hidden group">
-             <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-transparent pointer-events-none"></div>
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={projectiveData}>
-                <PolarGrid stroke="hsl(var(--border)/0.4)" />
-                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 9, fontWeight: 800, fill: "hsl(var(--foreground))" }} />
-                <Radar
-                   name="Estado"
-                   dataKey="A"
-                   stroke="#ec4899"
-                   fill="#ec4899"
-                   fillOpacity={0.4}
-                   strokeWidth={3}
-                />
-                <Tooltip content={<RenderTooltip />} />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
-
-        {/* MOTIVATIONAL */}
-        <section className="space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-orange-500/10 text-orange-500">
-              <Target className="w-4 h-4" />
-            </div>
-            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-foreground/80">Motores de Impulso</h4>
-          </div>
-          <div className="space-y-5 bg-background/30 rounded-[2.5rem] p-8 border border-border/10 shadow-2xl">
-            {individual.motivational.map((m) => {
-              const val = mapScaleToNum(m.value);
-              const percent = (val / 5) * 100;
-              return (
-                <div key={m.name} className="space-y-2 group">
-                  <div className="flex justify-between items-center text-[10px] font-black uppercase">
-                    <span className="text-muted-foreground group-hover:text-primary transition-colors">{m.name}</span>
-                    <span className="text-foreground tabular-nums">{m.value}</span>
-                  </div>
-                  <div className="h-2 w-full bg-muted/30 rounded-full overflow-hidden shadow-inner">
-                    <div 
-                      className="h-full bg-primary transition-all duration-1000 ease-out" 
-                      style={{ width: `${percent}%`, backgroundColor: STACK_COLORS_5[val-1] || STACK_COLORS_5[2] }}
-                    />
-                  </div>
+        {/* PERSONALITY & TEAMWORK */}
+        <div className="grid grid-cols-1 gap-6">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between px-2">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500">
+                  <RadarIcon className="w-3.5 h-3.5" />
                 </div>
-              );
-            })}
+                <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground/80">Perfil de Personalidad</h4>
+              </div>
+              <div className="text-[9px] font-bold text-muted-foreground bg-muted/30 px-2 py-1 rounded-md shadow-sm">Escala 1-5</div>
+            </div>
+            <div className="h-[220px] bg-background/30 rounded-3xl p-3 border border-border/10 shadow-2xl relative overflow-hidden group">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart cx="50%" cy="50%" outerRadius="75%" data={personalityData}>
+                  <PolarGrid stroke="hsl(var(--border)/0.5)" />
+                  <PolarAngleAxis dataKey="subject" tick={{ fontSize: 8, fontWeight: 700, fill: "hsl(var(--muted-foreground))" }} />
+                  <Radar name="Personalidad" dataKey="A" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.3} dot={{ r: 3, fill: "#3b82f6" }} />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-        </section>
+
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 px-2">
+              <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500">
+                <Users2 className="w-3.5 h-3.5" />
+              </div>
+              <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground/80">Perfil de Trabajo en Equipo</h4>
+            </div>
+            <div className="h-[220px] bg-background/30 rounded-3xl p-3 border border-border/10 shadow-2xl relative overflow-hidden group">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart cx="50%" cy="50%" outerRadius="75%" data={teamworkData}>
+                  <PolarGrid stroke="hsl(var(--border)/0.5)" />
+                  <PolarAngleAxis dataKey="subject" tick={{ fontSize: 8, fontWeight: 700, fill: "hsl(var(--muted-foreground))" }} />
+                  <Radar name="Trabajo en Equipo" dataKey="A" stroke="#10b981" fill="#10b981" fillOpacity={0.3} dot={{ r: 3, fill: "#10b981" }} />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
+        {/* PROJECTIVE & MOTIVATIONAL */}
+        <div className="grid grid-cols-1 gap-6">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 px-2">
+              <div className="p-1.5 rounded-lg bg-purple-500/10 text-purple-500">
+                <Brain className="w-3.5 h-3.5" />
+              </div>
+              <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground/80">Perfil Proyectivo</h4>
+            </div>
+            <div className="h-[220px] bg-background/30 rounded-3xl p-3 border border-border/10 shadow-2xl relative overflow-hidden group">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart cx="50%" cy="50%" outerRadius="75%" data={projectiveData}>
+                  <PolarGrid stroke="hsl(var(--border)/0.5)" />
+                  <PolarAngleAxis dataKey="subject" tick={{ fontSize: 8, fontWeight: 700, fill: "hsl(var(--muted-foreground))" }} />
+                  <Radar name="Proyectivo" dataKey="A" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.3} dot={{ r: 3, fill: "#8b5cf6" }} />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 px-2">
+              <div className="p-1.5 rounded-lg bg-orange-500/10 text-orange-500">
+                <Target className="w-3.5 h-3.5" />
+              </div>
+              <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground/80">PERFIL DE MOTIVACIONAL</h4>
+            </div>
+            <div className="space-y-3 bg-background/30 rounded-3xl p-6 border border-border/10 shadow-2xl">
+              {individual.motivational.map((m) => {
+                const val = mapScaleToNum(m.value);
+                const color = val >= 4 ? "bg-emerald-500" : val >= 2.5 ? "bg-amber-500" : "bg-red-500";
+                return (
+                  <div key={m.name} className="space-y-1.5">
+                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
+                      <span className="text-muted-foreground/80">{m.name}</span>
+                      <span className="text-foreground">{m.value}</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-muted/40 rounded-full overflow-hidden">
+                      <div className={cn("h-full transition-all duration-1000 rounded-full", color)} style={{ width: `${(val / 5) * 100}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
 
         {/* LEADERSHIP & BEHAVIORAL */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-           <Card className="border-border/10 bg-purple-500/5 overflow-hidden rounded-[2.5rem] border-l-4 border-l-purple-500 shadow-xl group">
-             <CardHeader className="p-6 pb-2">
-               <CardTitle className="text-[10px] font-black uppercase tracking-widest text-purple-600 flex items-center gap-2">
+        <div className="grid grid-cols-2 gap-4">
+           <Card className="border-border/10 bg-purple-500/5 overflow-hidden rounded-3xl border-l-4 border-l-purple-500 shadow-xl group">
+             <CardHeader className="p-4 pb-1">
+               <CardTitle className="text-[9px] font-black uppercase tracking-widest text-purple-600 flex items-center gap-1.5">
                  <Presentation className="w-3 h-3" /> Liderazgo
                </CardTitle>
              </CardHeader>
-             <CardContent className="p-6 pt-0 flex flex-col items-center">
-                <div className="h-24 w-24">
+             <CardContent className="p-4 pt-0 flex flex-col items-center">
+                <div className="h-20 w-20">
                    <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                          <Pie
                             data={leadershipPie}
-                            innerRadius={25}
-                            outerRadius={35}
+                            innerRadius={20}
+                            outerRadius={30}
                             dataKey="value"
                             stroke="none"
                          >
@@ -297,24 +261,24 @@ const IndividualPanel = ({ individual, onClose }: { individual: IndividualEvalua
                       </PieChart>
                    </ResponsiveContainer>
                 </div>
-                <p className="text-xs font-black text-foreground text-center line-clamp-2 uppercase tracking-tighter mt-2">{individual.leadership || "N/A"}</p>
+                <p className="text-[10px] font-black text-foreground text-center line-clamp-2 uppercase tracking-tighter mt-1">{individual.leadership || "N/A"}</p>
              </CardContent>
            </Card>
 
-           <Card className="border-border/10 bg-amber-500/5 overflow-hidden rounded-[2.5rem] border-l-4 border-l-amber-500 shadow-xl group">
-             <CardHeader className="p-6 pb-2">
-               <CardTitle className="text-[10px] font-black uppercase tracking-widest text-amber-600 flex items-center gap-2">
+           <Card className="border-border/10 bg-amber-500/5 overflow-hidden rounded-3xl border-l-4 border-l-amber-500 shadow-xl group">
+             <CardHeader className="p-4 pb-1">
+               <CardTitle className="text-[9px] font-black uppercase tracking-widest text-amber-600 flex items-center gap-1.5">
                  <ActivitySquare className="w-3 h-3" /> Conductual
                </CardTitle>
              </CardHeader>
-             <CardContent className="p-6 pt-0 flex flex-col items-center">
-                <div className="h-24 w-24">
+             <CardContent className="p-4 pt-0 flex flex-col items-center">
+                <div className="h-20 w-20">
                    <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                          <Pie
                             data={behavioralPie}
-                            innerRadius={25}
-                            outerRadius={35}
+                            innerRadius={20}
+                            outerRadius={30}
                             dataKey="value"
                             stroke="none"
                          >
@@ -328,11 +292,12 @@ const IndividualPanel = ({ individual, onClose }: { individual: IndividualEvalua
                       </PieChart>
                    </ResponsiveContainer>
                 </div>
-                <p className="text-xs font-black text-foreground text-center uppercase tracking-tighter mt-2">{individual.behavioral || "N/A"}</p>
+                <p className="text-[10px] font-black text-foreground text-center uppercase tracking-tighter mt-1">{individual.behavioral || "N/A"}</p>
              </CardContent>
            </Card>
         </div>
       </div>
+
     </div>
   );
 };
@@ -410,53 +375,50 @@ export default function FinalDashboardPage() {
       )}>
         
         {/* HEADER HERO */}
-        <div className="relative overflow-hidden rounded-[4rem] bg-card border border-border/40 shadow-[0_48px_96px_-12px_rgba(0,0,0,0.15)] p-12 md:p-20 group">
+        <div className="relative overflow-hidden rounded-[2.5rem] bg-card border border-border/40 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.12)] p-8 md:p-12 group">
           <div className="absolute top-0 right-0 w-[1000px] h-[1000px] bg-primary/10 rounded-full blur-[180px] -translate-y-1/3 translate-x-1/3 animate-slow-pan pointer-events-none group-hover:bg-primary/15 transition-colors duration-1000"></div>
           <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-[120px] translate-y-1/2 -translate-x-1/4 pointer-events-none opacity-50"></div>
           
           <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-12">
-            <div className="space-y-8 max-w-3xl">
-              <div className="inline-flex items-center gap-3 px-8 py-3 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.3em] border border-primary/20 backdrop-blur-2xl shadow-sm transition-all hover:bg-primary/20">
-                <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-lg"></div>
-                Inteligencia Predictiva · Core v2.0
-              </div>
-              <h1 className="text-6xl md:text-8xl lg:text-9xl font-black tracking-tighter text-foreground leading-[0.8] italic group-hover:scale-[1.01] transition-transform duration-700">
+            <div className="space-y-6 max-w-3xl">
+              
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter text-foreground leading-tight italic group-hover:scale-[1.01] transition-transform duration-700">
                 {view === 'charts' ? <>Deep <span className="text-primary not-italic">Matrix</span></> : <>Talent <span className="text-emerald-500 not-italic">Vault</span></>}
               </h1>
-              <p className="text-muted-foreground text-2xl font-medium leading-relaxed max-w-2xl">
+              <p className="text-muted-foreground text-lg font-medium leading-relaxed max-w-xl">
                 Arquitectura de análisis conductual y métricas de desempeño grupal en tiempo real.
               </p>
             </div>
             
-            <div className="flex flex-col items-start lg:items-end gap-10">
-              <div className="flex gap-2 p-2 bg-background/50 backdrop-blur-3xl rounded-[2.5rem] border border-border/40 shadow-xl">
+            <div className="flex flex-col items-start lg:items-end gap-6">
+              <div className="flex gap-1.5 p-1.5 bg-background/50 backdrop-blur-3xl rounded-2xl border border-border/40 shadow-xl">
                 <Button 
                   onClick={() => setView('charts')} 
                   variant={view === 'charts' ? 'default' : 'ghost'}
-                  className={cn("gap-3 rounded-[2rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all h-14 px-10", view === 'charts' ? "shadow-2xl shadow-primary/30" : "text-muted-foreground/60 hover:text-foreground")}
+                  className={cn("gap-2.5 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] transition-all h-10 px-6", view === 'charts' ? "shadow-2xl shadow-primary/30" : "text-muted-foreground/60 hover:text-foreground")}
                 >
-                  <LayoutDashboard className="w-4 h-4" /> Global View
+                  <LayoutDashboard className="w-3.5 h-3.5" /> Global View
                 </Button>
                 <Button 
                   onClick={() => setView('list')} 
                   variant={view === 'list' ? 'default' : 'ghost'}
-                  className={cn("gap-3 rounded-[2rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all h-14 px-10", view === 'list' ? "shadow-2xl shadow-emerald-500/30 bg-emerald-600 hover:bg-emerald-700" : "text-muted-foreground/60 hover:text-foreground")}
+                  className={cn("gap-2.5 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] transition-all h-10 px-6", view === 'list' ? "shadow-2xl shadow-emerald-500/30 bg-emerald-600 hover:bg-emerald-700" : "text-muted-foreground/60 hover:text-foreground")}
                 >
-                  <Users className="w-4 h-4" /> Evaluated Base
+                  <Users className="w-3.5 h-3.5" /> Evaluated Base
                 </Button>
               </div>
 
-              <div className="flex items-center gap-6">
-                <Button variant="outline" onClick={() => refetch()} className="gap-3 rounded-2xl text-[10px] h-16 px-8 border-border/40 bg-background/40 backdrop-blur-2xl shadow-xl uppercase font-black tracking-widest hover:border-primary/50 hover:bg-primary/5 transition-all active:scale-95 group">
-                  <RefreshCw className={cn("w-5 h-5 group-hover:rotate-180 transition-transform duration-700", isFetching ? "animate-spin text-primary" : "")} /> Sync Repo
+              <div className="flex items-center gap-4">
+                <Button variant="outline" onClick={() => refetch()} className="gap-2.5 rounded-xl text-[9px] h-12 px-6 border-border/40 bg-background/40 backdrop-blur-2xl shadow-xl uppercase font-black tracking-widest hover:border-primary/50 hover:bg-primary/5 transition-all active:scale-95 group">
+                  <RefreshCw className={cn("w-4 h-4 group-hover:rotate-180 transition-transform duration-700", isFetching ? "animate-spin text-primary" : "")} /> Sync Repo
                 </Button>
-                <div className="bg-foreground text-background px-10 py-6 rounded-[2.5rem] shadow-2xl flex items-center gap-8 group/stat hover:scale-105 transition-transform duration-500">
+                <div className="bg-foreground text-background px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-4 group/stat hover:scale-105 transition-transform duration-500">
                   <div className="text-right">
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-50 mb-1">Total Dataset</p>
-                    <p className="text-4xl font-black tabular-nums leading-none tracking-tighter">{data?.totalEvaluated || 0}</p>
+                    <p className="text-[9px] font-black uppercase tracking-[0.3em] opacity-50 mb-0.5">Total Dataset</p>
+                    <p className="text-3xl font-black tabular-nums leading-none tracking-tighter">{data?.totalEvaluated || 0}</p>
                   </div>
-                  <div className="w-14 h-14 rounded-2xl bg-background/15 flex items-center justify-center text-background shadow-inner">
-                    <Users className="w-7 h-7" />
+                  <div className="w-10 h-10 rounded-xl bg-background/15 flex items-center justify-center text-background shadow-inner">
+                    <Users className="w-5 h-5" />
                   </div>
                 </div>
               </div>
@@ -473,14 +435,14 @@ export default function FinalDashboardPage() {
               { label: "Perfiles Óptimos", value: stats?.adequateProfiles, icon: TrendingUp, color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
               { label: "Neural Score", value: "94.2%", icon: ActivitySquare, color: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/20" },
             ].map((kpi, i) => (
-              <Card key={i} className={cn("border-2 bg-card/60 backdrop-blur-xl shadow-xl rounded-[2.5rem] overflow-hidden group hover:-translate-y-2 transition-all duration-500", kpi.border)}>
-                <CardContent className="p-8 flex items-center gap-6">
-                  <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 shadow-lg group-hover:rotate-12 transition-transform duration-500", kpi.bg, kpi.color)}>
-                    <kpi.icon className="w-8 h-8" />
+              <Card key={i} className={cn("border-2 bg-card/60 backdrop-blur-xl shadow-xl rounded-3xl overflow-hidden group hover:-translate-y-2 transition-all duration-500", kpi.border)}>
+                <CardContent className="p-6 flex items-center gap-4">
+                  <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-lg group-hover:rotate-12 transition-transform duration-500", kpi.bg, kpi.color)}>
+                    <kpi.icon className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mb-1">{kpi.label}</p>
-                    <p className="text-2xl font-black text-foreground tracking-tighter leading-none">{kpi.value}</p>
+                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mb-0.5">{kpi.label}</p>
+                    <p className="text-xl font-black text-foreground tracking-tighter leading-none">{kpi.value}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -493,23 +455,23 @@ export default function FinalDashboardPage() {
           <div className="space-y-16 animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-400 fill-mode-forwards">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
               {/* PERSONALITY */}
-              <Card className="border-border/40 bg-card/30 backdrop-blur-xl shadow-2xl rounded-[4rem] overflow-hidden group/card relative border-2 hover:border-primary/20 transition-colors duration-700">
+              <Card className="border-border/40 bg-card/30 backdrop-blur-xl shadow-2xl rounded-[2.5rem] overflow-hidden group/card relative border-2 hover:border-primary/20 transition-colors duration-700">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent pointer-events-none opacity-0 group-hover/card:opacity-100 transition-opacity duration-1000"></div>
-                <CardHeader className="border-b border-border/20 p-12 bg-muted/5">
+                <CardHeader className="border-b border-border/20 p-8 bg-muted/5">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-6">
-                      <div className="w-16 h-16 rounded-[1.5rem] bg-blue-500/10 flex items-center justify-center text-blue-500 shadow-xl border border-blue-500/10 group-hover/card:scale-110 group-hover/card:rotate-3 transition-all duration-700">
-                        <BarChart3 className="w-8 h-8" />
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 shadow-xl border border-blue-500/10 group-hover/card:scale-110 group-hover/card:rotate-3 transition-all duration-700">
+                        <BarChart3 className="w-6 h-6" />
                       </div>
                       <div>
-                        <CardTitle className="text-4xl font-black tracking-tighter italic">Personality Core</CardTitle>
-                        <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-blue-500/60 mt-2">Big Five Dimensional Mapping</p>
+                        <CardTitle className="text-2xl font-black tracking-tighter italic">Perfil de Personalidad</CardTitle>
+                        <p className="text-[9px] font-bold uppercase tracking-[0.4em] text-blue-500/60 mt-1">Big Five Dimensional Mapping</p>
                       </div>
                     </div>
-                    <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest">Global Sync</Badge>
+                    <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest">Global Sync</Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="p-12 h-[500px]">
+                <CardContent className="p-8 h-[400px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart layout="vertical" data={data.personality} margin={{ top: 0, right: 40, left: 40, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="15 15" horizontal={false} stroke="hsl(var(--border)/0.4)" />
@@ -528,23 +490,23 @@ export default function FinalDashboardPage() {
               </Card>
 
               {/* MOTIVATIONAL */}
-              <Card className="border-border/40 bg-card/30 backdrop-blur-xl shadow-2xl rounded-[4rem] overflow-hidden group/card relative border-2 hover:border-orange-500/20 transition-colors duration-700">
+              <Card className="border-border/40 bg-card/30 backdrop-blur-xl shadow-2xl rounded-[2.5rem] overflow-hidden group/card relative border-2 hover:border-orange-500/20 transition-colors duration-700">
                  <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent pointer-events-none opacity-0 group-hover/card:opacity-100 transition-opacity duration-1000"></div>
-                <CardHeader className="border-b border-border/20 p-12 bg-muted/5">
+                <CardHeader className="border-b border-border/20 p-8 bg-muted/5">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-6">
-                      <div className="w-16 h-16 rounded-[1.5rem] bg-orange-500/10 flex items-center justify-center text-orange-500 shadow-xl border border-orange-500/10 group-hover/card:scale-110 group-hover/card:-rotate-3 transition-all duration-700">
-                        <TrendingUp className="w-8 h-8" />
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500 shadow-xl border border-orange-500/10 group-hover/card:scale-110 group-hover/card:-rotate-3 transition-all duration-700">
+                        <TrendingUp className="w-6 h-6" />
                       </div>
                       <div>
-                        <CardTitle className="text-4xl font-black tracking-tighter italic">Drive Dynamics</CardTitle>
-                        <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-orange-500/60 mt-2">Intrinsic Engagement Factors</p>
+                        <CardTitle className="text-2xl font-black tracking-tighter italic">Perfil Motivacional</CardTitle>
+                        <p className="text-[9px] font-bold uppercase tracking-[0.4em] text-orange-500/60 mt-1">Intrinsic Engagement Factors</p>
                       </div>
                     </div>
-                    <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/20 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest">Multi-Axis</Badge>
+                    <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/20 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest">Multi-Axis</Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="p-12 h-[500px]">
+                <CardContent className="p-8 h-[400px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart layout="vertical" data={data.motivational} margin={{ top: 0, right: 40, left: 40, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="15 15" horizontal={false} stroke="hsl(var(--border)/0.4)" />
@@ -573,8 +535,8 @@ export default function FinalDashboardPage() {
                       <Users2 className="w-12 h-12" />
                     </div>
                     <div>
-                      <CardTitle className="text-5xl md:text-7xl font-black tracking-tighter decoration-emerald-500/30 underline-offset-[16px] italic">Team Belbin Matrix</CardTitle>
-                      <p className="text-sm font-black uppercase tracking-[0.5em] text-muted-foreground/60 mt-5">Matriz de Sinergias y Roles de Colaboración</p>
+                      <CardTitle className="text-5xl md:text-7xl font-black tracking-tighter decoration-emerald-500/30 underline-offset-[16px] italic">Perfil de Trabajo en Equipo</CardTitle>
+                      <p className="text-sm font-black uppercase tracking-[0.5em] text-muted-foreground/60 mt-5">Team Belbin Matrix</p>
                     </div>
                   </div>
                   <div className="px-12 py-6 rounded-[3rem] bg-background/60 border-2 border-border/10 backdrop-blur-3xl shadow-xl group/badge hover:border-emerald-500/30 transition-all">
@@ -608,9 +570,9 @@ export default function FinalDashboardPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
               {[
-                { title: "Neuro-Stasis", desc: "Projective Stability Index", data: data.projective, type: "bar", colors: PROJ_COLORS_3 },
-                { title: "Leadership DNA", desc: "Cultural Alignment Map", data: data.leadership, type: "pie", colors: LEAD_COLORS_4 },
-                { title: "Behavioral Flow", desc: "Psychosocial Dynamics", data: data.behavioral, type: "pie", colors: PROJ_COLORS_3 },
+                { title: "Perfil Proyectivo", desc: "Índice de Estabilidad Proyectiva", data: data.projective, type: "bar", colors: PROJ_COLORS_3 },
+                { title: "Perfil Liderazgo", desc: "Mapa de Alineación", data: data.leadership, type: "pie", colors: LEAD_COLORS_4 },
+                { title: "Perfil Conductual", desc: "Dinámica Psicosocial", data: data.behavioral, type: "pie", colors: PROJ_COLORS_3 },
               ].map((item, i) => (
                 <Card key={i} className="border-2 bg-card/30 backdrop-blur-xl shadow-2xl rounded-[4rem] overflow-hidden group hover:-translate-y-4 transition-all duration-1000 relative border-border/40 hover:border-primary/30">
                   <div className="absolute inset-x-0 bottom-0 h-1.5 bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
@@ -713,15 +675,15 @@ export default function FinalDashboardPage() {
                             selectedIndividual?.id === individual.id ? "bg-primary/10 border-l-4 border-l-primary" : ""
                           )}
                         >
-                          <TableCell className="py-6 pl-10">
-                             <span className="font-mono text-[10px] font-bold text-muted-foreground/40 group-hover:text-primary transition-colors">#{individual.id}</span>
+                          <TableCell className="py-3 pl-8">
+                             <span className="font-mono text-[9px] font-bold text-muted-foreground/40 group-hover:text-primary transition-colors">#{individual.id}</span>
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-4">
-                              <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-all shadow-inner">
-                                 <User className="w-5 h-5" />
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-all shadow-inner">
+                                 <User className="w-4 h-4" />
                               </div>
-                              <span className="text-sm font-black text-foreground group-hover:translate-x-1 transition-transform italic uppercase tracking-tight">{individual.name}</span>
+                              <span className="text-xs font-black text-foreground group-hover:translate-x-1 transition-transform italic uppercase tracking-tight">{individual.name}</span>
                             </div>
                           </TableCell>
                           <TableCell>
@@ -744,18 +706,18 @@ export default function FinalDashboardPage() {
                              </div>
                           </TableCell>
                           <TableCell>
-                             <Badge className="bg-purple-500/10 text-purple-600 border-purple-500/20 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest">
+                             <Badge className="bg-purple-500/10 text-purple-600 border-purple-500/20 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest">
                                {individual.leadership || "ESTÁNDAR"}
                              </Badge>
                           </TableCell>
                           <TableCell>
-                             <div className="flex items-center gap-3">
+                             <div className="flex items-center gap-2.5">
                                 <div className={cn(
-                                  "w-2.5 h-2.5 rounded-full shadow-[0_0_10px_currentColor]",
+                                  "w-2 h-2 rounded-full shadow-[0_0_8px_currentColor]",
                                   individual.behavioral.includes("RIESGO") ? "bg-red-500 text-red-500 animate-pulse" : 
                                   individual.behavioral.includes("ADECUADO") ? "bg-emerald-500 text-emerald-500" : "bg-amber-500 text-amber-500"
                                 )} />
-                                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">{individual.behavioral || "PROCESADO"}</span>
+                                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">{individual.behavioral || "PROCESADO"}</span>
                              </div>
                           </TableCell>
                           <TableCell>
@@ -767,9 +729,9 @@ export default function FinalDashboardPage() {
                                ))}
                              </div>
                           </TableCell>
-                          <TableCell className="text-right pr-10">
-                             <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10 hover:text-primary group-hover:scale-110 transition-all">
-                                <ChevronRight className="w-5 h-5" />
+                          <TableCell className="text-right pr-8">
+                             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-primary/10 hover:text-primary group-hover:scale-110 transition-all">
+                                <ChevronRight className="w-4 h-4" />
                              </Button>
                           </TableCell>
                         </TableRow>

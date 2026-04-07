@@ -243,7 +243,7 @@ export const fetchFinalDashboardData = async (sheetId: string): Promise<FinalDas
           'Recursos': {}, 'Impulsor': {}, 'Implementador': {}, 'Finalizador': {}
         };
         const projCounter: Record<string, QualityCount> = {
-          'Manejo Emo.': {}, 'Relaciones': {}, 'Impulsos': {}, 'Adaptación': {}
+          'Manejo Emociones': {}, 'Rel. interpers': {}, 'Ctrl Impulsos': {}, 'Adaptación': {}
         };
         
         const leadCounter: QualityCount = {};
@@ -325,9 +325,9 @@ export const fetchFinalDashboardData = async (sheetId: string): Promise<FinalDas
           addOccurrence(teamCounter, 'Impulsor', r[24]);
           addOccurrence(teamCounter, 'Implementador', r[25]);
           addOccurrence(teamCounter, 'Finalizador', r[26]);
-          addOccurrence(projCounter, 'Manejo Emo.', r[27]);
-          addOccurrence(projCounter, 'Relaciones', r[28]);
-          addOccurrence(projCounter, 'Impulsos', r[29]);
+          addOccurrence(projCounter, 'Manejo Emociones', r[27]);
+          addOccurrence(projCounter, 'Rel. interpers', r[28]);
+          addOccurrence(projCounter, 'Ctrl Impulsos', r[29]);
           addOccurrence(projCounter, 'Adaptación', r[30]);
           addOccurrence(leadCounter, '', r[31]);
           addOccurrence(behCounter, '', r[32]);
@@ -367,9 +367,9 @@ export const fetchFinalDashboardData = async (sheetId: string): Promise<FinalDas
               { name: 'Finalizador', value: extractState(r[26]) }
             ],
             projective: [
-              { name: 'Manejo Emo.', value: extractState(r[27]) },
-              { name: 'Relaciones', value: extractState(r[28]) },
-              { name: 'Impulsos', value: extractState(r[29]) },
+              { name: 'Manejo Emociones', value: extractState(r[27]) },
+              { name: 'Rel. interpers', value: extractState(r[28]) },
+              { name: 'Ctrl Impulsos', value: extractState(r[29]) },
               { name: 'Adaptación', value: extractState(r[30]) }
             ],
             leadership: extractState(r[31]),

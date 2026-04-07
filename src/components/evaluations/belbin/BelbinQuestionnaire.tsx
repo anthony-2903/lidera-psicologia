@@ -73,7 +73,7 @@ export const belbinStages = [
     options: [
       { id: "A", text: "Disfruto analizando las situaciones y sopesando todas las opciones posibles." },
       { id: "B", text: "Me interesa encontrar soluciones prácticas a los problemas." },
-      { id: "C", text: "Me gusta creer que estoy fomentando unas buenas relaciones en el trabajo." },
+      { id: "C", text: "Me gusta creer que estoy fomentando unas buenas Rel. interpers en el trabajo." },
       { id: "D", text: "Puedo tener una fuerte influencia en las decisiones." },
       { id: "E", text: "Me gusta conocer a personas que tienen algo nuevo que ofrecer." },
       { id: "F", text: "Puedo poner de acuerdo a los compañeros sobre las acciones que se deben tomar." },
