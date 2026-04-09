@@ -13,7 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  Legend, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Cell
+  Legend, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Cell,
+  PieChart, Pie
 } from "recharts";
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
@@ -63,6 +64,23 @@ const RenderTooltip = ({ active, payload, label }: any) => {
               </span>
             </div>
           ))}
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
+const RenderPieTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-background/90 backdrop-blur-2xl border border-white/10 p-5 rounded-[2rem] shadow-2xl animate-in fade-in zoom-in-95 duration-300 z-50 ring-1 ring-black/5 max-w-[250px]">
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-3 border-b border-border/20 pb-2">{data.name}</p>
+        <p className="text-[11px] font-bold text-muted-foreground leading-relaxed mb-4 italic">"{data.desc}"</p>
+        <div className="flex items-center justify-between">
+           <span className="text-[10px] font-black uppercase text-muted-foreground/60">Colaboradores:</span>
+           <span className="text-lg font-black text-foreground">{data.value}</span>
         </div>
       </div>
     );
@@ -202,6 +220,26 @@ export default function DpmsRauraPage() {
       e.puesto.toLowerCase().includes(search.toLowerCase())
     );
   }, [data, search]);
+
+  const maturityData = useMemo(() => {
+    if (!data?.entries) return [];
+    const levels = [
+      { name: 'Reactivo', value: 0, color: '#ef4444', desc: 'Cultura basada en instinto y miedo. La seguridad es una carga delegada.' },
+      { name: 'Dependiente', value: 0, color: '#f59e0b', desc: 'Cultura basada en supervisión y reglas. Se cumple por temor a la sanción.' },
+      { name: 'Independiente', value: 0, color: '#3b82f6', desc: 'Cultura basada en autovigilancia. El individuo se cuida por convicción.' },
+      { name: 'Interdependiente', value: 0, color: '#10b981', desc: 'Cultura colectiva. "Yo te cuido, tú me cuidas". Excelencia operacional.' },
+    ];
+    
+    data.entries.forEach(e => {
+      const s = e.totalScore;
+      if (s <= 25) levels[0].value++;
+      else if (s <= 50) levels[1].value++;
+      else if (s <= 75) levels[2].value++;
+      else levels[3].value++;
+    });
+    
+    return levels.filter(l => l.value > 0);
+  }, [data]);
 
   if (isLoading) {
     return (
@@ -412,6 +450,77 @@ export default function DpmsRauraPage() {
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
+
+            </div>
+
+            {/* MATURITY ANALYSIS SECTION */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+               {/* BAR CHART SECTION (Previous areas bar chart now takes 2 cols if needed, or we keep 3 charts in a row) */}
+               {/* Let's place the Pie chart in 1 col and the analysis in 2 cols */}
+
+               <Card className="rounded-[4rem] border-2 border-border/40 bg-white/40 backdrop-blur-2xl shadow-3xl overflow-hidden group/card relative hover:border-primary/30 transition-all duration-1000 lg:col-span-1">
+                  <CardHeader className="p-10 pb-0 text-center">
+                    <CardTitle className="text-3xl font-black tracking-tighter italic uppercase">Nivel de Seguridad</CardTitle>
+                    <CardDescription className="text-[10px] font-black uppercase tracking-[0.4em] opacity-40">Madurez de la Cultura Preventiva</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-8 h-[350px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={maturityData}
+                          innerRadius={80}
+                          outerRadius={110}
+                          paddingAngle={8}
+                          dataKey="value"
+                          animationDuration={1500}
+                        >
+                          {maturityData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                          ))}
+                        </Pie>
+                        <Tooltip content={<RenderPieTooltip />} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-4">
+                       <p className="text-4xl font-black tracking-tighter text-foreground italic">{data.totalRespondents}</p>
+                       <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 leading-none">Muestras</p>
+                    </div>
+                  </CardContent>
+               </Card>
+
+               <Card className="rounded-[4rem] border-2 border-border/40 bg-white/40 backdrop-blur-2xl shadow-3xl overflow-hidden relative lg:col-span-2 p-12 flex flex-col justify-center space-y-10 group">
+                  <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:scale-110 transition-transform duration-1000">
+                     <TrendingUp className="w-40 h-40 text-primary" />
+                  </div>
+                  
+                  <div className="space-y-4 relative z-10">
+                     <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic mb-2 flex items-center gap-3">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" /> Neural Diagnostic Summary
+                     </h4>
+                     <h3 className="text-5xl font-black tracking-tighter text-foreground leading-none italic max-w-2xl">
+                        Análisis de Comportamiento y <span className="text-primary not-italic">ADN Preventivo</span>
+                     </h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+                    {maturityData.map((level, idx) => (
+                      <div key={idx} className="flex gap-5 group/item">
+                        <div className="w-1.5 h-auto rounded-full group-hover:scale-y-110 transition-transform" style={{ backgroundColor: level.color }} />
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: level.color }}>{level.name}</p>
+                          <p className="text-[13px] font-medium text-muted-foreground leading-relaxed italic">{level.desc}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-6 border-t border-border/10 relative z-10">
+                    <p className="text-sm font-medium text-slate-500 italic max-w-3xl leading-relaxed">
+                      El diagnóstico actual refleja un <span className="font-black text-foreground">{Math.round(data.globalAverage)}%</span> de alineamiento global. 
+                      La concentración mayoritaria en el nivel <span className="font-black text-foreground uppercase italic tracking-tight underline decoration-primary/30">{maturityData.reduce((prev, current) => (prev.value > current.value) ? prev : current).name}</span> sugiere que la organización {data.globalAverage > 75 ? 'posee una base robusta para la interdependencia.' : data.globalAverage > 50 ? 'se encuentra en una etapa de transición crítica hacia la autogestión.' : 'requiere un refuerzo inmediato en liderazgo visible y supervisión.'}
+                    </p>
+                  </div>
+               </Card>
 
             </div>
           </div>
