@@ -48,7 +48,7 @@ export const SidebarContent = ({ collapsed = false, onItemClick }: { collapsed?:
 
   // Filtrar los nav items según lo que tenga permitido
   const visibleNavItems = navItems.filter((item) => {
-    if (!profile) return true; // Mientras carga, mostrar todos para evitar parpadeo o manejar carga
+    if (!profile) return false; // Mientras carga el perfil, no mostramos nada para seguridad
     if (!isActive) return false;
     return allowedViews.includes(item.path);
   });

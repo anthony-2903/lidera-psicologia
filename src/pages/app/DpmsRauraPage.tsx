@@ -323,29 +323,42 @@ export default function DpmsRauraPage() {
     const avgCulture = data.categories[3].value;
 
     const levels = [
-      { name: "Frágil", value: 0, color: "#f87171", range: "0-45%" },
-      { name: "En Desarrollo", value: 0, color: "#60a5fa", range: "46-75%" },
-      { name: "Consolidada", value: 0, color: "#34d399", range: "76-100%" },
+      { name: "Reactivo", value: 0, color: "#ef4444", range: "0-25%" },
+      { name: "Dependiente", value: 0, color: "#f59e0b", range: "26-50%" },
+      { name: "Independiente", value: 0, color: "#3b82f6", range: "51-75%" },
+      { name: "Interdependiente", value: 0, color: "#10b981", range: "76-100%" },
     ];
 
     data.entries.forEach((e) => {
       const s = e.scores.cultura;
-      if (s <= 45) levels[0].value++;
-      else if (s <= 75) levels[1].value++;
-      else levels[2].value++;
+      if (s <= 25) levels[0].value++;
+      else if (s <= 50) levels[1].value++;
+      else if (s <= 75) levels[2].value++;
+      else levels[3].value++;
     });
+
+    let currentLabel = "N/A";
+    let currentColor = "#cbd5e1";
+
+    if (avgCulture <= 25) {
+      currentLabel = "Reactivo";
+      currentColor = "#ef4444";
+    } else if (avgCulture <= 50) {
+      currentLabel = "Dependiente";
+      currentColor = "#f59e0b";
+    } else if (avgCulture <= 75) {
+      currentLabel = "Independiente";
+      currentColor = "#3b82f6";
+    } else {
+      currentLabel = "Interdependiente";
+      currentColor = "#10b981";
+    }
 
     return {
       avg: avgCulture,
       distribution: levels.filter((l) => l.value > 0),
-      label:
-        avgCulture > 75
-          ? "Consolidada"
-          : avgCulture > 45
-            ? "En Desarrollo"
-            : "Frágil",
-      color:
-        avgCulture > 75 ? "#34d399" : avgCulture > 45 ? "#60a5fa" : "#f87171",
+      label: currentLabel,
+      color: currentColor,
     };
   }, [data]);
 
@@ -793,10 +806,12 @@ export default function DpmsRauraPage() {
                     </span>
                     .
                     {cultureData.avg > 75
-                      ? " Esto indica una base sólida de confianza y liderazgo distribuido que potencia la seguridad."
-                      : cultureData.avg > 45
-                        ? " Existe un clima de cooperación funcional, aunque persisten nichos de comunicación unidireccional."
-                        : " Se observa una fragmentación en el tejido organizacional que requiere intervención en canales de confianza."}
+                      ? " Esto indica una base sólida de confianza e interdependencia que potencia la seguridad colectiva."
+                      : cultureData.avg > 50
+                        ? " Existe un clima de autogestión e independencia funcional, con individuos comprometidos con su seguridad."
+                        : cultureData.avg > 25
+                          ? " Se observa una cultura dependiente de la supervisión constante y el cumplimiento de reglas externas."
+                          : " La organización presenta un nivel reactivo basado en el instinto, con vacíos críticos en la cultura preventiva."}
                   </p>
                 </div>
               </Card>
