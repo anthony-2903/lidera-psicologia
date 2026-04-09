@@ -20,73 +20,17 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { DASHBOARD_PALETTES } from "@/lib/dashboard-configs";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { KpiCard, GlassCard } from "@/components/dashboard/DashboardCards";
+import { ChartTooltip, ChartLegend } from "@/components/dashboard/ChartElements";
 
 const SHEET_ID = "1-yiLe8BFRiw8XbUyn9vdl2e2M3y7ENYQXgKajhEBwUA";
 
 // --- Paletas ---
-const CAT_COLORS: Record<string, string> = {
-  'Liderazgo Visible': "#8b5cf6",
-  'Gestión y Cumplimiento': "#3b82f6",
-  'Participación': "#10b981",
-  'Cultura y Comunicación': "#f59e0b",
-};
+const CAT_COLORS = DASHBOARD_PALETTES.rauraCategories;
 
 // --- Componentes Internos ---
-
-const RenderLegend = ({ payload }: any) => {
-  if (!payload) return null;
-  return (
-    <ul className="flex flex-wrap justify-center gap-6 mt-6">
-      {payload.map((entry: any, index: number) => (
-        <li key={`item-${index}`} className="flex items-center text-[10px] font-black uppercase tracking-widest text-muted-foreground/80 hover:text-foreground transition-all cursor-default">
-          <span className="w-3 h-3 rounded-full mr-2 shadow-lg shadow-black/10" style={{ backgroundColor: entry.color }}></span>
-          {entry.value}
-        </li>
-      ))}
-    </ul>
-  );
-};
-
-const RenderTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-background/90 backdrop-blur-2xl border border-white/10 p-5 rounded-[2rem] shadow-2xl animate-in fade-in zoom-in-95 duration-300 z-50 ring-1 ring-black/5">
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-4 border-b border-border/20 pb-2">{label || 'Métrica de Madurez'}</p>
-        <div className="space-y-3">
-          {payload.map((entry: any, index: number) => (
-            <div key={index} className="flex items-center justify-between gap-8">
-              <div className="flex items-center gap-3">
-                <div className="w-2.5 h-2.5 rounded-full shadow-inner" style={{ backgroundColor: entry.color }} />
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{entry.name}:</span>
-              </div>
-              <span className="text-sm font-black text-foreground tabular-nums">
-                {typeof entry.value === 'number' ? Math.round(entry.value) : entry.value}%
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-  return null;
-};
-
-const RenderPieTooltip = ({ active, payload }: any) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    return (
-      <div className="bg-background/90 backdrop-blur-2xl border border-white/10 p-5 rounded-[2rem] shadow-2xl animate-in fade-in zoom-in-95 duration-300 z-50 ring-1 ring-black/5 max-w-[250px]">
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-3 border-b border-border/20 pb-2">{data.name}</p>
-        <p className="text-[11px] font-bold text-muted-foreground leading-relaxed mb-4 italic">"{data.desc}"</p>
-        <div className="flex items-center justify-between">
-           <span className="text-[10px] font-black uppercase text-muted-foreground/60">Colaboradores:</span>
-           <span className="text-lg font-black text-foreground">{data.value}</span>
-        </div>
-      </div>
-    );
-  }
-  return null;
-};
 
 const EntryPanel = ({ entry, onClose }: { entry: RauraEntry, onClose: () => void }) => {
   const radarData = useMemo(() => [
@@ -303,65 +247,21 @@ export default function DpmsRauraPage() {
   return (
     <div className="relative min-h-[calc(100vh-100px)] flex flex-col selection:bg-primary/20 overflow-x-hidden p-6 md:p-8 space-y-12">
       
-      {/* HEADER HERO SECTION */}
-      <div className={cn(
-        "relative overflow-hidden rounded-[3rem] bg-card border border-border/40 shadow-3xl p-10 md:p-14 group transition-all duration-1000",
-        selectedEntry ? "pr-[450px]" : ""
-      )}>
-        <div className="absolute top-0 right-0 w-[1200px] h-[1200px] bg-primary/10 rounded-full blur-[180px] -translate-y-1/3 translate-x-1/3 animate-slow-pan pointer-events-none group-hover:bg-primary/15 transition-colors duration-1000"></div>
-        
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-16">
-          <div className="space-y-8 max-w-3xl">
-            <div className="flex flex-wrap gap-3">
-               <Badge className="bg-primary/10 text-primary border-primary/20 px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.3em] backdrop-blur-md italic animate-pulse">Live Dashboard</Badge>
-               <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.3em] backdrop-blur-md">Raura Site</Badge>
-            </div>
-            <h1 className="text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter text-foreground leading-tight italic group-hover:scale-[1.01] transition-transform duration-700">
-               DPMS <span className="text-primary not-italic">Raura</span>
-            </h1>
-            <p className="text-muted-foreground text-xl font-medium leading-relaxed max-w-2xl italic">
-               Métricas de percepción y madurez en seguridad minera. Análisis de comportamiento y liderazgo visible.
-            </p>
-          </div>
-          
-          <div className="flex flex-col items-start lg:items-end gap-10">
-            <div className="flex gap-2 p-2 bg-background/50 backdrop-blur-3xl rounded-[2rem] border border-border/40 shadow-2xl ring-1 ring-black/5">
-              {[
-                { id: 'general', icon: LayoutDashboard, label: 'Resumen Global' },
-                { id: 'individual', icon: MousePointer2, label: 'Explorar Respuestas' },
-                { id: 'comments', icon: MessageSquare, label: 'Mesa de Voz' },
-              ].map(tab => (
-                <Button
-                  key={tab.id}
-                  variant={activeTab === tab.id ? 'default' : 'ghost'}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className={cn(
-                    "gap-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all h-12 px-8",
-                    activeTab === tab.id ? "shadow-2xl shadow-primary/30" : "text-muted-foreground/60 hover:text-foreground"
-                  )}
-                >
-                  <tab.icon className="w-4 h-4" /> {tab.label}
-                </Button>
-              ))}
-            </div>
-
-            <div className="flex items-center gap-6">
-               <Button variant="outline" onClick={() => refetch()} className="gap-3 rounded-2xl text-[10px] h-14 px-8 border-border/40 bg-white/40 backdrop-blur-3xl shadow-xl uppercase font-black tracking-[0.3em] hover:border-primary/50 hover:bg-primary/5 transition-all active:scale-95 group/sync">
-                  <RefreshCw className={cn("w-5 h-5 group-hover/sync:rotate-180 transition-transform duration-700", isFetching ? "animate-spin text-primary" : "")} /> Sincronizar
-               </Button>
-               <div className="bg-foreground text-background px-8 py-4 rounded-[2rem] shadow-3xl flex items-center gap-6 group/stat hover:scale-105 transition-transform duration-500">
-                  <div className="text-right">
-                    <p className="text-[10px] font-black uppercase tracking-[0.4em] opacity-40 mb-1">Muestreo Total</p>
-                    <p className="text-5xl font-black tabular-nums leading-none tracking-tighter italic">{data.totalRespondents}</p>
-                  </div>
-                  <div className="w-14 h-14 rounded-2xl bg-background/20 flex items-center justify-center text-background shadow-inner">
-                    <Users className="w-7 h-7" />
-                  </div>
-               </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <DashboardHeader 
+        title={<>DPMS <span className="text-primary not-italic">Raura</span></>}
+        subtitle="Métricas de percepción y madurez en seguridad minera. Análisis de comportamiento y liderazgo visible."
+        isFetching={isFetching}
+        onRefresh={refetch}
+        view={activeTab}
+        onViewChange={setActiveTab}
+        stats={{ label: "Muestreo Total", value: data.totalRespondents, icon: Users }}
+        tabs={[
+          { id: 'general', icon: LayoutDashboard, label: 'Resumen Global' },
+          { id: 'individual', icon: MousePointer2, label: 'Explorar Respuestas' },
+          { id: 'comments', icon: MessageSquare, label: 'Mesa de Voz' },
+        ]}
+        className={cn(selectedEntry ? "pr-[450px]" : "")}
+      />
 
       {/* --- CONTENT AREA --- */}
       
@@ -375,28 +275,46 @@ export default function DpmsRauraPage() {
             
             {/* KPI GRID */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
-              {[
-                { label: "Maturity Score", value: `${Math.round(data.globalAverage)}%`, icon: Target, color: "text-primary", bg: "bg-primary/10", border: "border-primary/20", glow: "shadow-primary/20", desc: "Alineamiento global" },
-                { label: "Liderazgo", value: `${Math.round(data.categories[0].value)}%`, icon: Star, color: "text-purple-500", bg: "bg-purple-500/10", border: "border-purple-500/20", glow: "shadow-purple-500/20", desc: "Percepción directiva" },
-                { label: "Seguridad Site", value: `${Math.round(data.categories[1].value)}%`, icon: ShieldCheck, color: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/20", glow: "shadow-blue-500/20", desc: "Cumplimiento normativo" },
-                { label: "Voz del Equipo", value: data.entries.filter(e => e.comentarios).length, icon: MessageSquare, color: "text-orange-500", bg: "bg-orange-500/10", border: "border-orange-500/20", glow: "shadow-orange-500/20", desc: "Observaciones críticas" },
-              ].map((kpi, i) => (
-                <Card key={i} className={cn("border-2 bg-white/60 backdrop-blur-xl shadow-2xl rounded-[3rem] overflow-hidden group hover:-translate-y-3 transition-all duration-700", kpi.border, "hover:" + kpi.glow)}>
-                  <CardContent className="p-8 flex items-center gap-6 relative">
-                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-150 transition-transform duration-1000">
-                       <kpi.icon className="w-16 h-16" />
-                    </div>
-                    <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 shadow-xl group-hover:rotate-6 transition-transform duration-500", kpi.bg, kpi.color)}>
-                      <kpi.icon className="w-8 h-8" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 mb-1">{kpi.label}</p>
-                      <p className={cn("text-3xl font-black tracking-tighter tabular-nums leading-none", kpi.color)}>{kpi.value}</p>
-                      <p className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-widest mt-2">{kpi.desc}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+              <KpiCard 
+                label="Maturity Score" 
+                value={`${Math.round(data.globalAverage)}%`} 
+                icon={Target} 
+                color="text-primary" 
+                bg="bg-primary/10" 
+                border="border-primary/20" 
+                glowColor="primary/20" 
+                description="Alineamiento global" 
+              />
+              <KpiCard 
+                label="Liderazgo" 
+                value={`${Math.round(data.categories[0].value)}%`} 
+                icon={Star} 
+                color="text-purple-500" 
+                bg="bg-purple-500/10" 
+                border="border-purple-500/20" 
+                glowColor="purple-500/20" 
+                description="Percepción directiva" 
+              />
+              <KpiCard 
+                label="Seguridad Site" 
+                value={`${Math.round(data.categories[1].value)}%`} 
+                icon={ShieldCheck} 
+                color="text-blue-500" 
+                bg="bg-blue-500/10" 
+                border="border-blue-500/20" 
+                glowColor="blue-500/20" 
+                description="Cumplimiento normativo" 
+              />
+              <KpiCard 
+                label="Voz del Equipo" 
+                value={data.entries.filter(e => e.comentarios).length} 
+                icon={MessageSquare} 
+                color="text-orange-500" 
+                bg="bg-orange-500/10" 
+                border="border-orange-500/20" 
+                glowColor="orange-500/20" 
+                description="Observaciones críticas" 
+              />
             </div>
 
             {/* MAIN CHARTS SECTION */}
@@ -419,7 +337,7 @@ export default function DpmsRauraPage() {
                         tick={{ fontSize: 10, fontWeight: 900, fill: "rgba(0,0,0,0.5)", letterSpacing: '0.15em' }} 
                       />
                       <PolarRadiusAxis domain={[0, 100]} hide />
-                      <Tooltip content={<RenderTooltip />} />
+                      <Tooltip content={<ChartTooltip />} />
                       <Radar 
                         name="Madurez" 
                         dataKey="value" 
@@ -461,7 +379,7 @@ export default function DpmsRauraPage() {
                         tickFormatter={(value) => value.toUpperCase()}
                         width={140} 
                       />
-                      <Tooltip content={<RenderTooltip />} cursor={{ fill: 'rgba(16, 185, 129, 0.05)' }} />
+                      <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(16, 185, 129, 0.05)' }} />
                       <Bar dataKey="score" radius={[0, 20, 20, 0]} barSize={40} animationDuration={2000} animationBegin={800}>
                         {data.areas.map((entry: any, index: number) => (
                           <Cell 
@@ -503,7 +421,7 @@ export default function DpmsRauraPage() {
                             <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                           ))}
                         </Pie>
-                        <Tooltip content={<RenderPieTooltip />} />
+                        <Tooltip content={<ChartTooltip isPie />} />
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-4">

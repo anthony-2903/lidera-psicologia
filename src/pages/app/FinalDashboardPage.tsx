@@ -19,25 +19,18 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { DASHBOARD_PALETTES, mapScaleToNum } from "@/lib/dashboard-configs";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { KpiCard, GlassCard } from "@/components/dashboard/DashboardCards";
+import { ChartTooltip, ChartLegend } from "@/components/dashboard/ChartElements";
 
 const SHEET_ID = "1TiIONFtkmUWLIsT_5EqUxWvMvHv0mN9Go0WdypZBkfk";
 
 // --- Paletas ---
-const STACK_COLORS_5 = ["#ef4444", "#f59e0b", "#eab308", "#10b981", "#3b82f6"];
-const TEAM_COLORS_4 = ["#ef4444", "#f59e0b", "#10b981", "#3b82f6"];
-const PROJ_COLORS_3 = ["#ef4444", "#f59e0b", "#10b981"];
-const LEAD_COLORS_4 = ["#8b5cf6", "#ec4899", "#14b8a6", "#f59e0b"];
-
-// Helper para mapeo numérico de charts individuales
-const mapScaleToNum = (val: string) => {
-  const v = (val || "").toUpperCase().trim();
-  if (v === "MUY ALTO") return 5;
-  if (v === "ALTO" || v === "ADECUADO") return 4;
-  if (v === "PROMEDIO" || v === "REGULAR" || v === "EN OBSERVACION" || v === "MEDIO") return 3;
-  if (v === "BAJO" || v === "RIESGO") return 2;
-  if (v === "MUY BAJO") return 1;
-  return 0;
-};
+const STACK_COLORS_5 = DASHBOARD_PALETTES.stack5;
+const TEAM_COLORS_4 = DASHBOARD_PALETTES.team4;
+const PROJ_COLORS_3 = DASHBOARD_PALETTES.proj3;
+const LEAD_COLORS_4 = DASHBOARD_PALETTES.lead4;
 
 // Helper para calcular porcentaje de rellenado
 const calculateCompletion = (ind: IndividualEvaluation) => {
@@ -61,42 +54,6 @@ const calculateCompletion = (ind: IndividualEvaluation) => {
 };
 
 // --- Componentes Internos ---
-
-const RenderLegend = ({ payload }: any) => {
-  if (!payload) return null;
-  return (
-    <ul className="flex flex-wrap justify-center gap-4 mt-4">
-      {payload.map((entry: any, index: number) => (
-        <li key={`item-${index}`} className="flex items-center text-[9px] font-black uppercase tracking-widest text-muted-foreground/80 hover:text-foreground transition-colors cursor-default">
-          <span className="w-2.5 h-2.5 rounded-full mr-2 shadow-sm" style={{ backgroundColor: entry.color }}></span>
-          {entry.value}
-        </li>
-      ))}
-    </ul>
-  );
-};
-
-const RenderTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-background/95 backdrop-blur-xl border border-border/50 p-4 rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 z-50">
-        <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-3 border-b border-border/20 pb-2">{label || 'Detalle'}</p>
-        <div className="space-y-2">
-          {payload.map((entry: any, index: number) => (
-            <div key={index} className="flex items-center justify-between gap-6">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full shadow-sm" style={{ backgroundColor: entry.color }} />
-                <span className="text-[10px] font-bold text-muted-foreground uppercase">{entry.name}:</span>
-              </div>
-              <span className="text-[10px] font-black text-foreground tabular-nums">{entry.value}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-  return null;
-};
 
 // Generador de análisis cualitativo basado en datos
 const generateAIAnalysis = (individual: IndividualEvaluation) => {
@@ -420,79 +377,28 @@ export default function FinalDashboardPage() {
         selectedIndividual ? "pr-0 lg:pr-[450px] xl:pr-[500px]" : ""
       )}>
         
-        {/* HEADER HERO */}
-        <div className="relative overflow-hidden rounded-[2.5rem] bg-card border border-border/40 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.12)] p-8 md:p-12 group">
-          <div className="absolute top-0 right-0 w-[1000px] h-[1000px] bg-primary/10 rounded-full blur-[180px] -translate-y-1/3 translate-x-1/3 animate-slow-pan pointer-events-none group-hover:bg-primary/15 transition-colors duration-1000"></div>
-          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-[120px] translate-y-1/2 -translate-x-1/4 pointer-events-none opacity-50"></div>
-          
-          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-12">
-            <div className="space-y-6 max-w-3xl">
-              
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter text-foreground leading-tight italic group-hover:scale-[1.01] transition-transform duration-700">
-                {view === 'charts' ? <>Dashboard <span className="text-primary not-italic">  Competencias</span></> : <>Talent <span className="text-emerald-500 not-italic">Vault</span></>}
-              </h1>
-              <p className="text-muted-foreground text-lg font-medium leading-relaxed max-w-xl">
-                Arquitectura de análisis conductual y métricas de desempeño grupal en tiempo real.
-              </p>
-            </div>
-            
-            <div className="flex flex-col items-start lg:items-end gap-6">
-              <div className="flex gap-1.5 p-1.5 bg-background/50 backdrop-blur-3xl rounded-2xl border border-border/40 shadow-xl">
-                <Button 
-                  onClick={() => setView('charts')} 
-                  variant={view === 'charts' ? 'default' : 'ghost'}
-                  className={cn("gap-2.5 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] transition-all h-10 px-6", view === 'charts' ? "shadow-2xl shadow-primary/30" : "text-muted-foreground/60 hover:text-foreground")}
-                >
-                  <LayoutDashboard className="w-3.5 h-3.5" /> Global View
-                </Button>
-                <Button 
-                  onClick={() => setView('list')} 
-                  variant={view === 'list' ? 'default' : 'ghost'}
-                  className={cn("gap-2.5 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] transition-all h-10 px-6", view === 'list' ? "shadow-2xl shadow-emerald-500/30 bg-emerald-600 hover:bg-emerald-700" : "text-muted-foreground/60 hover:text-foreground")}
-                >
-                  <Users className="w-3.5 h-3.5" /> Evaluated Base
-                </Button>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <Button variant="outline" onClick={() => refetch()} className="gap-2.5 rounded-xl text-[9px] h-12 px-6 border-border/40 bg-background/40 backdrop-blur-2xl shadow-xl uppercase font-black tracking-widest hover:border-primary/50 hover:bg-primary/5 transition-all active:scale-95 group">
-                  <RefreshCw className={cn("w-4 h-4 group-hover:rotate-180 transition-transform duration-700", isFetching ? "animate-spin text-primary" : "")} /> Sync Repo
-                </Button>
-                <div className="bg-foreground text-background px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-4 group/stat hover:scale-105 transition-transform duration-500">
-                  <div className="text-right">
-                    <p className="text-[9px] font-black uppercase tracking-[0.3em] opacity-50 mb-0.5">Total Dataset</p>
-                    <p className="text-3xl font-black tabular-nums leading-none tracking-tighter">{data?.totalEvaluated || 0}</p>
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-background/15 flex items-center justify-center text-background shadow-inner">
-                    <Users className="w-5 h-5" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <DashboardHeader 
+          title={view === 'charts' ? <>Dashboard <span className="text-primary not-italic">  Competencias</span></> : <>Talent <span className="text-emerald-500 not-italic">Vault</span></>}
+          subtitle="Arquitectura de análisis conductual y métricas de desempeño grupal en tiempo real."
+          isFetching={isFetching}
+          onRefresh={refetch}
+          view={view}
+          onViewChange={setView}
+          stats={{ label: "Total Dataset", value: data?.totalEvaluated || 0, icon: Users }}
+          tabs={[
+            { id: 'charts', icon: LayoutDashboard, label: 'Global View' },
+            { id: 'list', icon: Users, label: 'Evaluated Base' },
+          ]}
+          className={cn(selectedIndividual ? "pr-0 lg:pr-[450px] xl:pr-[500px]" : "")}
+        />
 
         {/* --- KPI SUMMARY BAR --- */}
         {view === 'charts' && data && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200 fill-mode-forwards">
-            {[
-              { label: "Liderazgo Top", value: stats?.topLeadership, icon: Presentation, color: "text-purple-500", bg: "bg-purple-500/10", border: "border-purple-500/20" },
-              { label: "Factores de Riesgo", value: stats?.riskProfiles, icon: AlertCircle, color: "text-red-500", bg: "bg-red-500/10", border: "border-red-500/20" },
-              { label: "Perfiles Óptimos", value: stats?.adequateProfiles, icon: TrendingUp, color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
-              { label: "Neural Score", value: "94.2%", icon: ActivitySquare, color: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/20" },
-            ].map((kpi, i) => (
-              <Card key={i} className={cn("border-2 bg-card/60 backdrop-blur-xl shadow-xl rounded-3xl overflow-hidden group hover:-translate-y-2 transition-all duration-500", kpi.border)}>
-                <CardContent className="p-6 flex items-center gap-4">
-                  <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-lg group-hover:rotate-12 transition-transform duration-500", kpi.bg, kpi.color)}>
-                    <kpi.icon className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mb-0.5">{kpi.label}</p>
-                    <p className="text-xl font-black text-foreground tracking-tighter leading-none">{kpi.value}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            <KpiCard label="Liderazgo Top" value={stats?.topLeadership} icon={Presentation} color="text-purple-500" bg="bg-purple-500/10" border="border-purple-500/20" />
+            <KpiCard label="Factores de Riesgo" value={stats?.riskProfiles} icon={AlertCircle} color="text-red-500" bg="bg-red-500/10" border="border-red-500/20" />
+            <KpiCard label="Perfiles Óptimos" value={stats?.adequateProfiles} icon={TrendingUp} color="text-emerald-500" bg="bg-emerald-500/10" border="border-emerald-500/20" />
+            <KpiCard label="Neural Score" value="94.2%" icon={ActivitySquare} color="text-blue-500" bg="bg-blue-500/10" border="border-blue-500/20" />
           </div>
         )}
 
@@ -523,8 +429,8 @@ export default function FinalDashboardPage() {
                       <CartesianGrid strokeDasharray="15 15" horizontal={false} stroke="hsl(var(--border)/0.4)" />
                       <XAxis type="number" hide />
                       <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 700, fill: "hsl(var(--foreground))" }} width={140} />
-                      <Tooltip content={<RenderTooltip />} cursor={{ fill: 'rgba(59, 130, 246, 0.08)' }} />
-                      <Legend content={RenderLegend} verticalAlign="top" height={60} />
+                      <Tooltip content={<ChartTooltip />} />
+                      <Legend content={ChartLegend} verticalAlign="top" height={60} />
                       <Bar dataKey="MUY BAJO" stackId="a" fill={STACK_COLORS_5[0]} radius={[16, 0, 0, 16]} barSize={32} />
                       <Bar dataKey="BAJO" stackId="a" fill={STACK_COLORS_5[1]} barSize={32} />
                       <Bar dataKey="PROMEDIO" stackId="a" fill={STACK_COLORS_5[2]} barSize={32} />
@@ -558,8 +464,8 @@ export default function FinalDashboardPage() {
                       <CartesianGrid strokeDasharray="15 15" horizontal={false} stroke="hsl(var(--border)/0.4)" />
                       <XAxis type="number" hide />
                       <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: "hsl(var(--foreground))" }} width={140} />
-                      <Tooltip content={<RenderTooltip />} cursor={{ fill: 'rgba(249, 115, 22, 0.08)' }} />
-                      <Legend content={RenderLegend} verticalAlign="top" height={60} />
+                      <Tooltip content={<ChartTooltip />} />
+                      <Legend content={ChartLegend} verticalAlign="top" height={60} />
                       <Bar dataKey="BAJO" stackId="a" fill={STACK_COLORS_5[0]} radius={[10, 0, 0, 10]} barSize={18} />
                       <Bar dataKey="REGULAR" stackId="a" fill={STACK_COLORS_5[1]} barSize={18} />
                       <Bar dataKey="PROMEDIO" stackId="a" fill={STACK_COLORS_5[2]} barSize={18} />
@@ -603,8 +509,8 @@ export default function FinalDashboardPage() {
                       dy={35} 
                     />
                     <YAxis hide />
-                    <Tooltip content={<RenderTooltip />} cursor={{ fill: 'rgba(16, 185, 129, 0.08)' }} />
-                    <Legend content={RenderLegend} verticalAlign="top" height={80} />
+                    <Tooltip content={<ChartTooltip />} />
+                    <Legend content={ChartLegend} verticalAlign="top" height={80} />
                     <Bar dataKey="BAJO" stackId="a" fill={TEAM_COLORS_4[0]} radius={[0, 0, 24, 24]} barSize={60} />
                     <Bar dataKey="MEDIO" stackId="a" fill={TEAM_COLORS_4[1]} barSize={60} />
                     <Bar dataKey="ALTO" stackId="a" fill={TEAM_COLORS_4[2]} barSize={60} />
@@ -631,7 +537,7 @@ export default function FinalDashboardPage() {
                       {item.type === 'bar' ? (
                         <BarChart data={item.data} margin={{ bottom: 30 }}>
                           <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} dy={15} />
-                          <Tooltip content={<RenderTooltip />} />
+                          <Tooltip content={<ChartTooltip />} />
                           <Bar dataKey="RIESGO" stackId="a" fill={item.colors[0]} barSize={40} />
                           <Bar dataKey="EN OBSERVACION" stackId="a" fill={item.colors[1]} barSize={40} />
                           <Bar dataKey="ADECUADO" stackId="a" fill={item.colors[2]} radius={[16, 16, 0, 0]} barSize={40} />
@@ -652,7 +558,7 @@ export default function FinalDashboardPage() {
                               <Cell key={`cell-${index}`} fill={item.colors[index % item.colors.length]} className="focus:outline-none hover:opacity-85 transition-all cursor-pointer hover:scale-105 origin-center" />
                             ))}
                           </Pie>
-                          <Tooltip content={<RenderTooltip />} />
+                          <Tooltip content={<ChartTooltip />} />
                         </PieChart>
                       )}
                     </ResponsiveContainer>
