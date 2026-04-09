@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   Legend, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Cell,
-  PieChart, Pie
+  PieChart, Pie, RadialBarChart, RadialBar
 } from "recharts";
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
@@ -239,6 +239,31 @@ export default function DpmsRauraPage() {
     });
     
     return levels.filter(l => l.value > 0);
+  }, [data]);
+
+  const cultureData = useMemo(() => {
+    if (!data?.entries) return { avg: 0, distribution: [], label: 'N/A' };
+    const avgCulture = data.categories[3].value;
+    
+    const levels = [
+      { name: 'Frágil', value: 0, color: '#f87171', range: '0-45%' },
+      { name: 'En Desarrollo', value: 0, color: '#60a5fa', range: '46-75%' },
+      { name: 'Consolidada', value: 0, color: '#34d399', range: '76-100%' },
+    ];
+
+    data.entries.forEach(e => {
+      const s = e.scores.cultura;
+      if (s <= 45) levels[0].value++;
+      else if (s <= 75) levels[1].value++;
+      else levels[2].value++;
+    });
+
+    return {
+      avg: avgCulture,
+      distribution: levels.filter(l => l.value > 0),
+      label: avgCulture > 75 ? 'Consolidada' : avgCulture > 45 ? 'En Desarrollo' : 'Frágil',
+      color: avgCulture > 75 ? '#34d399' : avgCulture > 45 ? '#60a5fa' : '#f87171'
+    };
   }, [data]);
 
   if (isLoading) {
@@ -520,6 +545,78 @@ export default function DpmsRauraPage() {
                       La concentración mayoritaria en el nivel <span className="font-black text-foreground uppercase italic tracking-tight underline decoration-primary/30">{maturityData.reduce((prev, current) => (prev.value > current.value) ? prev : current).name}</span> sugiere que la organización {data.globalAverage > 75 ? 'posee una base robusta para la interdependencia.' : data.globalAverage > 50 ? 'se encuentra en una etapa de transición crítica hacia la autogestión.' : 'requiere un refuerzo inmediato en liderazgo visible y supervisión.'}
                     </p>
                   </div>
+               </Card>
+
+            </div>
+
+            {/* CULTURE ANALYSIS SECTION */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+               
+               <Card className="rounded-[4rem] border-2 border-border/40 bg-white/40 backdrop-blur-2xl shadow-3xl overflow-hidden relative lg:col-span-2 p-12 flex flex-col justify-center space-y-8 group">
+                  <div className="absolute -bottom-10 -left-10 p-10 opacity-5 group-hover:scale-110 transition-transform duration-1000 rotate-12">
+                     <Users className="w-60 h-60 text-primary" />
+                  </div>
+                  
+                  <div className="space-y-4 relative z-10 text-right lg:text-left">
+                     <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-500 italic mb-2 flex items-center gap-3 lg:justify-start justify-end">
+                        <Activity className="w-4 h-4 text-blue-500" /> Organizational DNA Index
+                     </h4>
+                     <h3 className="text-5xl font-black tracking-tighter text-foreground leading-none italic max-w-2xl">
+                        Nivel de <span className="text-blue-500 not-italic">Cultura</span> Organiactiva
+                     </h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+                    {cultureData.distribution.map((level, idx) => (
+                      <div key={idx} className="bg-white/40 backdrop-blur-md rounded-3xl p-6 border border-white/20 shadow-sm hover:shadow-md transition-all">
+                        <p className="text-[9px] font-black uppercase tracking-widest mb-2 opacity-60">Población {level.name}</p>
+                        <div className="flex items-end justify-between">
+                           <span className="text-3xl font-black tabular-nums italic" style={{ color: level.color }}>{level.value}</span>
+                           <span className="text-[10px] font-bold text-muted-foreground/40 mb-1">{level.range}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-6 border-t border-border/10 relative z-10">
+                    <p className="text-sm font-medium text-slate-500 italic max-w-3xl leading-relaxed">
+                       La cultura organizacional se define por el grado de cohesión y comunicación. Actualmente, el <span className="font-black text-foreground">{Math.round(((cultureData.distribution.find(d => d.name === cultureData.label)?.value || 0) / data.totalRespondents) * 100)}%</span> de la muestra se sitúa en el segmento <span className="font-black" style={{ color: cultureData.color }}>{cultureData.label.toUpperCase()}</span>. 
+                       {cultureData.avg > 75 ? ' Esto indica una base sólida de confianza y liderazgo distribuido que potencia la seguridad.' : cultureData.avg > 45 ? ' Existe un clima de cooperación funcional, aunque persisten nichos de comunicación unidireccional.' : ' Se observa una fragmentación en el tejido organizacional que requiere intervención en canales de confianza.'}
+                    </p>
+                  </div>
+               </Card>
+
+               <Card className="rounded-[4rem] border-2 border-border/40 bg-white/40 backdrop-blur-2xl shadow-3xl overflow-hidden group/card relative hover:border-blue-400/30 transition-all duration-1000 lg:col-span-1">
+                  <div className="absolute inset-0 bg-gradient-to-t from-blue-500/5 to-transparent pointer-events-none"></div>
+                  <CardHeader className="p-10 pb-0 text-center">
+                    <Badge variant="outline" className="text-blue-500 border-blue-500/20 px-6 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.4em] mb-4">Culture Gauge</Badge>
+                    <CardTitle className="text-3xl font-black tracking-tighter italic uppercase text-foreground">Salud Cultural</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-8 h-[350px] flex flex-col items-center justify-center relative">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RadialBarChart 
+                        cx="50%" 
+                        cy="50%" 
+                        innerRadius="60%" 
+                        outerRadius="100%" 
+                        barSize={25} 
+                        data={[{ name: 'Cultura', value: cultureData.avg, fill: cultureData.color }]}
+                        startAngle={180}
+                        endAngle={0}
+                      >
+                        <RadialBar
+                          background
+                          dataKey="value"
+                          cornerRadius={30}
+                          animationDuration={2000}
+                        />
+                      </RadialBarChart>
+                    </ResponsiveContainer>
+                    <div className="absolute top-[60%] flex flex-col items-center text-center">
+                       <p className="text-6xl font-black tracking-tighter tabular-nums italic leading-none" style={{ color: cultureData.color }}>{Math.round(cultureData.avg)}%</p>
+                       <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/60 mt-3">{cultureData.label}</p>
+                    </div>
+                  </CardContent>
                </Card>
 
             </div>
