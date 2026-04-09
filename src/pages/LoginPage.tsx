@@ -12,7 +12,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { useEffect } from "react";
 
 const LoginPage = () => {
-  const { session } = useAuth();
+  const { session, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,10 +20,23 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (session) {
-      navigate("/app/dashboard");
+    if (session && profile && !authLoading) {
+      if (profile.is_active === false) {
+        toast.error("Tu cuenta está desactivada. Contacta al administrador.");
+        return;
+      }
+
+      // Si tiene permiso para el dashboard, ir ahí. Si no, a su primera vista permitida.
+      const allowedViews = profile.allowed_views || [];
+      if (allowedViews.includes("/app/dashboard")) {
+        navigate("/app/dashboard");
+      } else if (allowedViews.length > 0) {
+        navigate(allowedViews[0]);
+      } else {
+        toast.error("No tienes vistas permitidas. Contacta al administrador.");
+      }
     }
-  }, [session, navigate]);
+  }, [session, profile, authLoading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +56,7 @@ const LoginPage = () => {
         toast.error("Credenciales incorrectas o usuario no encontrado");
       } else if (data.session) {
         toast.success("Inicio de sesión exitoso");
-        navigate("/app/dashboard");
+        // El useEffect se encargará de la redirección basándose en el profile
       }
     } catch (err) {
       toast.error("Error al conectar con el servidor");

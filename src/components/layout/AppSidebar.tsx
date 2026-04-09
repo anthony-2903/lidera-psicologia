@@ -38,50 +38,18 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "../auth/AuthProvider";
 
 export const SidebarContent = ({ collapsed = false, onItemClick }: { collapsed?: boolean, onItemClick?: () => void }) => {
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const [allowedViews, setAllowedViews] = useState<string[] | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
 
-  useEffect(() => {
-    checkUserPermissions();
-  }, []);
-
-  const checkUserPermissions = async () => {
-    try {
-      if (!user) {
-        setAllowedViews(navItems.map(i => i.path)); // Falla elegante si no hay auth
-        return;
-      }
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('allowed_views, is_admin, is_active')
-        .eq('id', user.id)
-        .single();
-        
-      if (error || !data) {
-        setAllowedViews(navItems.map(i => i.path));
-      } else {
-        if (data.is_active === false) {
-          // Si está inactivo, no puede ver NADA
-          setAllowedViews([]);
-          setIsAdmin(false);
-        } else {
-          setAllowedViews(data.allowed_views || []);
-          setIsAdmin(data.is_admin || false);
-        }
-      }
-    } catch (e) {
-      setAllowedViews(navItems.map(i => i.path));
-    }
-  };
+  const allowedViews = profile?.allowed_views || [];
+  const isAdmin = profile?.is_admin || false;
+  const isActive = profile?.is_active !== false;
 
   // Filtrar los nav items según lo que tenga permitido
-  // Si no ha cargado los permisos, mostrar todo temporalmente o mostrar esqueleto
   const visibleNavItems = navItems.filter((item) => {
-    if (!allowedViews) return true; // Mientras carga
+    if (!profile) return true; // Mientras carga, mostrar todos para evitar parpadeo o manejar carga
+    if (!isActive) return false;
     return allowedViews.includes(item.path);
   });
 
