@@ -35,8 +35,10 @@ export const navItems = [
 
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "../auth/AuthProvider";
 
 export const SidebarContent = ({ collapsed = false, onItemClick }: { collapsed?: boolean, onItemClick?: () => void }) => {
+  const { user, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [allowedViews, setAllowedViews] = useState<string[] | null>(null);
@@ -48,8 +50,7 @@ export const SidebarContent = ({ collapsed = false, onItemClick }: { collapsed?:
 
   const checkUserPermissions = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      if (!user) {
         setAllowedViews(navItems.map(i => i.path)); // Falla elegante si no hay auth
         return;
       }
@@ -57,7 +58,7 @@ export const SidebarContent = ({ collapsed = false, onItemClick }: { collapsed?:
       const { data, error } = await supabase
         .from('profiles')
         .select('allowed_views, is_admin, is_active')
-        .eq('id', session.user.id)
+        .eq('id', user.id)
         .single();
         
       if (error || !data) {
@@ -160,7 +161,10 @@ export const SidebarContent = ({ collapsed = false, onItemClick }: { collapsed?:
       {/* Bottom */}
       <div className="p-4 border-t border-sidebar-border space-y-2">
         <button
-          onClick={() => navigate("/")}
+          onClick={async () => {
+            await signOut();
+            navigate("/");
+          }}
           className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-destructive/80 hover:text-white hover:bg-destructive transition-all duration-300 w-full group"
         >
           <LogOut className="w-5 h-5 shrink-0 group-hover:-translate-x-1 transition-transform" />

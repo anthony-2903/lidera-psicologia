@@ -41,37 +41,47 @@ const Loading = () => (
   </div>
 );
 
+import { AuthProvider } from "./components/auth/AuthProvider";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Suspense fallback={<Loading />}>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/recovery" element={<RecoveryPage />} />
-            <Route path="/app" element={<AppLayout />}>
-              <Route path="dashboard" element={<DashboardPage />} />
-              <Route path="presentation" element={<PresentationPage />} />
-              <Route path="groups" element={<GroupsPage />} />
-              <Route path="test-application" element={<TestApplicationPage />} />
-              <Route path="evaluations" element={<EvaluationsPage />} />
-              <Route path="diagram" element={<DiagramPage />} />
-              <Route path="participants" element={<ParticipantsPage />} />
-              <Route path="diagnostic" element={<DiagnosticPage />} />
-              <Route path="improvement" element={<ImprovementPage />} />
-              <Route path="action-plan" element={<ActionPlanPage />} />
-              <Route path="results" element={<ResultsPage />} />
-              <Route path="final-dashboard" element={<FinalDashboardPage />} />
-              <Route path="dpms-raura" element={<DpmsRauraPage />} />
-              <Route path="admin" element={<AdminUsersPage />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <Suspense fallback={<Loading />}>
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/recovery" element={<RecoveryPage />} />
+              
+              {/* Rutas protegidas */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/app" element={<AppLayout />}>
+                  <Route path="dashboard" element={<DashboardPage />} />
+                  <Route path="presentation" element={<PresentationPage />} />
+                  <Route path="groups" element={<GroupsPage />} />
+                  <Route path="test-application" element={<TestApplicationPage />} />
+                  <Route path="evaluations" element={<EvaluationsPage />} />
+                  <Route path="diagram" element={<DiagramPage />} />
+                  <Route path="participants" element={<ParticipantsPage />} />
+                  <Route path="diagnostic" element={<DiagnosticPage />} />
+                  <Route path="improvement" element={<ImprovementPage />} />
+                  <Route path="action-plan" element={<ActionPlanPage />} />
+                  <Route path="results" element={<ResultsPage />} />
+                  <Route path="final-dashboard" element={<FinalDashboardPage />} />
+                  <Route path="dpms-raura" element={<DpmsRauraPage />} />
+                  <Route path="admin" element={<AdminUsersPage />} />
+                </Route>
+              </Route>
+
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
