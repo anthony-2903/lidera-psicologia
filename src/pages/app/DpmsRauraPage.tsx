@@ -1,0 +1,558 @@
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { fetchRauraData, RauraEntry } from "@/lib/sheets-adapter";
+import { 
+  Users, AlertCircle, RefreshCw, BarChart3, TrendingUp, 
+  Activity, LayoutDashboard, Search, X, User, Radar as RadarIcon, 
+  ChevronRight, MessageSquare, ShieldCheck, Zap, Star, Target,
+  FileText, ArrowRight, MousePointer2
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+  Legend, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Cell
+} from "recharts";
+import { 
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+
+const SHEET_ID = "1-yiLe8BFRiw8XbUyn9vdl2e2M3y7ENYQXgKajhEBwUA";
+
+// --- Paletas ---
+const CAT_COLORS: Record<string, string> = {
+  'Liderazgo Visible': "#8b5cf6",
+  'Gestión y Cumplimiento': "#3b82f6",
+  'Participación': "#10b981",
+  'Cultura y Comunicación': "#f59e0b",
+};
+
+// --- Componentes Internos ---
+
+const RenderLegend = ({ payload }: any) => {
+  if (!payload) return null;
+  return (
+    <ul className="flex flex-wrap justify-center gap-6 mt-6">
+      {payload.map((entry: any, index: number) => (
+        <li key={`item-${index}`} className="flex items-center text-[10px] font-black uppercase tracking-widest text-muted-foreground/80 hover:text-foreground transition-all cursor-default">
+          <span className="w-3 h-3 rounded-full mr-2 shadow-lg shadow-black/10" style={{ backgroundColor: entry.color }}></span>
+          {entry.value}
+        </li>
+      ))}
+    </ul>
+  );
+};
+
+const RenderTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-background/90 backdrop-blur-2xl border border-white/10 p-5 rounded-[2rem] shadow-2xl animate-in fade-in zoom-in-95 duration-300 z-50 ring-1 ring-black/5">
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-4 border-b border-border/20 pb-2">{label || 'Métrica de Madurez'}</p>
+        <div className="space-y-3">
+          {payload.map((entry: any, index: number) => (
+            <div key={index} className="flex items-center justify-between gap-8">
+              <div className="flex items-center gap-3">
+                <div className="w-2.5 h-2.5 rounded-full shadow-inner" style={{ backgroundColor: entry.color }} />
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{entry.name}:</span>
+              </div>
+              <span className="text-sm font-black text-foreground tabular-nums">
+                {typeof entry.value === 'number' ? Math.round(entry.value) : entry.value}%
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
+const EntryPanel = ({ entry, onClose }: { entry: RauraEntry, onClose: () => void }) => {
+  const radarData = useMemo(() => [
+    { subject: 'LIDERAZGO', A: entry.scores.liderazgo, fullMark: 100, color: CAT_COLORS['Liderazgo Visible'] },
+    { subject: 'GESTIÓN', A: entry.scores.gestion, fullMark: 100, color: CAT_COLORS['Gestión y Cumplimiento'] },
+    { subject: 'PARTICIPACIÓN', A: entry.scores.participacion, fullMark: 100, color: CAT_COLORS['Participación'] },
+    { subject: 'CULTURA', A: entry.scores.cultura, fullMark: 100, color: CAT_COLORS['Cultura y Comunicación'] },
+  ], [entry]);
+
+  return (
+    <div className="h-full flex flex-col animate-in slide-in-from-right-full duration-700 cubic-bezier(0.23, 1, 0.32, 1) border-l border-white/10 bg-white/40 backdrop-blur-3xl shadow-[-20px_0_80px_rgba(0,0,0,0.1)]">
+      {/* Sidebar Header */}
+      <div className="px-8 py-8 border-b border-black/5 shrink-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent flex items-center justify-between">
+        <div className="flex items-center gap-5">
+           <div className="relative group">
+              <div className="absolute inset-0 bg-primary/20 blur-xl rounded-2xl animate-pulse group-hover:bg-primary/30 transition-all"></div>
+              <div className="w-14 h-14 rounded-2xl bg-white/50 border border-white/20 flex items-center justify-center text-primary shadow-xl relative z-10 transition-transform duration-500 group-hover:scale-110">
+                <User className="w-7 h-7" />
+              </div>
+           </div>
+           <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary/60 mb-1 italic">Perfil de Respuesta</p>
+              <h3 className="text-2xl font-black text-foreground tracking-tighter leading-none">{entry.area}</h3>
+           </div>
+        </div>
+        <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full h-10 w-10 hover:bg-red-500/10 hover:text-red-500 transition-all border border-transparent hover:border-red-500/20">
+          <X className="w-5 h-5" />
+        </Button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-10">
+        {/* Entry Snapshot */}
+        <div className="grid grid-cols-2 gap-4">
+           <div className="p-4 rounded-[1.5rem] bg-white/60 border border-white/20 shadow-sm transition-all hover:shadow-md">
+              <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Puesto</p>
+              <p className="text-xs font-bold text-foreground truncate uppercase">{entry.puesto}</p>
+           </div>
+           <div className="p-4 rounded-[1.5rem] bg-white/60 border border-white/20 shadow-sm transition-all hover:shadow-md">
+              <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Fecha</p>
+              <p className="text-xs font-bold text-foreground truncate uppercase">{entry.fecha}</p>
+           </div>
+        </div>
+
+        {/* Detailed Radar */}
+        <div className="space-y-4">
+          <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground/80 px-2 flex items-center gap-2 italic">
+            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" /> Neural Fingerprint
+          </h4>
+          <div className="h-[280px] bg-white/40 rounded-[2.5rem] p-6 border border-white/20 shadow-2xl relative overflow-hidden group">
+            <div className="absolute -top-10 -right-10 w-24 h-24 bg-primary/10 rounded-full blur-3xl opacity-50 group-hover:opacity-100 transition-all" />
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+                <PolarGrid stroke="rgba(0,0,0,0.05)" />
+                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 9, fontWeight: 900, fill: "rgba(0,0,0,0.4)", letterSpacing: '0.1em' }} />
+                <Radar 
+                  dataKey="A" 
+                  stroke="#3b82f6" 
+                  fill="#3b82f6" 
+                  fillOpacity={0.25} 
+                  dot={{ r: 5, fill: "#3b82f6", strokeWidth: 2, stroke: "#fff" }} 
+                  animationDuration={1500}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Categories Grid */}
+        <div className="grid grid-cols-2 gap-5">
+          {Object.entries(entry.scores).map(([key, value], idx) => {
+            const label = key.charAt(0).toUpperCase() + key.slice(1);
+            const color = Object.values(CAT_COLORS)[idx];
+            return (
+              <div key={key} className="relative group cursor-default">
+                 <div 
+                  className="absolute inset-0 blur-lg opacity-0 group-hover:opacity-40 transition-opacity rounded-3xl"
+                  style={{ backgroundColor: color }}
+                 />
+                 <Card className="rounded-[2rem] border-border/40 bg-white/80 shadow-sm relative z-10 overflow-hidden group-hover:-translate-y-1 transition-transform">
+                   <div 
+                    className="absolute top-0 left-0 w-1.5 h-full"
+                    style={{ backgroundColor: color }}
+                   />
+                   <CardHeader className="p-5 pb-1">
+                      <CardTitle className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">{label}</CardTitle>
+                   </CardHeader>
+                   <CardContent className="p-5 pt-0">
+                      <p className="text-3xl font-black tabular-nums tracking-tighter" style={{ color: color }}>
+                        {Math.round(value)}%
+                      </p>
+                   </CardContent>
+                 </Card>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Comments Section */}
+        {entry.comentarios && (
+          <div className="relative p-7 bg-slate-900 rounded-[2.5rem] border border-white/10 shadow-3xl group overflow-hidden">
+            <div className="absolute top-0 right-0 p-5 opacity-10">
+               <MessageSquare className="w-16 h-16 text-primary" />
+            </div>
+            <h4 className="text-[10px] font-black uppercase text-primary mb-4 flex items-center gap-3 tracking-[0.4em] italic">
+              <Zap className="w-4 h-4 fill-primary" /> Transcripción Crítica
+            </h4>
+            <p className="text-sm font-medium text-slate-200 leading-relaxed italic relative z-10 selection:bg-primary/30">
+              "{entry.comentarios}"
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default function DpmsRauraPage() {
+  const [activeTab, setActiveTab ] = useState<'general' | 'individual' | 'comments'>('general');
+  const [search, setSearch] = useState("");
+  const [selectedEntry, setSelectedEntry] = useState<RauraEntry | null>(null);
+
+  const { data, isLoading, isError, refetch, isFetching } = useQuery({
+    queryKey: ['rauraData', SHEET_ID],
+    queryFn: () => fetchRauraData(SHEET_ID),
+  });
+
+  const filteredEntries = useMemo(() => {
+    if (!data?.entries) return [];
+    return data.entries.filter(e => 
+      e.area.toLowerCase().includes(search.toLowerCase()) || 
+      e.puesto.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [data, search]);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-8 text-center relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[140px] animate-pulse"></div>
+        <div className="relative">
+          <div className="w-24 h-24 rounded-[2.5rem] bg-card border border-border/40 flex items-center justify-center shadow-2xl animate-float">
+            <ShieldCheck className="w-12 h-12 text-primary animate-pulse" />
+          </div>
+        </div>
+        <div className="space-y-4 relative z-10">
+          <h2 className="text-4xl font-black tracking-tighter text-foreground uppercase italic underline decoration-primary/30 underline-offset-8">DPMS Network</h2>
+          <p className="text-muted-foreground font-black uppercase tracking-[0.5em] text-[11px] animate-pulse">Analizando Madurez de Seguridad...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError || !data) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8 text-center px-4">
+        <div className="w-28 h-28 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 shadow-2xl border border-red-500/20">
+          <AlertCircle className="w-14 h-14" />
+        </div>
+        <div className="space-y-3">
+          <h2 className="text-4xl font-black tracking-tighter">Sync Interrumpido</h2>
+          <p className="text-muted-foreground max-w-md font-medium text-lg italic">El repositorio de datos DPMS-Raura no respondió al llamado.</p>
+        </div>
+        <Button onClick={() => refetch()} className="gap-3 px-10 h-16 rounded-2xl text-base font-black shadow-2xl shadow-primary/20 uppercase tracking-widest transition-all active:scale-95">
+          <RefreshCw className={cn("w-5 h-5", isFetching && "animate-spin")} /> Reconectar Canales
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative min-h-[calc(100vh-100px)] flex flex-col selection:bg-primary/20 overflow-x-hidden p-6 md:p-8 space-y-12">
+      
+      {/* HEADER HERO SECTION */}
+      <div className={cn(
+        "relative overflow-hidden rounded-[3rem] bg-card border border-border/40 shadow-3xl p-10 md:p-14 group transition-all duration-1000",
+        selectedEntry ? "pr-[450px]" : ""
+      )}>
+        <div className="absolute top-0 right-0 w-[1200px] h-[1200px] bg-primary/10 rounded-full blur-[180px] -translate-y-1/3 translate-x-1/3 animate-slow-pan pointer-events-none group-hover:bg-primary/15 transition-colors duration-1000"></div>
+        
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-16">
+          <div className="space-y-8 max-w-3xl">
+            <div className="flex flex-wrap gap-3">
+               <Badge className="bg-primary/10 text-primary border-primary/20 px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.3em] backdrop-blur-md italic animate-pulse">Live Dashboard</Badge>
+               <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.3em] backdrop-blur-md">Raura Site</Badge>
+            </div>
+            <h1 className="text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter text-foreground leading-tight italic group-hover:scale-[1.01] transition-transform duration-700">
+               DPMS <span className="text-primary not-italic">Raura</span>
+            </h1>
+            <p className="text-muted-foreground text-xl font-medium leading-relaxed max-w-2xl italic">
+               Métricas de percepción y madurez en seguridad minera. Análisis de comportamiento y liderazgo visible.
+            </p>
+          </div>
+          
+          <div className="flex flex-col items-start lg:items-end gap-10">
+            <div className="flex gap-2 p-2 bg-background/50 backdrop-blur-3xl rounded-[2rem] border border-border/40 shadow-2xl ring-1 ring-black/5">
+              {[
+                { id: 'general', icon: LayoutDashboard, label: 'Resumen Global' },
+                { id: 'individual', icon: MousePointer2, label: 'Explorar Respuestas' },
+                { id: 'comments', icon: MessageSquare, label: 'Mesa de Voz' },
+              ].map(tab => (
+                <Button
+                  key={tab.id}
+                  variant={activeTab === tab.id ? 'default' : 'ghost'}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={cn(
+                    "gap-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all h-12 px-8",
+                    activeTab === tab.id ? "shadow-2xl shadow-primary/30" : "text-muted-foreground/60 hover:text-foreground"
+                  )}
+                >
+                  <tab.icon className="w-4 h-4" /> {tab.label}
+                </Button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-6">
+               <Button variant="outline" onClick={() => refetch()} className="gap-3 rounded-2xl text-[10px] h-14 px-8 border-border/40 bg-white/40 backdrop-blur-3xl shadow-xl uppercase font-black tracking-[0.3em] hover:border-primary/50 hover:bg-primary/5 transition-all active:scale-95 group/sync">
+                  <RefreshCw className={cn("w-5 h-5 group-hover/sync:rotate-180 transition-transform duration-700", isFetching ? "animate-spin text-primary" : "")} /> Sincronizar
+               </Button>
+               <div className="bg-foreground text-background px-8 py-4 rounded-[2rem] shadow-3xl flex items-center gap-6 group/stat hover:scale-105 transition-transform duration-500">
+                  <div className="text-right">
+                    <p className="text-[10px] font-black uppercase tracking-[0.4em] opacity-40 mb-1">Muestreo Total</p>
+                    <p className="text-5xl font-black tabular-nums leading-none tracking-tighter italic">{data.totalRespondents}</p>
+                  </div>
+                  <div className="w-14 h-14 rounded-2xl bg-background/20 flex items-center justify-center text-background shadow-inner">
+                    <Users className="w-7 h-7" />
+                  </div>
+               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* --- CONTENT AREA --- */}
+      
+      <div className={cn(
+        "flex-1 space-y-20 transition-all duration-1000 cubic-bezier(0.23, 1, 0.32, 1)",
+        selectedEntry ? "pr-[400px] lg:pr-[450px]" : ""
+      )}>
+        
+        {activeTab === 'general' && (
+          <div className="space-y-20 animate-in fade-in slide-in-from-bottom-12 duration-1000 fill-mode-forwards">
+            
+            {/* KPI GRID */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+              {[
+                { label: "Maturity Score", value: `${Math.round(data.globalAverage)}%`, icon: Target, color: "text-primary", bg: "bg-primary/10", border: "border-primary/20", glow: "shadow-primary/20", desc: "Alineamiento global" },
+                { label: "Liderazgo", value: `${Math.round(data.categories[0].value)}%`, icon: Star, color: "text-purple-500", bg: "bg-purple-500/10", border: "border-purple-500/20", glow: "shadow-purple-500/20", desc: "Percepción directiva" },
+                { label: "Seguridad Site", value: `${Math.round(data.categories[1].value)}%`, icon: ShieldCheck, color: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/20", glow: "shadow-blue-500/20", desc: "Cumplimiento normativo" },
+                { label: "Voz del Equipo", value: data.entries.filter(e => e.comentarios).length, icon: MessageSquare, color: "text-orange-500", bg: "bg-orange-500/10", border: "border-orange-500/20", glow: "shadow-orange-500/20", desc: "Observaciones críticas" },
+              ].map((kpi, i) => (
+                <Card key={i} className={cn("border-2 bg-white/60 backdrop-blur-xl shadow-2xl rounded-[3rem] overflow-hidden group hover:-translate-y-3 transition-all duration-700", kpi.border, "hover:" + kpi.glow)}>
+                  <CardContent className="p-8 flex items-center gap-6 relative">
+                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-150 transition-transform duration-1000">
+                       <kpi.icon className="w-16 h-16" />
+                    </div>
+                    <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 shadow-xl group-hover:rotate-6 transition-transform duration-500", kpi.bg, kpi.color)}>
+                      <kpi.icon className="w-8 h-8" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 mb-1">{kpi.label}</p>
+                      <p className={cn("text-3xl font-black tracking-tighter tabular-nums leading-none", kpi.color)}>{kpi.value}</p>
+                      <p className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-widest mt-2">{kpi.desc}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* MAIN CHARTS SECTION */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+              
+              {/* RADAR DIMENSIONS */}
+              <Card className="rounded-[4rem] border-2 border-border/40 bg-white/40 backdrop-blur-2xl shadow-3xl overflow-hidden group/card relative hover:border-primary/30 transition-all duration-1000">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none"></div>
+                <CardHeader className="p-12 pb-0 flex flex-col items-center gap-3 text-center">
+                  <Badge variant="outline" className="text-primary border-primary/20 px-6 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.4em] mb-4">Neural Vision</Badge>
+                  <CardTitle className="text-4xl font-black tracking-tighter italic lg:text-5xl uppercase">Dimensiones Críticas</CardTitle>
+                  <CardDescription className="text-sm font-black uppercase tracking-[0.4em] opacity-40">Mapeo de Madurez Evolutiva</CardDescription>
+                </CardHeader>
+                <CardContent className="p-12 h-[500px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart cx="50%" cy="50%" outerRadius="80%" data={data.categories}>
+                      <PolarGrid stroke="rgba(0,0,0,0.08)" strokeDasharray="10 10" />
+                      <PolarAngleAxis 
+                        dataKey="name" 
+                        tick={{ fontSize: 10, fontWeight: 900, fill: "rgba(0,0,0,0.5)", letterSpacing: '0.15em' }} 
+                      />
+                      <PolarRadiusAxis domain={[0, 100]} hide />
+                      <Tooltip content={<RenderTooltip />} />
+                      <Radar 
+                        name="Madurez" 
+                        dataKey="value" 
+                        stroke="hsl(var(--primary))" 
+                        fill="hsl(var(--primary))" 
+                        fillOpacity={0.25} 
+                        dot={{ r: 6, fill: "hsl(var(--primary))", stroke: "#fff", strokeWidth: 3 }} 
+                        animationDuration={2500}
+                        animationBegin={500}
+                      />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* AREAS BAR CHART */}
+              <Card className="rounded-[4rem] border-2 border-border/40 bg-white/40 backdrop-blur-2xl shadow-3xl overflow-hidden group/card relative hover:border-emerald-500/30 transition-all duration-1000">
+                <div className="absolute inset-x-0 bottom-0 h-2 bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-1000"></div>
+                <CardHeader className="p-12 pb-0 text-center">
+                  <div className="flex justify-center mb-6">
+                    <div className="w-16 h-16 rounded-[1.5rem] bg-emerald-500/10 flex items-center justify-center text-emerald-500 shadow-xl group-hover:rotate-12 transition-transform">
+                       <BarChart3 className="w-8 h-8" />
+                    </div>
+                  </div>
+                  <CardTitle className="text-4xl font-black tracking-tighter lg:text-5xl italic uppercase">Performance Local</CardTitle>
+                  <CardDescription className="text-[11px] font-black uppercase tracking-[0.5em] text-emerald-600/60 mt-4">Comparativa Entre Áreas Operativas</CardDescription>
+                </CardHeader>
+                <CardContent className="p-12 h-[500px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={data.areas} layout="vertical" margin={{ left: 60, right: 40 }}>
+                      <CartesianGrid strokeDasharray="15 15" horizontal={false} stroke="rgba(0,0,0,0.05)" />
+                      <XAxis type="number" domain={[0, 104]} hide />
+                      <YAxis 
+                        dataKey="name" 
+                        type="category" 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{ fontSize: 11, fontWeight: 900, fill: 'rgba(0,0,0,0.6)' }} 
+                        tickFormatter={(value) => value.toUpperCase()}
+                        width={140} 
+                      />
+                      <Tooltip content={<RenderTooltip />} cursor={{ fill: 'rgba(16, 185, 129, 0.05)' }} />
+                      <Bar dataKey="score" radius={[0, 20, 20, 0]} barSize={40} animationDuration={2000} animationBegin={800}>
+                        {data.areas.map((entry: any, index: number) => (
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={entry.score > 80 ? "#10b981" : entry.score > 60 ? "#3b82f6" : "#f59e0b"} 
+                            className="hover:opacity-80 transition-opacity cursor-pointer"
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'individual' && (
+          <div className="space-y-12 animate-in fade-in slide-in-from-right-16 duration-1000 fill-mode-forwards">
+            <div className="flex flex-col lg:flex-row gap-10 lg:items-center justify-between">
+              <div className="relative w-full lg:w-[900px] group">
+                <div className="absolute -inset-1.5 bg-gradient-to-r from-primary/30 to-blue-500/30 blur-2xl opacity-0 group-hover:opacity-100 transition duration-1000"></div>
+                <Search className="absolute left-10 top-1/2 -translate-y-1/2 w-8 h-8 text-primary relative z-10" />
+                <Input 
+                  placeholder="Escaneando patrones por Área o Puesto..." 
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-24 h-24 bg-white/60 backdrop-blur-3xl border-border/40 rounded-[3rem] shadow-2xl focus:ring-8 focus:ring-primary/5 text-2xl font-black tracking-tight relative z-10 border-2"
+                />
+              </div>
+              <div className="hidden xl:flex items-center gap-8 bg-card px-16 py-7 rounded-[3rem] border-2 border-border/20 shadow-3xl group ">
+                 <div className="text-right border-r-2 border-border/20 pr-10">
+                    <p className="text-[11px] font-black uppercase tracking-[0.4em] text-muted-foreground/60 mb-2 italic">Neural Index</p>
+                    <p className="text-xs font-bold text-primary">Active Search_</p>
+                 </div>
+                 <div>
+                    <p className="text-5xl font-black text-foreground tabular-nums tracking-tighter italic">{filteredEntries.length}</p>
+                    <p className="text-[9px] font-black uppercase tracking-widest opacity-40 mt-1">Found</p>
+                 </div>
+              </div>
+            </div>
+
+            <Card className="rounded-[4rem] border-border/40 bg-white/40 backdrop-blur-3xl shadow-3xl border-2 overflow-hidden">
+              <div className="overflow-x-auto custom-scrollbar">
+                <Table>
+                  <TableHeader className="bg-muted/40">
+                    <TableRow className="border-border/40 hover:bg-transparent">
+                      <TableHead className="w-[120px] font-black text-[11px] uppercase tracking-[0.4em] text-muted-foreground/60 py-10 pl-14 italic">Identity</TableHead>
+                      <TableHead className="font-black text-[11px] uppercase tracking-[0.4em] text-muted-foreground/60 py-10">Área Operativa</TableHead>
+                      <TableHead className="font-black text-[11px] uppercase tracking-[0.4em] text-muted-foreground/60 py-10">Puesto / Nivel</TableHead>
+                      <TableHead className="font-black text-[11px] uppercase tracking-[0.4em] text-muted-foreground/60 py-10">Neural Maturity</TableHead>
+                      <TableHead className="font-black text-[11px] uppercase tracking-[0.4em] text-muted-foreground/60 py-10">Fecha</TableHead>
+                      <TableHead className="text-right font-black text-[11px] uppercase tracking-[0.4em] text-muted-foreground/60 py-10 pr-14">Detalle</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredEntries.map((entry) => (
+                      <TableRow 
+                        key={entry.id}
+                        onClick={() => setSelectedEntry(entry)}
+                        className={cn(
+                          "cursor-pointer border-border/20 transition-all hover:bg-primary/5 group h-24",
+                          selectedEntry?.id === entry.id ? "bg-primary/10 border-l-8 border-l-primary" : ""
+                        )}
+                      >
+                        <TableCell className="pl-14">
+                           <div className="w-12 h-12 rounded-2xl bg-muted/50 border border-border/20 flex items-center justify-center text-[10px] font-black group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110 transition-all shadow-inner italic">
+                              #{entry.id}
+                           </div>
+                        </TableCell>
+                        <TableCell>
+                           <span className="text-lg font-black text-foreground group-hover:translate-x-1 transition-transform uppercase italic tracking-tight">{entry.area}</span>
+                        </TableCell>
+                        <TableCell>
+                           <Badge variant="outline" className="text-[10px] font-black uppercase tracking-widest px-4 py-1.5 border-border/40 group-hover:bg-background group-hover:border-primary/30 transition-all">
+                              {entry.puesto}
+                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                           <div className="flex items-center gap-5">
+                              <div className="w-32 h-3 bg-muted/40 rounded-full overflow-hidden border border-border/10">
+                                 <div 
+                                  className="h-full bg-primary shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-1000" 
+                                  style={{ width: `${entry.totalScore}%` }} 
+                                 />
+                              </div>
+                              <span className="text-sm font-black italic">{Math.round(entry.totalScore)}%</span>
+                           </div>
+                        </TableCell>
+                        <TableCell>
+                           <span className="text-[11px] font-bold text-muted-foreground uppercase opacity-50">{entry.fecha}</span>
+                        </TableCell>
+                        <TableCell className="text-right pr-14">
+                           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full border border-border/40 group-hover:bg-primary group-hover:text-white group-hover:border-primary group-hover:rotate-12 transition-all shadow-xl">
+                              <ChevronRight className="w-6 h-6" />
+                           </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === 'comments' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 animate-in fade-in zoom-in-95 duration-1000 fill-mode-forwards">
+             {data.entries.filter(e => e.comentarios).map((e, i) => (
+                <div key={e.id} className="relative group perspective-1000">
+                   <div className="absolute -inset-1 bg-gradient-to-tr from-primary/20 to-transparent blur-xl opacity-0 group-hover:opacity-100 transition-opacity rounded-[3rem]"></div>
+                   <Card className="rounded-[3rem] border-2 border-border/40 bg-white/60 backdrop-blur-3xl shadow-2xl relative overflow-hidden group-hover:-rotate-2 group-hover:scale-[1.02] transition-all duration-700 h-full flex flex-col">
+                      <CardHeader className="p-10 pb-6 flex flex-row items-center justify-between">
+                         <div className="flex flex-col gap-2">
+                           <Badge className="w-fit bg-primary text-white border-0 px-5 py-1.5 text-[10px] uppercase font-black tracking-widest italic">{e.area}</Badge>
+                           <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-40">{e.puesto}</p>
+                         </div>
+                         <div className="text-[10px] font-black text-muted-foreground/30 italic">#{e.id}</div>
+                      </CardHeader>
+                      <CardContent className="p-10 pt-0 flex-1 flex flex-col justify-center">
+                         <p className="text-xl font-medium leading-relaxed italic text-slate-700 select-none pb-8 border-b border-border/10">
+                            "{e.comentarios}"
+                         </p>
+                         <div className="mt-8 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                               <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
+                               <span className="text-[10px] font-black uppercase text-emerald-600 tracking-widest">Feedback Verificado</span>
+                            </div>
+                            <span className="text-[10px] font-bold text-muted-foreground/50">{e.fecha}</span>
+                         </div>
+                      </CardContent>
+                   </Card>
+                </div>
+             ))}
+          </div>
+        )}
+
+      </div>
+
+      {/* FLOATING ACTION PANEL */}
+      {selectedEntry && (
+        <div className="fixed inset-y-0 right-0 w-full md:w-[450px] lg:w-[500px] z-[100] animate-in slide-in-from-right duration-700 cubic-bezier(0.23, 1, 0.32, 1)">
+           <EntryPanel entry={selectedEntry} onClose={() => setSelectedEntry(null)} />
+        </div>
+      )}
+
+      {/* DESIGN DECORATIONS */}
+      <div className="fixed bottom-10 left-10 pointer-events-none opacity-20 hidden 2xl:block">
+         <div className="flex items-center gap-4 text-primary font-black uppercase tracking-[1em] text-[10px] italic">
+            <Activity className="w-4 h-4 animate-pulse" /> Diagnostic Protocol_Raura
+         </div>
+      </div>
+
+    </div>
+  );
+}

@@ -22,6 +22,7 @@ const ImprovementPage = lazy(() => import("./pages/app/ImprovementPage"));
 const ActionPlanPage = lazy(() => import("./pages/app/ActionPlanPage"));
 const ResultsPage = lazy(() => import("./pages/app/ResultsPage"));
 const FinalDashboardPage = lazy(() => import("./pages/app/FinalDashboardPage"));
+const DpmsRauraPage = lazy(() => import("./pages/app/DpmsRauraPage"));
 const AdminUsersPage = lazy(() => import("./pages/app/AdminUsersPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -64,6 +65,7 @@ const App = () => (
               <Route path="action-plan" element={<ActionPlanPage />} />
               <Route path="results" element={<ResultsPage />} />
               <Route path="final-dashboard" element={<FinalDashboardPage />} />
+              <Route path="dpms-raura" element={<DpmsRauraPage />} />
               <Route path="admin" element={<AdminUsersPage />} />
             </Route>
             <Route path="*" element={<NotFound />} />

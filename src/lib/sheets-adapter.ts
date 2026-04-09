@@ -42,6 +42,31 @@ export interface FinalDashboardData {
   individuals: IndividualEvaluation[];
 }
 
+export interface RauraEntry {
+  id: number;
+  area: string;
+  fecha: string;
+  puesto: string;
+  empresa: string;
+  scores: {
+    liderazgo: number;
+    gestion: number;
+    participacion: number;
+    cultura: number;
+  };
+  totalScore: number;
+  comentarios: string;
+  rawResponses: string[];
+}
+
+export interface RauraDashboardData {
+  totalRespondents: number;
+  globalAverage: number;
+  categories: { name: string; value: number }[];
+  areas: ChartData[];
+  entries: RauraEntry[];
+}
+
 export interface SheetRow {
   N: string;
   'APELLIDOS Y NOMBRES': string;
@@ -399,6 +424,115 @@ export const fetchFinalDashboardData = async (sheetId: string): Promise<FinalDas
           leadership: mapSingleToPie(leadCounter),
           behavioral: mapSingleToPie(behCounter),
           individuals: individuals
+        });
+      },
+      error: reject
+    });
+  });
+};
+
+// ============================================
+// FUNCION PARSER RAURA DASHBOARD
+// ============================================
+export const fetchRauraData = async (sheetId: string): Promise<RauraDashboardData> => {
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
+
+  const response = await fetch(url);
+  if (!response.ok) throw new Error('Failed to fetch Raura data');
+  const csvText = await response.text();
+
+  return new Promise((resolve, reject) => {
+    Papa.parse<string[]>(csvText, {
+      header: false,
+      skipEmptyLines: true,
+      complete: (results) => {
+        const rows = results.data;
+        if (rows.length < 2) {
+          reject(new Error("No data found in Raura sheet"));
+          return;
+        }
+
+        const entries: RauraEntry[] = [];
+        
+        const scoreMap: Record<string, number> = {
+          'SIEMPRE': 5,
+          'MUCHAS VECES': 4,
+          'ALGUNAS VECES': 3,
+          'POCAS VECES': 2,
+          'NUNCA': 1
+        };
+
+        const getScore = (val: string) => scoreMap[val.toUpperCase().trim()] || 0;
+
+        // Question Grouping Indices (0-indexed from CSV)
+        const catIndices = {
+          liderazgo: [4, 7, 8, 9, 11],
+          gestion: [5, 6, 10, 12, 27, 28, 31],
+          participacion: [13, 14, 15, 16, 20, 30, 32],
+          cultura: [17, 18, 19, 21, 22, 23, 24, 25, 26, 29]
+        };
+
+        for (let i = 1; i < rows.length; i++) {
+          const r = rows[i];
+          if (!r[0]) continue;
+
+          const calcAvg = (indices: number[]) => {
+            const scores = indices.map(idx => getScore(r[idx])).filter(s => s > 0);
+            return scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length) * 20 : 0; // Convert to 0-100 scale
+          };
+
+          const scores = {
+            liderazgo: calcAvg(catIndices.liderazgo),
+            gestion: calcAvg(catIndices.gestion),
+            participacion: calcAvg(catIndices.participacion),
+            cultura: calcAvg(catIndices.cultura)
+          };
+
+          const totalScore = (scores.liderazgo + scores.gestion + scores.participacion + scores.cultura) / 4;
+
+          entries.push({
+            id: i,
+            area: r[0],
+            fecha: r[1],
+            puesto: r[2] || 'No especificado',
+            empresa: r[3],
+            scores,
+            totalScore,
+            comentarios: r[33] || '',
+            rawResponses: r.slice(4, 33)
+          });
+        }
+
+        // Aggregate Data
+        const avg = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+
+        const globalAvg = avg(entries.map(e => e.totalScore));
+        
+        const categories = [
+          { name: 'Liderazgo Visible', value: avg(entries.map(e => e.scores.liderazgo)) },
+          { name: 'Gestión y Cumplimiento', value: avg(entries.map(e => e.scores.gestion)) },
+          { name: 'Participación', value: avg(entries.map(e => e.scores.participacion)) },
+          { name: 'Cultura y Comunicación', value: avg(entries.map(e => e.scores.cultura)) }
+        ];
+
+        // Group by Area
+        const areaGroups: Record<string, number[]> = {};
+        entries.forEach(e => {
+          if (!areaGroups[e.area]) areaGroups[e.area] = [];
+          areaGroups[e.area].push(e.totalScore);
+        });
+
+        const areas = Object.keys(areaGroups).map(name => ({
+          name,
+          score: Math.round(avg(areaGroups[name]))
+        }));
+
+        resolve({
+          totalRespondents: entries.length,
+          globalAverage: globalAvg,
+          categories,
+          areas,
+          entries
         });
       },
       error: reject

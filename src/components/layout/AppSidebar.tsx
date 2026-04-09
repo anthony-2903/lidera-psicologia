@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   FileText,
+  Activity,
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -29,6 +30,7 @@ export const navItems = [
   { label: "Plan de Acción", icon: CheckSquare, path: "/app/action-plan" },
   { label: "Resultados", icon: TrendingUp, path: "/app/results" },
   { label: "Dashboard Final", icon: LayoutDashboard, path: "/app/final-dashboard" },
+  { label: "DPMS-Raura", icon: Activity, path: "/app/dpms-raura" },
 ];
 
 import { useEffect } from "react";
