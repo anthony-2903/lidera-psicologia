@@ -362,6 +362,15 @@ export default function DpmsRauraPage() {
     };
   }, [data]);
 
+  const behaviorCategory = useMemo(() => {
+    if (!data) return { name: "N/A", color: "#cbd5e1" };
+    const s = data.globalAverage;
+    if (s <= 25) return { name: "Reactivo", color: "#ef4444" };
+    if (s <= 50) return { name: "Dependiente", color: "#f59e0b" };
+    if (s <= 75) return { name: "Independiente", color: "#3b82f6" };
+    return { name: "Interdependiente", color: "#10b981" };
+  }, [data]);
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-8 text-center relative overflow-hidden">
@@ -663,7 +672,7 @@ export default function DpmsRauraPage() {
                       <Tooltip content={<ChartTooltip isPie />} />
                     </PieChart>
                   </ResponsiveContainer>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-4">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                     <p className="text-4xl font-black tracking-tighter text-foreground italic">
                       {data.totalRespondents}
                     </p>
@@ -680,10 +689,22 @@ export default function DpmsRauraPage() {
                 </div>
 
                 <div className="space-y-4 relative z-10">
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic mb-2 flex items-center gap-3">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />{" "}
-                    Neural Diagnostic Summary
-                  </h4>
+                  <div className="flex flex-wrap items-center gap-3 mb-2">
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic flex items-center gap-3">
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />{" "}
+                      Neural Diagnostic Summary
+                    </h4>
+                    <Badge 
+                      className="rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest border-none shadow-lg animate-in zoom-in duration-500"
+                      style={{ 
+                        backgroundColor: `${behaviorCategory.color}20`, 
+                        color: behaviorCategory.color,
+                        boxShadow: `0 0 20px ${behaviorCategory.color}30`
+                      }}
+                    >
+                      Nivel: {behaviorCategory.name}
+                    </Badge>
+                  </div>
                   <h3 className="text-5xl font-black tracking-tighter text-foreground leading-none italic max-w-2xl">
                     Análisis de Comportamiento y{" "}
                     <span className="text-primary not-italic">
@@ -748,14 +769,26 @@ export default function DpmsRauraPage() {
                 </div>
 
                 <div className="space-y-4 relative z-10 text-right lg:text-left">
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-500 italic mb-2 flex items-center gap-3 lg:justify-start justify-end">
-                    <Activity className="w-4 h-4 text-blue-500" />{" "}
-                    Organizational DNA Index
-                  </h4>
+                  <div className="flex flex-wrap items-center gap-3 mb-2 lg:justify-start justify-end">
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-500 italic flex items-center gap-3">
+                      <Activity className="w-4 h-4 text-blue-500" />{" "}
+                      Organizational DNA Index
+                    </h4>
+                    <Badge 
+                      className="rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest border-none shadow-lg"
+                      style={{ 
+                        backgroundColor: `${cultureData.color}20`, 
+                        color: cultureData.color,
+                        boxShadow: `0 0 20px ${cultureData.color}30`
+                      }}
+                    >
+                      Nivel: {cultureData.label}
+                    </Badge>
+                  </div>
                   <h3 className="text-5xl font-black tracking-tighter text-foreground leading-none italic max-w-2xl">
                     Nivel de{" "}
                     <span className="text-blue-500 not-italic">Cultura</span>{" "}
-                    Organiactiva
+                    Organizativa
                   </h3>
                 </div>
 
