@@ -590,11 +590,17 @@ export const fetchLocusControlData = async (sheetId: string): Promise<LocusContr
           const internal = parseInt(r[4]) || 0;
           const external = parseInt(r[5]) || 0;
           
-          // Clasificación según reglas del usuario
-          let result = r[6] || '';
-          if (internal <= 12) result = 'RIESGO ALTO';
-          else if (internal <= 18) result = 'RIESGO MEDIO';
-          else if (internal <= 23) result = 'APTO';
+          // Nueva Clasificación: Balance Interno vs Externo
+          const diff = internal - external;
+          let result: string;
+          
+          if (diff > 5) {
+            result = 'APTO';
+          } else if (diff < -5) {
+            result = 'RIESGO ALTO';
+          } else {
+            result = 'RIESGO MEDIO';
+          }
 
           if (riskCounts[result as keyof typeof riskCounts] !== undefined) {
             riskCounts[result as keyof typeof riskCounts]++;

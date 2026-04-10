@@ -4,7 +4,7 @@ import { fetchLocusControlData, LocusControlEntry } from "@/lib/sheets-adapter";
 import { 
   Target, Brain, Zap, ShieldCheck, Users, Search, RefreshCw, AlertCircle,
   TrendingUp, ArrowRight, User, Filter, Globe, ChevronRight, LayoutDashboard, List,
-  X, FileDown, Sparkles
+  X, FileDown, Sparkles, ActivityIcon
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,11 +29,131 @@ const RISK_COLORS = {
 const LocusIndividualPanel = ({ entry, onClose }: { entry: LocusControlEntry, onClose: () => void }) => {
   const internalPct = (entry.internalScore / 23) * 100;
   
-  const getAnalysis = (score: number) => {
-    if (score <= 12) return "Perfil con alta dependencia de factores externos. Existe una tendencia a percibir que los resultados de seguridad dependen de la suerte o de terceros, lo cual requiere intervención en autonomía.";
-    if (score <= 18) return "Perfil equilibrado con capacidad de autogestión. El individuo reconoce su impacto en los resultados pero mantiene conciencia de las limitaciones del entorno.";
-    return "Alta orientación al autodominio. El individuo asume total responsabilidad sobre sus acciones y resultados de seguridad, ideal para roles de liderazgo y supervisión autónoma.";
+  const getAnalysis = (internal: number, external: number) => {
+    const diff = internal - external;
+    if (diff > 0) return "Perfil con dominancia interna. El evaluado asume responsabilidad directa sobre sus acciones y resultados, mostrando proactividad en seguridad. SE CONSIDERA APTO.";
+    return "Perfil con dominancia externa. Existe una tendencia a atribuir resultados a factores ajenos, lo que sugiere una menor autonomía operativa. NO SE CONSIDERA APTO.";
   };
+
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const analysis = getAnalysis(entry.internalScore, entry.externalScore);
+    const date = new Date().toLocaleDateString();
+    const diff = entry.internalScore - entry.externalScore;
+    const isApto = diff > 0;
+
+    const reportHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Informe Locus - ${entry.name}</title>
+          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+          <style>
+            body { background: #f1f5f9; font-family: 'Inter', sans-serif; color: #0f172a; margin: 0; padding: 40px; display: flex; justify-content: center; }
+            .page { background: white; width: 210mm; min-height: 297mm; box-shadow: 0 20px 50px rgba(0,0,0,0.1); padding: 20mm; box-sizing: border-box; border-radius: 10px; position: relative; }
+            .header { border-bottom: 4px solid #6366f1; padding-bottom: 20px; margin-bottom: 40px; display: flex; justify-content: space-between; align-items: flex-end; }
+            .brand { color: #6366f1; font-weight: 900; font-size: 24px; letter-spacing: -1px; italics: true; }
+            .title-box h1 { font-size: 32px; font-weight: 900; margin: 0; text-transform: uppercase; letter-spacing: -1px; }
+            .section { margin-bottom: 40px; }
+            .section-title { font-size: 14px; font-weight: 900; color: #6366f1; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; border-left: 4px solid #6366f1; padding-left: 10px; }
+            .scale-container { background: #f8fafc; border-radius: 20px; padding: 30px; border: 1px solid #e2e8f0; position: relative; margin-top: 20px; }
+            .ruler { height: 12px; background: #e2e8f0; border-radius: 6px; overflow: hidden; display: flex; margin: 20px 0; }
+            .pointer { position: absolute; top: 45px; transform: translateX(-50%); text-align: center; }
+            .pointer-line { width: 3px; height: 35px; background: ${isApto ? "#10b981" : "#ef4444"}; margin: 0 auto; border-radius: 2px; }
+            .pointer-val { background: ${isApto ? "#10b981" : "#ef4444"}; color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 900; margin-top: 5px; }
+            .analysis-box { background: #0f172a; color: white; padding: 30px; border-radius: 20px; line-height: 1.6; font-style: italic; font-size: 15px; }
+            .footer { position: absolute; bottom: 20mm; left: 20mm; right: 20mm; text-align: center; font-size: 10px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 10px; }
+          </style>
+        </head>
+        <body>
+          <div id="report-content" class="page">
+            <div class="header">
+              <div class="title-box">
+                <p style="font-size: 10px; font-weight: 900; color: #64748b; margin-bottom: 5px; text-transform: uppercase;">Informe de Evaluación Neural</p>
+                <h1>${entry.name}</h1>
+              </div>
+              <div style="text-align: right">
+                <div class="brand">Locus<i>Control</i></div>
+                <p style="font-size: 10px; font-weight: 700; color: #94a3b8;">${date}</p>
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">I. Datos del Evaluado</div>
+              <table style="width: 100%; font-size: 13px;">
+                <tr>
+                  <td style="padding: 10px 0; color: #64748b; font-weight: 700;">EMPRESA:</td>
+                  <td style="font-weight: 900;">${entry.company}</td>
+                  <td style="padding: 10px 0; color: #64748b; font-weight: 700;">ID EVALUACIÓN:</td>
+                  <td style="font-weight: 900;">LOC-${entry.id}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0; color: #64748b; font-weight: 700;">PUESTO:</td>
+                  <td style="font-weight: 900;">${entry.position}</td>
+                  <td style="padding: 10px 0; color: #64748b; font-weight: 700;">RESULTADO FINAL:</td>
+                  <td style="font-weight: 900; color: ${isApto ? "#10b981" : "#ef4444"}">${isApto ? 'APTO' : 'POR MEJORAR (No Apto)'}</td>
+                </tr>
+              </table>
+            </div>
+
+            <div class="section">
+              <div class="section-title">II. Balance de Control Operativo</div>
+              <div class="scale-container">
+                <div style="display: flex; justify-content: space-between; font-size: 9px; font-weight: 900; color: #64748b; margin-bottom: 15px;">
+                  <span>DOMINANCIA EXTERNA (ALTO RIESGO)</span>
+                  <span>CENTRO</span>
+                  <span>DOMINANCIA INTERNA (CUMPLIMIENTO)</span>
+                </div>
+                <div class="ruler">
+                  <div style="width: 50%; background: #ef4444; opacity: 0.3;"></div>
+                  <div style="width: 50%; background: #10b981; opacity: 0.3;"></div>
+                </div>
+                <div class="pointer" style="left: ${((diff + 23) / 46) * 100}%">
+                  <div class="pointer-line"></div>
+                  <div class="pointer-val">${isApto ? 'APTO' : 'NO APTO'} (${diff} pts)</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">III. Conclusión Diagnóstica</div>
+              <div class="ai-box" style="background: #0f172a; color: #e2e8f0; padding: 30px; border-radius: 20px; font-style: italic; line-height: 1.6;">
+                "${analysis}"
+              </div>
+            </div>
+
+            <div class="footer">
+              Este informe es confidencial y para uso exclusivo de Seguridad Industrial • Lidera Psicología
+            </div>
+          </div>
+
+          <script>
+            window.onload = () => {
+              const element = document.getElementById('report-content');
+              html2pdf().from(element).set({
+                margin: 0,
+                filename: 'Resultado_Locus_${entry.name.replace(/\s+/g, '_')}.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+              }).save().then(() => {
+                setTimeout(() => window.close(), 1000);
+              });
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(reportHtml);
+    printWindow.document.close();
+  };
+
+  const indDiff = entry.internalScore - entry.externalScore;
+  const indIsApto = indDiff > 0;
 
   return (
     <div className={cn(
@@ -50,7 +170,7 @@ const LocusIndividualPanel = ({ entry, onClose }: { entry: LocusControlEntry, on
               </div>
             </div>
             <div>
-              <p className="text-[9px] font-black uppercase tracking-[0.3em] text-primary/70 mb-0.5">Perfil Individual de Control</p>
+              <p className="text-[9px] font-black uppercase tracking-[0.3em] text-primary/70 mb-0.5">Diagnóstico Individual</p>
               <h3 className="text-xl font-black text-foreground leading-tight tracking-tighter uppercase italic">{entry.name}</h3>
             </div>
           </div>
@@ -68,63 +188,35 @@ const LocusIndividualPanel = ({ entry, onClose }: { entry: LocusControlEntry, on
               <p className="text-sm font-black italic">{entry.company}</p>
            </Card>
            <Card className="rounded-3xl border-border/20 bg-background/50 p-4">
-              <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Puesto</p>
-              <p className="text-sm font-black italic">{entry.position}</p>
+              <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Dictamen Individual</p>
+              <p className={cn("text-sm font-black italic uppercase", indIsApto ? "text-emerald-500" : "text-red-500")}>
+                {indIsApto ? 'APTO' : 'NO APTO'}
+              </p>
            </Card>
         </div>
 
-        <div className="space-y-6">
-           <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground/80 px-2 flex items-center gap-2">
-              <ActivityIcon className="w-4 h-4 text-primary" /> Balanza de Control
-           </h4>
-           <div className="bg-background/40 rounded-[2.5rem] p-8 border border-border/10 shadow-xl space-y-8">
-              <div className="relative h-4 w-full bg-muted/30 rounded-full overflow-hidden">
-                 <div 
-                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-indigo-500 to-indigo-400 rounded-full" 
-                    style={{ width: `${internalPct}%` }} 
-                 />
-                 <div 
-                    className="absolute h-8 w-2 bg-white border border-border shadow-2xl rounded-full top-1/2 -translate-y-1/2 transition-all duration-1000"
-                    style={{ left: `${internalPct}%` }}
-                 />
-              </div>
-              <div className="flex justify-between items-center bg-muted/20 rounded-2xl p-4">
-                 <div className="text-center flex-1">
-                    <p className="text-2xl font-black text-indigo-600 tabular-nums">{entry.internalScore}</p>
-                    <p className="text-[8px] font-bold uppercase text-indigo-500 tracking-widest">Ptos. Interno</p>
-                 </div>
-                 <div className="w-px h-8 bg-border/20" />
-                 <div className="text-center flex-1">
-                    <p className="text-2xl font-black text-emerald-600 tabular-nums">{entry.externalScore}</p>
-                    <p className="text-[8px] font-bold uppercase text-emerald-500 tracking-widest">Ptos. Externo</p>
-                 </div>
-              </div>
-           </div>
-        </div>
-
-        {/* Aptitude Ruler Scale (Regla de Medida) */}
+        {/* Aptitude Ruler Scale (Regla de Balance Binario) */}
         <div className="space-y-4">
            <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground/80 px-2 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-primary" /> Regla de Aptitud Cognitiva
+              <ShieldCheck className="w-4 h-4 text-primary" /> Regla de Dictamen Directo
            </h4>
            <div className="bg-background/40 rounded-[2.5rem] p-8 border border-border/10 shadow-xl space-y-10 relative overflow-hidden">
               <div className="flex justify-between text-[8px] font-black uppercase text-muted-foreground/40 px-1 italic">
-                 <span>Riesgo Crítico</span>
-                 <span>Punto de Equilibrio</span>
-                 <span>Aptitud Óptima</span>
+                 <span>Dominancia Externa (Inapto)</span>
+                 <span>Neutral</span>
+                 <span>Dominancia Interna (Apto)</span>
               </div>
               
               <div className="relative h-12 w-full flex items-center">
-                 {/* The Ruler Background with segments */}
+                 {/* The Ruler Background - Binary Split */}
                  <div className="absolute inset-x-0 h-3 bg-muted/20 rounded-full flex overflow-hidden border border-border/10">
-                    <div className="h-full bg-red-500/40 border-r border-white/20" style={{ width: `${(12/23)*100}%` }} />
-                    <div className="h-full bg-amber-500/40 border-r border-white/20" style={{ width: `${(6/23)*100}%` }} />
-                    <div className="h-full bg-emerald-500/40" style={{ width: `${(5/23)*100}%` }} />
+                    <div className="h-full bg-red-500/40 border-r border-white/20" style={{ width: `50%` }} />
+                    <div className="h-full bg-emerald-500/40" style={{ width: `50%` }} />
                  </div>
 
                  {/* Ticks */}
                  <div className="absolute inset-x-0 h-8 flex justify-between px-0.5 pointer-events-none">
-                    {[0, 5, 10, 15, 20, 23].map((tick) => (
+                    {[-23, -10, 0, 10, 23].map((tick) => (
                       <div key={tick} className="flex flex-col items-center">
                         <div className="w-px h-2 bg-border/40 mb-1" />
                         <span className="text-[7px] font-bold text-muted-foreground/30">{tick}</span>
@@ -132,39 +224,32 @@ const LocusIndividualPanel = ({ entry, onClose }: { entry: LocusControlEntry, on
                     ))}
                  </div>
 
-                 {/* Individual Pointer */}
+                 {/* Balance Pointer */}
                  <div 
                     className="absolute z-20 transition-all duration-1000 ease-out"
-                    style={{ left: `${(entry.internalScore / 23) * 100}%` }}
+                    style={{ left: `${((indDiff + 23) / 46) * 100}%` }}
                  >
                     <div className="relative -translate-x-1/2 flex flex-col items-center">
                        <div className={cn(
-                         "w-1 h-16 -mt-2 shadow-xl rounded-full animate-pulse",
-                         entry.internalScore <= 12 ? "bg-red-500" :
-                         entry.internalScore <= 18 ? "bg-amber-500" :
-                         "bg-emerald-500"
+                         "w-1 h-16 -mt-2 shadow-xl rounded-full",
+                         indIsApto ? "bg-emerald-500" : "bg-red-500"
                        )} />
                        <div className={cn(
                          "mt-1 px-3 py-1 rounded-full text-[10px] font-black shadow-2xl border border-white/20 whitespace-nowrap",
-                         entry.internalScore <= 12 ? "bg-red-500 text-white" :
-                         entry.internalScore <= 18 ? "bg-amber-500 text-white" :
-                         "bg-emerald-500 text-white"
+                         indIsApto ? "bg-emerald-500 text-white" : "bg-red-500 text-white"
                        )}>
-                         {entry.internalScore} PTS
+                         {indIsApto ? 'APTO' : 'NO APTO'} ({indDiff})
                        </div>
                     </div>
                  </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 pt-4">
-                 <div className={cn("text-center p-2 rounded-xl border border-dashed transition-all", entry.internalScore <= 12 ? "bg-red-500/10 border-red-500/30 ring-1 ring-red-500/20" : "opacity-30")}>
-                    <p className="text-[8px] font-black uppercase text-red-600">Alto Riesgo</p>
+              <div className="grid grid-cols-2 gap-4 pt-4">
+                 <div className={cn("text-center p-3 rounded-2xl border border-dashed transition-all", !indIsApto ? "bg-red-500/10 border-red-500/30 ring-1 ring-red-500/20 shadow-lg shadow-red-500/10 scale-105" : "opacity-30")}>
+                    <p className="text-[10px] font-black uppercase text-red-600">No Apto</p>
                  </div>
-                 <div className={cn("text-center p-2 rounded-xl border border-dashed transition-all", (entry.internalScore > 12 && entry.internalScore <= 18) ? "bg-amber-500/10 border-amber-500/30 ring-1 ring-amber-500/20" : "opacity-30")}>
-                    <p className="text-[8px] font-black uppercase text-amber-600">Riesgo Medio</p>
-                 </div>
-                 <div className={cn("text-center p-2 rounded-xl border border-dashed transition-all", entry.internalScore > 18 ? "bg-emerald-500/10 border-emerald-500/30 ring-1 ring-emerald-500/20" : "opacity-30")}>
-                    <p className="text-[8px] font-black uppercase text-emerald-600">Usuario Apto</p>
+                 <div className={cn("text-center p-3 rounded-2xl border border-dashed transition-all", indIsApto ? "bg-emerald-500/10 border-emerald-500/30 ring-1 border-emerald-500/20 shadow-lg shadow-emerald-500/10 scale-105" : "opacity-30")}>
+                    <p className="text-[10px] font-black uppercase text-emerald-600">Apto</p>
                  </div>
               </div>
            </div>
@@ -173,24 +258,21 @@ const LocusIndividualPanel = ({ entry, onClose }: { entry: LocusControlEntry, on
         <div className="p-6 bg-slate-900 rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-[60px] -translate-y-1/2 translate-x-1/2 opacity-50" />
           <h4 className="text-[11px] font-black uppercase mb-4 text-primary flex items-center gap-2">
-             <Sparkles className="w-4 h-4" /> Descriptivo Psicométrico
+             <Sparkles className="w-4 h-4" /> Descriptivo Diagnóstico
           </h4>
-          <p className="text-sm font-medium text-slate-300 leading-relaxed italic">"{getAnalysis(entry.internalScore)}"</p>
+          <p className="text-sm font-medium text-slate-300 leading-relaxed italic">"{getAnalysis(entry.internalScore, entry.externalScore)}"</p>
         </div>
 
-        <Button className="w-full h-14 rounded-2xl gap-3 bg-primary text-primary-foreground font-black uppercase tracking-widest text-xs shadow-xl shadow-primary/20">
+        <Button 
+          onClick={handlePrint}
+          className="w-full h-14 rounded-2xl gap-3 bg-primary text-primary-foreground font-black uppercase tracking-widest text-xs shadow-xl shadow-primary/20"
+        >
            <FileDown className="w-5 h-5" /> Descargar Informe PDF
         </Button>
       </div>
     </div>
   );
 };
-
-const ActivityIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-  </svg>
-);
 
 const LocusControlPage = () => {
   const [view, setView] = useState<'dashboard' | 'list'>('dashboard');
@@ -201,6 +283,59 @@ const LocusControlPage = () => {
     queryKey: ['locusControl', SHEET_ID],
     queryFn: () => fetchLocusControlData(SHEET_ID),
   });
+
+  const handlePrintDashboard = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    // Capturamos el contenido actual (Dashboard o Lista)
+    const container = document.querySelector('.flex-1.space-y-12'); 
+    if (!container) return;
+
+    const contentHtml = container.innerHTML;
+
+    const reportHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Dashboard Locus de Control</title>
+          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+          <script src="https://cdn.tailwindcss.com"></script>
+          <style>
+            body { background: white; font-family: 'Inter', sans-serif; padding: 40px; }
+            .no-print { display: none !important; }
+            canvas, .recharts-responsive-container { min-height: 300px !important; }
+          </style>
+        </head>
+        <body>
+          <div id="print-area">
+            ${contentHtml}
+          </div>
+          <script>
+            window.onload = () => {
+              // Limpiar elementos no deseados de la captura
+              document.querySelectorAll('button').forEach(b => b.classList.add('no-print'));
+              
+              const element = document.getElementById('print-area');
+              html2pdf().from(element).set({
+                margin: 10,
+                filename: 'Dashboard_Locus_Control.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 1.5, useCORS: true, logging: false },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+              }).save().then(() => {
+                setTimeout(() => window.close(), 1000);
+              });
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(reportHtml);
+    printWindow.document.close();
+  };
 
   const filteredEntries = useMemo(() => {
     if (!data?.entries) return [];
@@ -276,6 +411,9 @@ const LocusControlPage = () => {
               <List className="w-4 h-4" /> Listado
             </Button>
             <div className="w-px h-6 bg-border/50 mx-2" />
+            <Button variant="ghost" size="icon" onClick={() => handlePrintDashboard()} className="rounded-xl text-primary hover:bg-primary/10">
+              <FileDown className="w-4 h-4" />
+            </Button>
             <Button variant="ghost" size="icon" onClick={() => refetch()} className="rounded-xl">
               <RefreshCw className={cn("w-4 h-4", isFetching && "animate-spin")} />
             </Button>
@@ -344,16 +482,16 @@ const LocusControlPage = () => {
                         ))}
                       </Pie>
                       <Tooltip cursor={{ fill: 'transparent' }} content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          return (
-                            <div className="bg-background/90 backdrop-blur-md border border-border/50 p-3 rounded-2xl shadow-2xl">
-                              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">{payload[0].name}</p>
-                              <p className="text-xl font-black">{payload[0].value} <span className="text-xs font-medium text-muted-foreground italic">casos</span></p>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }} />
+                         if (active && payload && payload.length) {
+                           return (
+                             <div className="bg-background/90 backdrop-blur-md border border-border/50 p-3 rounded-2xl shadow-2xl">
+                               <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">{payload[0].name}</p>
+                               <p className="text-xl font-black">{payload[0].value} <span className="text-xs font-medium text-muted-foreground italic">casos</span></p>
+                             </div>
+                           );
+                         }
+                         return null;
+                       }} />
                       <Legend verticalAlign="bottom" height={36} content={({ payload }) => (
                         <div className="flex justify-center gap-6 mt-4">
                           {payload?.map((entry: any, index: number) => (
