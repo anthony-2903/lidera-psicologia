@@ -67,6 +67,25 @@ export interface RauraDashboardData {
   entries: RauraEntry[];
 }
 
+export interface LocusControlEntry {
+  id: number;
+  name: string;
+  company: string;
+  position: string;
+  internalScore: number;
+  externalScore: number;
+  result: string;
+  date: string;
+}
+
+export interface LocusControlData {
+  totalEvaluated: number;
+  avgInternal: number;
+  avgExternal: number;
+  riskDistribution: { name: string; value: number }[];
+  entries: LocusControlEntry[];
+}
+
 export interface SheetRow {
   N: string;
   'APELLIDOS Y NOMBRES': string;
@@ -532,6 +551,81 @@ export const fetchRauraData = async (sheetId: string): Promise<RauraDashboardDat
           globalAverage: globalAvg,
           categories,
           areas,
+          entries
+        });
+      },
+      error: reject
+    });
+  });
+};
+
+// ============================================
+// FUNCION PARSER LOCUS DE CONTROL
+// ============================================
+export const fetchLocusControlData = async (sheetId: string): Promise<LocusControlData> => {
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+
+  const response = await fetch(url);
+  if (!response.ok) throw new Error('Failed to fetch Locus de Control data');
+  const csvText = await response.text();
+
+  return new Promise((resolve, reject) => {
+    Papa.parse<string[]>(csvText, {
+      header: false,
+      skipEmptyLines: true,
+      complete: (results) => {
+        const rows = results.data;
+        if (rows.length < 2) {
+          reject(new Error("No data found in Locus de Control sheet"));
+          return;
+        }
+
+        const entries: LocusControlEntry[] = [];
+        const riskCounts = { 'RIESGO ALTO': 0, 'RIESGO MEDIO': 0, 'APTO': 0 };
+
+        for (let i = 1; i < rows.length; i++) {
+          const r = rows[i];
+          if (!r[1]) continue;
+
+          const internal = parseInt(r[4]) || 0;
+          const external = parseInt(r[5]) || 0;
+          
+          // Clasificación según reglas del usuario
+          let result = r[6] || '';
+          if (internal <= 12) result = 'RIESGO ALTO';
+          else if (internal <= 18) result = 'RIESGO MEDIO';
+          else if (internal <= 23) result = 'APTO';
+
+          if (riskCounts[result as keyof typeof riskCounts] !== undefined) {
+            riskCounts[result as keyof typeof riskCounts]++;
+          }
+
+          entries.push({
+            id: parseInt(r[0]) || i,
+            name: r[1],
+            company: r[2],
+            position: r[3],
+            internalScore: internal,
+            externalScore: external,
+            result,
+            date: r[7] || ''
+          });
+        }
+
+        const avgInternal = entries.reduce((acc, curr) => acc + curr.internalScore, 0) / entries.length;
+        const avgExternal = entries.reduce((acc, curr) => acc + curr.externalScore, 0) / entries.length;
+
+        const riskDistribution = [
+          { name: 'RIESGO ALTO', value: riskCounts['RIESGO ALTO'] },
+          { name: 'RIESGO MEDIO', value: riskCounts['RIESGO MEDIO'] },
+          { name: 'APTO', value: riskCounts['APTO'] }
+        ];
+
+        resolve({
+          totalEvaluated: entries.length,
+          avgInternal,
+          avgExternal,
+          riskDistribution,
           entries
         });
       },

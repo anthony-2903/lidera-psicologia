@@ -13,6 +13,7 @@ import {
   ChevronRight,
   FileText,
   Activity,
+  Brain,
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -31,6 +32,7 @@ export const navItems = [
   { label: "Resultados", icon: TrendingUp, path: "/app/results" },
   { label: "Dashboard Final", icon: LayoutDashboard, path: "/app/final-dashboard" },
   { label: "DPMS-Raura", icon: Activity, path: "/app/dpms-raura" },
+  { label: "Locus de Control", icon: Brain, path: "/app/locus-control" },
 ];
 
 import { useEffect } from "react";

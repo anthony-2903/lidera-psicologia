@@ -19,6 +19,8 @@ const breadcrumbMap: Record<string, string> = {
   "action-plan": "Plan de Acción",
   results: "Resultados",
   "final-dashboard": "Dashboard Final",
+  "dpms-raura": "DPMS-Raura",
+  "locus-control": "Locus de Control",
 };
 
 const AppLayout = () => {
