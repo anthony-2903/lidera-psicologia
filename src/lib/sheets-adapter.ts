@@ -57,6 +57,7 @@ export interface RauraEntry {
   totalScore: number;
   comentarios: string;
   rawResponses: string[];
+  questions?: string[];
 }
 
 export interface RauraDashboardData {
@@ -472,6 +473,7 @@ export const fetchRauraData = async (sheetId: string): Promise<RauraDashboardDat
         }
 
         const entries: RauraEntry[] = [];
+        const questions = rows[0].slice(4, 33);
         
         const scoreMap: Record<string, number> = {
           'SIEMPRE': 5,
@@ -481,7 +483,11 @@ export const fetchRauraData = async (sheetId: string): Promise<RauraDashboardDat
           'NUNCA': 1
         };
 
-        const getScore = (val: string) => scoreMap[val.toUpperCase().trim()] || 0;
+        const getScore = (val: string) => {
+          const v = val.trim();
+          if (/^[1-5]$/.test(v)) return parseInt(v);
+          return scoreMap[v.toUpperCase()] || 0;
+        };
 
         // Question Grouping Indices (0-indexed from CSV)
         const catIndices = {
@@ -497,7 +503,7 @@ export const fetchRauraData = async (sheetId: string): Promise<RauraDashboardDat
 
           const calcAvg = (indices: number[]) => {
             const scores = indices.map(idx => getScore(r[idx])).filter(s => s > 0);
-            return scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length) * 20 : 0; // Convert to 0-100 scale
+            return scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length) * 20 : 0; 
           };
 
           const scores = {
@@ -518,7 +524,8 @@ export const fetchRauraData = async (sheetId: string): Promise<RauraDashboardDat
             scores,
             totalScore,
             comentarios: r[33] || '',
-            rawResponses: r.slice(4, 33)
+            rawResponses: r.slice(4, 33),
+            questions
           });
         }
 

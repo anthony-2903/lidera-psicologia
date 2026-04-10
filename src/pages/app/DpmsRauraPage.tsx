@@ -252,6 +252,38 @@ const EntryPanel = ({
             </p>
           </div>
         )}
+
+        {/* Interpretation Section (Raw Responses) */}
+        <div className="space-y-6">
+          <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground/80 px-2 flex items-center gap-2 italic">
+            <FileText className="w-4 h-4 text-primary" /> Desglose de Respuestas
+          </h4>
+          <div className="space-y-3">
+             {entry.questions?.map((q, i) => {
+               const val = entry.rawResponses[i];
+               const getInt = (v: string) => {
+                 const map: any = { "1": "Nunca", "2": "Pocas veces", "3": "Algunas veces", "4": "Muchas veces", "5": "Siempre" };
+                 return map[v] || v;
+               };
+               const score = parseInt(val) || 0;
+               if (!q) return null;
+
+               return (
+                 <div key={i} className="bg-white/40 p-5 rounded-2xl border border-white/10 flex justify-between items-center group/item hover:bg-white/60 transition-all">
+                    <span className="text-[10px] font-bold text-slate-500 max-w-[70%] leading-relaxed uppercase">{q}</span>
+                    <Badge className={cn(
+                      "rounded-full px-4 py-1 text-[9px] font-black uppercase tracking-widest",
+                      score >= 4 ? "bg-emerald-500/10 text-emerald-600" :
+                      score >= 3 ? "bg-amber-500/10 text-amber-600" :
+                      "bg-red-500/10 text-red-600"
+                    )}>
+                      {getInt(val)}
+                    </Badge>
+                 </div>
+               );
+             })}
+          </div>
+        </div>
       </div>
     </div>
   );
