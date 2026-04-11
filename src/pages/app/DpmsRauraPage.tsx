@@ -22,6 +22,7 @@ import {
   FileText,
   ArrowRight,
   MousePointer2,
+  Brain,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -84,6 +85,40 @@ const EntryPanel = ({
   entry: RauraEntry;
   onClose: () => void;
 }) => {
+  const getAIAnalysis = (scores: RauraEntry['scores']) => {
+    const categories = {
+      liderazgo: { val: scores.liderazgo, name: "Liderazgo Visible" },
+      gestion: { val: scores.gestion, name: "Gestión" },
+      participación: { val: scores.participacion, name: "Participación" },
+      cultura: { val: scores.cultura, name: "Cultura" }
+    };
+
+    const sorted = Object.values(categories).sort((a,b) => a.val - b.val);
+    const lowest = sorted[0];
+    const highest = sorted[3];
+
+    let analysis = `El perfil presenta una madurez operativa destacada en **${highest.name}** (${Math.round(highest.val)}%), lo que indica una base sólida de confianza institucional. `;
+    
+    if (lowest.val < 50) {
+      analysis += `Sin embargo, se detecta un vacío crítico en **${lowest.name}** (${Math.round(lowest.val)}%). Desde una perspectiva psicológica, esto sugiere una posible desconexión entre las expectativas de seguridad y la ejecución diaria, posiblemente debida a una percepción de falta de apoyo o recursos.`;
+    } else {
+      analysis += `El área de **${lowest.name}** es el punto de mejora relativa, aunque se mantiene en niveles aceptables.`;
+    }
+
+    const recommendations = {
+      liderazgo: "Fomentar el coaching de seguridad para supervisores, centrando el enfoque en el reconocimiento positivo más que en la sanción.",
+      gestion: "Simplificar los procesos de reporte y asegurar que el feedback de las observaciones sea inmediato para evitar la fatiga por cumplimiento.",
+      participacion: "Implementar círculos de confianza donde el trabajador se sienta seguro de proponer mejoras sin temor a represalias.",
+      cultura: "Fortalecer el ADN de interdependencia mediante talleres de empatía y cuidado mutuo ('Blindaje Grupal')."
+    };
+
+    const rec = recommendations[lowest.name.toLowerCase().split(' ')[0] as keyof typeof recommendations] || "Continuar con el monitoreo preventivo.";
+
+    return { analysis, rec };
+  };
+
+  const aiResult = useMemo(() => getAIAnalysis(entry.scores), [entry]);
+
   const radarData = useMemo(
     () => [
       {
@@ -236,6 +271,34 @@ const EntryPanel = ({
               </div>
             );
           })}
+        </div>
+
+        {/* Categoría Neural Analysis (IA) */}
+        <div className="relative p-8 bg-gradient-to-br from-indigo-900 to-slate-900 rounded-[3rem] border border-indigo-500/30 shadow-3xl group overflow-hidden">
+           <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-500/20 blur-[80px] -translate-y-1/2 translate-x-1/2" />
+           <div className="relative z-10 space-y-6">
+              <div className="flex items-center gap-3">
+                 <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 flex items-center justify-center text-indigo-300">
+                    <Brain className="w-6 h-6 animate-pulse" />
+                 </div>
+                 <div>
+                    <h4 className="text-[10px] font-black uppercase text-indigo-300 tracking-[0.4em] italic mb-1">Diagnóstico IA Psicología Expert</h4>
+                    <p className="text-xs font-bold text-indigo-100/60">Análisis Conductual y Predictivo</p>
+                 </div>
+              </div>
+
+              <div className="space-y-4">
+                 <p className="text-sm font-medium text-indigo-100/90 leading-relaxed italic border-l-2 border-indigo-500/50 pl-4 py-1" dangerouslySetInnerHTML={{ __html: aiResult.analysis }} />
+                 <div className="p-5 bg-white/5 rounded-2xl border border-white/5 space-y-2">
+                    <p className="text-[9px] font-black uppercase text-indigo-400 tracking-widest flex items-center gap-2">
+                       <Zap className="w-3 h-3 fill-indigo-400" /> Plan de Acción Recomendado
+                    </p>
+                    <p className="text-xs font-bold text-indigo-100/80 leading-relaxed">
+                       {aiResult.rec}
+                    </p>
+                 </div>
+              </div>
+           </div>
         </div>
 
         {/* Comments Section */}
