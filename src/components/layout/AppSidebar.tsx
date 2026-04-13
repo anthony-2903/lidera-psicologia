@@ -14,6 +14,7 @@ import {
   FileText,
   Activity,
   Brain,
+  Layers,
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -21,7 +22,7 @@ import { cn } from "@/lib/utils";
 import logo from "@/assets/logo.png";
 
 export const navItems = [
-  { label: "Presentación", icon: Presentation, path: "/app/presentation" },
+  { label: "Presentación", icon: FileText, path: "/app/presentation" },
   { label: "Grupos", icon: UsersRound, path: "/app/groups" },
   { label: "Evaluación", icon: FileText, path: "/app/evaluations" },
   { label: "Aplicación de Pruebas", icon: ClipboardCheck, path: "/app/test-application" },
@@ -33,6 +34,7 @@ export const navItems = [
   { label: "Dashboard Final", icon: LayoutDashboard, path: "/app/final-dashboard" },
   { label: "DPMS-Raura", icon: Activity, path: "/app/dpms-raura" },
   { label: "Locus de Control", icon: Brain, path: "/app/locus-control" },
+  { label: "Dimensiones", icon: Layers, path: "/app/dimensiones" },
 ];
 
 import { useEffect } from "react";
@@ -50,7 +52,7 @@ export const SidebarContent = ({ collapsed = false, onItemClick }: { collapsed?:
 
   // Filtrar los nav items según lo que tenga permitido
   const visibleNavItems = navItems.filter((item) => {
-    if (!profile) return false; // Mientras carga el perfil, no mostramos nada para seguridad
+    if (!profile) return false;
     if (!isActive) return false;
     return allowedViews.includes(item.path);
   });

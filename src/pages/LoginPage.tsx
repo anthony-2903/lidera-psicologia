@@ -26,21 +26,10 @@ const LoginPage = () => {
           toast.error("Tu cuenta está desactivada. Contacta al administrador.");
           return;
         }
-
-        const allowedViews = profile.allowed_views || [];
-        if (allowedViews.includes("/app/dashboard")) {
-          navigate("/app/dashboard");
-        } else if (allowedViews.length > 0) {
-          navigate(allowedViews[0]);
-        } else {
-          toast.error("No tienes vistas permitidas. Contacta al administrador.");
-          // Fallback to dashboard if absolutely nothing is defined but active
-          navigate("/app/dashboard");
-        }
+        navigate("/app/welcome");
       } else {
-        // Si hay sesión pero no cargó el perfil (posible error o usuario nuevo)
-        // Redirigimos al dashboard por defecto para evitar bloqueo
-        navigate("/app/dashboard");
+        // Si hay sesión pero no cargó el perfil todavía
+        navigate("/app/welcome");
       }
     }
   }, [session, profile, authLoading, navigate]);

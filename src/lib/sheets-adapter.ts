@@ -13,6 +13,39 @@ export interface ChartData {
   [key: string]: string | number;
 }
 
+// Robust Gender Detection based on Spanish name patterns (Shared utility)
+export const detectGender = (fullName: string): 'MASCULINO' | 'FEMENINO' => {
+    const name = fullName.trim().toUpperCase();
+    // Handling "APELLIDOS, NOMBRES" or "NOMBRE APELLIDO"
+    let mainName = '';
+    if (name.includes(',')) {
+        const parts = name.split(',');
+        const namesPart = parts[1]?.trim();
+        mainName = namesPart ? namesPart.split(' ')[0] : '';
+    } else {
+        // Assume first name is the first word
+        mainName = name.split(' ')[0];
+    }
+
+    if (!mainName) return 'MASCULINO';
+
+    // Common female endings in Spanish
+    const femaleEndings = ['A', 'INA', 'ITA', 'ELA', 'ICA', 'NZA', 'ORA'];
+    const isFemaleEnding = femaleEndings.some(ending => mainName.endsWith(ending));
+
+    // Exceptions (Male names ending in A)
+    const maleExceptions = ['JOSHUA', 'LUCA', 'BAUTISTA', 'MATTIA', 'NICOLA', 'BORJA', 'ANDREA', 'ELIA'];
+    if (maleExceptions.includes(mainName)) return 'MASCULINO';
+    
+    if (isFemaleEnding || mainName.endsWith('MARIA')) return 'FEMENINO';
+    
+    // Common female names that don't end in A
+    const femaleNames = ['LUZ', 'ESTHER', 'ISABEL', 'BEATRIZ', 'CARMEN', 'RAQUEL', 'RUTH', 'MIRIAM', 'NIEVES', 'CONCEPCION', 'MARIVÍ'];
+    if (femaleNames.includes(mainName)) return 'FEMENINO';
+
+    return 'MASCULINO';
+};
+
 export interface IndividualEvaluation {
   id: number;
   name: string;
@@ -85,6 +118,32 @@ export interface LocusControlData {
   avgExternal: number;
   riskDistribution: { name: string; value: number }[];
   entries: LocusControlEntry[];
+}
+
+export interface DimensionesEntry {
+  id: number;
+  nombre: string;
+  dni: string;
+  empresa: string;
+  area: string;
+  cargo: string;
+  puntuacionLiderazgo: number;
+  puntuacionPercepcion: number; // Mapping EMA/Others to Perception for now as placeholder
+  total: number;
+  nivel: string;
+  perfil: string;
+  genero: 'MASCULINO' | 'FEMENINO';
+  lbaScore: number;
+  belbinScore: number;
+  emaScore: number;
+  bigFiveScore: number;
+  entrevistaScore: number;
+}
+
+export interface DimensionesDashboardData {
+  entries: DimensionesEntry[];
+  totalEvaluated: number;
+  avgScore: number;
 }
 
 export interface SheetRow {
@@ -210,6 +269,14 @@ export const fetchSheetData = async (sheetId: string): Promise<GroupMetric[]> =>
           } else {
             group.statusStats.falta++;
             group.pending++;
+          }
+
+          // Real Gender Detection
+          const gender = detectGender(row['APELLIDOS Y NOMBRES'] || '');
+          if (gender === 'MASCULINO') {
+            group.genderData[0].value++;
+          } else {
+            group.genderData[1].value++;
           }
         });
         
@@ -640,6 +707,88 @@ export const fetchLocusControlData = async (sheetId: string): Promise<LocusContr
           avgExternal,
           riskDistribution,
           entries
+        });
+      },
+      error: reject
+    });
+  });
+};
+
+// ============================================
+// FUNCION PARSER DIMENSIONES
+// ============================================
+export const fetchDimensionesData = async (sheetId: string): Promise<DimensionesDashboardData> => {
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+
+  const response = await fetch(url);
+  if (!response.ok) throw new Error('Failed to fetch Dimensiones data');
+  const csvText = await response.text();
+
+  return new Promise((resolve, reject) => {
+    Papa.parse<string[]>(csvText, {
+      header: false,
+      skipEmptyLines: true,
+      complete: (results) => {
+        const rows = results.data;
+        if (rows.length < 2) {
+          reject(new Error("No data found in Dimensiones sheet"));
+          return;
+        }
+
+        const entries: DimensionesEntry[] = [];
+        // Skip header row (index 0)
+        for (let i = 1; i < rows.length; i++) {
+          const r = rows[i];
+          if (!r[0] || r[0].trim() === "") continue;
+
+          // Clean percentages (e.g., "75.45%" -> 75.45)
+          const cleanPct = (val: string) => {
+             if (!val) return 0;
+             const v = val.replace('%', '').trim();
+             return parseFloat(v) || 0;
+          };
+
+          // Column Mapping based on CSV analysis:
+          // 0: Nombre, 1: DNI, 2: Empresa, 3: Area, 4: Cargo
+          // 5: LBA (Liderazgo), 10: Total, 11: Nivel, 12: Perfil
+          
+          const liderazgoPct = cleanPct(r[5]); // Weighted 30%
+          const liderazgoReal = (liderazgoPct / 30) * 100;
+
+          const totalScore = cleanPct(r[10]);
+          
+          // EMA or Big Five as proxy for perception
+          const percepcionPct = cleanPct(r[8]) || cleanPct(r[7]); 
+          const weight = r[8] ? 20 : 15;
+          const percepcionReal = (percepcionPct / weight) * 100;
+          
+          const genero = detectGender(r[0]);
+
+          entries.push({
+            id: i,
+            nombre: r[0],
+            dni: r[1],
+            empresa: r[2],
+            area: r[3],
+            cargo: r[4],
+            puntuacionLiderazgo: liderazgoReal,
+            puntuacionPercepcion: percepcionReal,
+            total: totalScore,
+            nivel: (r[11] || "Normal").trim(),
+            perfil: (r[12] || "").trim(),
+            genero,
+            lbaScore: cleanPct(r[5]),
+            belbinScore: cleanPct(r[6]),
+            emaScore: cleanPct(r[7]),
+            bigFiveScore: cleanPct(r[8]),
+            entrevistaScore: cleanPct(r[9])
+          });
+        }
+
+        resolve({
+          entries,
+          totalEvaluated: entries.length,
+          avgScore: entries.length > 0 ? entries.reduce((acc, e) => acc + e.total, 0) / entries.length : 0
         });
       },
       error: reject

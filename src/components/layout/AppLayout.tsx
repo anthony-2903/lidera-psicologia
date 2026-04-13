@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
 const breadcrumbMap: Record<string, string> = {
+  welcome: "Bienvenida",
   presentation: "Presentación",
   groups: "Grupos",
   evaluated: "Evaluados",

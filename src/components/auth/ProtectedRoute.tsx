@@ -58,7 +58,9 @@ const ProtectedRoute = () => {
   }
 
   // Verificar si tiene permiso para la ruta actual
-  const isAllowed = allowedViews.some(view => currentPath.startsWith(view));
+  // EXCEPT: Welcome page is always allowed for authenticated users
+  const isWelcomePage = currentPath === "/app/welcome";
+  const isAllowed = isWelcomePage || allowedViews.some(view => currentPath.startsWith(view));
 
   if (!isAllowed && allowedViews.length > 0) {
     return <Navigate to={allowedViews[0]} replace />;

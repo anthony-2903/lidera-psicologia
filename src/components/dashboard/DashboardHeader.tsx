@@ -8,7 +8,7 @@ interface DashboardHeaderProps {
   subtitle: string;
   isFetching?: boolean;
   onRefresh: () => void;
-  view?: 'charts' | 'list' | 'general' | 'individual' | 'comments';
+  view?: string;
   onViewChange?: (view: any) => void;
   stats?: { label: string; value: string | number; icon: LucideIcon };
   className?: string;

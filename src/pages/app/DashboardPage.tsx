@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Users, UsersRound, CheckCircle, Calendar, Clock, AlertCircle, TrendingUp, BarChart3, PieChart as PieChartIcon, Info, ChevronLeft, ArrowLeft, Loader2, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, RadarChart, PolarGrid, PolarAngleAxis, Radar } from "recharts";
@@ -9,9 +9,13 @@ import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { fetchSheetData, GroupMetric } from "@/lib/sheets-adapter";
 
+import { useAuth } from "@/components/auth/AuthProvider";
+import { WelcomeHero } from "@/components/dashboard/WelcomeHero";
+
 const SHEET_ID = "1abuYNzrdEH_6YCzlq31SAA9zLrbov0kt03gWNQPKUeU";
 
 const DashboardPage = () => {
+  const { user } = useAuth();
   const [selectedGroup, setSelectedGroup] = useState<GroupMetric | null>(null);
   const [view, setView] = useState<'grid' | 'detail'>('grid');
 
@@ -21,13 +25,21 @@ const DashboardPage = () => {
   });
 
   const summaryData = useMemo(() => {
-    if (!groupMetrics.length) return { totalGroups: 0, totalEvaluated: 0, totalCompleted: 0, avgSystemScore: 0 };
+    if (!groupMetrics.length) return { totalGroups: 0, totalEvaluated: 0, totalCompleted: 0, avgSystemScore: 0, genderData: [], areaData: [] };
     
     return {
       totalGroups: groupMetrics.length,
       totalEvaluated: groupMetrics.reduce((acc, g) => acc + g.total, 0),
       totalCompleted: groupMetrics.reduce((acc, g) => acc + g.completed, 0),
-      avgSystemScore: Math.round(groupMetrics.reduce((acc, g) => acc + g.avgScore, 0) / groupMetrics.length)
+      avgSystemScore: Math.round(groupMetrics.reduce((acc, g) => acc + g.avgScore, 0) / groupMetrics.length),
+      genderData: [
+        { name: "Hombre", value: groupMetrics.reduce((acc, g) => acc + g.genderData[0].value, 0), color: "hsl(var(--primary))" },
+        { name: "Mujer", value: groupMetrics.reduce((acc, g) => acc + g.genderData[1].value, 0), color: "#10b981" },
+      ],
+      areaData: groupMetrics.map(g => ({
+        area: g.name,
+        count: g.total
+      }))
     };
   }, [groupMetrics]);
 
@@ -146,7 +158,7 @@ const DashboardPage = () => {
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart cx="50%" cy="50%" outerRadius="80%" data={selectedGroup.radarData}>
                     <PolarGrid stroke="#e5e7eb" />
-                    <PolarAngleAxis dataKey="subject" tick={{ fontSize: 9, md: 10, fontWeight: 800, fill: "hsl(var(--foreground))" }} />
+                    <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fontWeight: 800, fill: "hsl(var(--foreground))" }} />
                     <Radar 
                       name="Fuerza del Grupo" 
                       dataKey="A" 
@@ -263,6 +275,98 @@ const DashboardPage = () => {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* Charts Summary: Restored Old View with Premium Touch */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card className="border-border/40 bg-white/60 backdrop-blur-xl shadow-2xl p-8 rounded-[3rem] overflow-hidden group">
+          <CardHeader className="px-0 pt-0 pb-8">
+            <CardTitle className="text-sm font-black uppercase tracking-widest text-primary/60 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+                <PieChartIcon className="w-4 h-4" />
+              </div>
+              Distribución por Género
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-0 pb-0">
+            <div className="h-[250px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={summaryData.genderData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={90}
+                    dataKey="value"
+                    paddingAngle={8}
+                  >
+                    {summaryData.genderData.map((entry, index) => (
+                      <Cell key={index} fill={entry.color} stroke="none" />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex justify-center gap-10 mt-6">
+              {summaryData.genderData.map((g) => (
+                <div key={g.name} className="flex flex-col items-center gap-1">
+                  <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: g.color }} />
+                    {g.name}
+                  </div>
+                  <div className="text-xl font-black text-slate-700">{g.value}</div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/40 bg-white/60 backdrop-blur-xl shadow-2xl p-8 rounded-[3rem] overflow-hidden group">
+          <CardHeader className="px-0 pt-0 pb-8">
+            <CardTitle className="text-sm font-black uppercase tracking-widest text-indigo-400 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center">
+                <UsersRound className="w-4 h-4" />
+              </div>
+              Participantes por Áreas
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-0 pb-0">
+            <div className="h-[250px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={summaryData.areaData} layout="vertical" margin={{ left: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} strokeOpacity={0.1} />
+                  <XAxis type="number" hide />
+                  <YAxis 
+                    type="category" 
+                    dataKey="area" 
+                    width={100} 
+                    tick={{ fontSize: 10, fontWeight: 900, fill: "hsl(var(--foreground))" }} 
+                    axisLine={false} 
+                    tickLine={false}
+                  />
+                  <Tooltip 
+                    cursor={{ fill: 'transparent' }}
+                    contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
+                  />
+                  <Bar 
+                    dataKey="count" 
+                    fill="hsl(var(--primary))" 
+                    radius={[0, 12, 12, 0]} 
+                    barSize={20}
+                  >
+                    {summaryData.areaData.map((entry, index) => (
+                      <Cell key={index} fill={index % 2 === 0 ? "hsl(var(--primary))" : "hsl(var(--primary)/0.6)"} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Group Specific Dashboards */}

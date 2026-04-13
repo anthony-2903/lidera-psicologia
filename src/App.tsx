@@ -25,6 +25,8 @@ const FinalDashboardPage = lazy(() => import("./pages/app/FinalDashboardPage"));
 const DpmsRauraPage = lazy(() => import("./pages/app/DpmsRauraPage"));
 const LocusControlPage = lazy(() => import("./pages/app/LocusControlPage"));
 const AdminUsersPage = lazy(() => import("./pages/app/AdminUsersPage"));
+const DimensionesPage = lazy(() => import("./pages/app/DimensionesPage"));
+const WelcomePage = lazy(() => import("./pages/app/WelcomePage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -75,8 +77,10 @@ const App = () => (
                   <Route path="final-dashboard" element={<FinalDashboardPage />} />
                   <Route path="dpms-raura" element={<DpmsRauraPage />} />
                   <Route path="locus-control" element={<LocusControlPage />} />
-                  <Route path="admin" element={<AdminUsersPage />} />
-                </Route>
+                   <Route path="dimensiones" element={<DimensionesPage />} />
+                   <Route path="welcome" element={<WelcomePage />} />
+                   <Route path="admin" element={<AdminUsersPage />} />
+                 </Route>
               </Route>
 
               <Route path="*" element={<NotFound />} />
