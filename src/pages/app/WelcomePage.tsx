@@ -26,7 +26,7 @@ const WelcomePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="h-screen w-full overflow-hidden">
       <WelcomeHero 
         email={user?.email || ""} 
         onDismiss={handleEnterDashboard}

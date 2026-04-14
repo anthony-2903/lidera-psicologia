@@ -21,19 +21,19 @@ export const WelcomeHero = ({ email, onDismiss }: WelcomeHeroProps) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      className="relative min-h-screen lg:min-h-[80vh] flex items-center justify-center p-4 md:p-6"
+      exit={{ opacity: 0, scale: 0.98 }}
+      className="relative flex-1 flex items-center justify-center p-2 md:p-4 min-h-0"
     >
       {/* Background Glows (Decorative) */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[150px] -z-10 animate-pulse" />
       <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-indigo-500/10 rounded-full blur-[150px] -z-10" />
 
-      <motion.div className="relative w-full max-w-6xl bg-white/40 backdrop-blur-3xl shadow-[0_40px_140px_-30px_rgba(0,0,0,0.15)] rounded-3xl md:rounded-[4rem] overflow-hidden border border-white">
-        <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch min-h-fit lg:min-h-[600px]">
-          {/* LEFT: CONTENT (7 columns for more impact) */}
-          <div className="lg:col-span-7 p-6 sm:p-10 lg:p-20 space-y-8 lg:space-y-10 flex flex-col justify-center">
+      <motion.div className="relative w-full max-w-5xl h-fit max-h-full bg-white/60 backdrop-blur-3xl shadow-[0_32px_120px_-20px_rgba(0,0,0,0.12)] rounded-[2rem] md:rounded-[3rem] overflow-hidden border border-white/50 flex flex-col">
+        <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch min-h-0">
+          {/* LEFT: CONTENT (7 columns) */}
+          <div className="lg:col-span-7 p-6 sm:p-8 lg:p-10 xl:p-12 space-y-4 lg:space-y-6 flex flex-col justify-center min-h-0">
             <div className="space-y-4">
               <motion.div
                 initial={{ x: -20, opacity: 0 }}
@@ -44,14 +44,14 @@ export const WelcomeHero = ({ email, onDismiss }: WelcomeHeroProps) => {
                 <div className="w-10 h-[2px] bg-primary" />
                 SISTEMA INTELIGENTE LIDERA MINA
               </motion.div>
-              <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black tracking-tighter text-slate-800 leading-[0.95] lg:leading-[0.9]">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-black tracking-tighter text-slate-800 leading-[1] lg:leading-[0.95]">
                 Hola, <span className="text-primary italic">{name}</span>.{" "}
                 <br />
                 <span className="text-slate-400">Bienvenido/a.</span>
               </h1>
             </div>
 
-            <p className="max-w-xl text-base sm:text-lg lg:text-xl text-slate-400 font-medium leading-relaxed tracking-tight italic">
+            <p className="max-w-xl text-sm sm:text-base lg:text-lg xl:text-xl text-slate-400 font-medium leading-relaxed tracking-tight italic">
               "Estás a punto de acceder al más avanzado{" "}
               <span className="text-slate-600 font-bold">
                 ecosistema de gestión psicológica y operacional
@@ -94,27 +94,27 @@ export const WelcomeHero = ({ email, onDismiss }: WelcomeHeroProps) => {
 
             <button
               onClick={onDismiss}
-              className="w-full sm:w-fit px-12 py-6 bg-primary text-white rounded-[2.5rem] font-black uppercase tracking-[0.2em] text-[13px] shadow-2xl shadow-primary/30 hover:shadow-primary/50 hover:scale-[1.03] active:scale-95 transition-all flex items-center justify-center gap-4 group"
+              className="w-full sm:w-fit px-8 py-4 sm:px-10 sm:py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[11px] sm:text-[12px] shadow-xl shadow-primary/20 hover:shadow-primary/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 group mt-2"
             >
               Ingresar al Dashboard
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
             </button>
           </div>
 
           {/* RIGHT: VISUAL (5 columns) */}
-          <div className="lg:col-span-5 relative bg-slate-50/50 flex items-center justify-center p-8 sm:p-12 overflow-hidden border-t lg:border-t-0 lg:border-l border-white/50">
+          <div className="lg:col-span-5 relative bg-slate-50/30 flex items-center justify-center p-6 lg:p-8 overflow-hidden border-t lg:border-t-0 lg:border-l border-white/30 min-h-0">
             <div className="w-full relative max-w-sm">
               <motion.div
                 animate={{
-                  y: [0, -30, 0],
-                  rotate: [0, 6, 0],
+                  y: [0, -15, 0],
+                  rotate: [0, 3, 0],
                 }}
                 transition={{
                   duration: 8,
                   repeat: Infinity,
                   ease: "easeInOut",
                 }}
-                className="relative z-10 aspect-[4/5] bg-white shadow-[0_50px_100px_-20px_rgba(0,0,0,0.1)] rounded-3xl md:rounded-[4rem] border border-white p-6 sm:p-10 flex flex-col justify-between"
+                className="relative z-10 aspect-[4/4.5] bg-white shadow-[0_40px_80px_-15px_rgba(0,0,0,0.08)] rounded-[2rem] md:rounded-[2.5rem] border border-white p-6 sm:p-7 flex flex-col justify-between scale-85 lg:scale-100 origin-center"
               >
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">

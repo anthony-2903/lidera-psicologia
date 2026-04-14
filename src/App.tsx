@@ -78,10 +78,10 @@ const App = () => (
                   <Route path="dpms-raura" element={<DpmsRauraPage />} />
                   <Route path="locus-control" element={<LocusControlPage />} />
                    <Route path="dimensiones" element={<DimensionesPage />} />
-                   <Route path="welcome" element={<WelcomePage />} />
                    <Route path="admin" element={<AdminUsersPage />} />
+                   <Route path="welcome" element={<WelcomePage />} />
                  </Route>
-              </Route>
+               </Route>
 
               <Route path="*" element={<NotFound />} />
             </Routes>
