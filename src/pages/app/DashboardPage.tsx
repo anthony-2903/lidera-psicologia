@@ -82,7 +82,7 @@ const DashboardPage = () => {
 
   if (view === 'detail' && selectedGroup) {
     return (
-      <div className="space-y-6 md:space-y-8 pb-10 animate-in fade-in zoom-in-95 duration-500 ease-out fill-mode-forwards px-2 md:px-0">
+      <div className="space-y-6 md:space-y-8 pb-10 animate-in fade-in zoom-in-95 duration-500 ease-out fill-mode-forwards px-4 md:px-0">
         <div className="flex items-center justify-between">
           <Button 
             variant="ghost" 
@@ -104,7 +104,7 @@ const DashboardPage = () => {
             <UsersRound className="w-8 h-8 md:w-10 md:h-10" />
           </div>
           <div className="space-y-0.5 md:space-y-1">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tighter text-foreground leading-none">{selectedGroup.name}</h1>
+            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tighter text-foreground leading-none">{selectedGroup.name}</h1>
             <p className="text-muted-foreground text-sm md:text-lg font-medium flex items-center gap-2">
               <Info className="w-3.5 h-3.5 md:w-4 md:h-4" /> Análisis profundo de desempeño
             </p>
@@ -144,7 +144,7 @@ const DashboardPage = () => {
 
               <div className="bg-primary/5 rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-8 flex flex-col items-center justify-center text-center border border-primary/10">
                 <div className="text-[10px] font-black uppercase tracking-widest text-primary/60 mb-2">Avance Grupal</div>
-                <div className="text-5xl md:text-6xl lg:text-7xl font-black text-primary tracking-tighter">{selectedGroup.avgScore}%</div>
+                <div className="text-3xl sm:text-5xl lg:text-7xl font-black text-primary tracking-tighter">{selectedGroup.avgScore}%</div>
                 <div className="mt-3 md:mt-4 flex items-center gap-2 text-[10px] md:text-xs font-bold text-primary/80">
                   <TrendingUp className="w-3.5 h-3.5 md:w-4 md:h-4" />
                   Basado en estado de ejecución
@@ -235,10 +235,10 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="space-y-6 md:space-y-8 pb-10 animate-in fade-in slide-in-from-left-4 duration-500 fill-mode-forwards px-0 md:px-0">
+    <div className="space-y-6 md:space-y-8 pb-10 animate-in fade-in slide-in-from-left-4 duration-500 fill-mode-forwards px-4 md:px-0">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-2xl md:text-4xl font-black tracking-tighter text-foreground leading-none">Dashboard General</h1>
+          <h1 className="text-xl sm:text-4xl font-black tracking-tighter text-foreground leading-none">Dashboard General</h1>
           <p className="text-muted-foreground text-xs md:text-lg font-medium">Análisis de desempeño agrupado</p>
         </div>
         <div className="flex items-center gap-3">
@@ -279,7 +279,7 @@ const DashboardPage = () => {
 
       {/* Charts Summary: Restored Old View with Premium Touch */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card className="border-border/40 bg-white/60 backdrop-blur-xl shadow-2xl p-8 rounded-[3rem] overflow-hidden group">
+        <Card className="border-border/40 bg-white/60 backdrop-blur-xl shadow-2xl p-4 sm:p-8 rounded-2xl sm:rounded-[3rem] overflow-hidden group">
           <CardHeader className="px-0 pt-0 pb-8">
             <CardTitle className="text-sm font-black uppercase tracking-widest text-primary/60 flex items-center gap-3">
               <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -325,7 +325,7 @@ const DashboardPage = () => {
           </CardContent>
         </Card>
 
-        <Card className="border-border/40 bg-white/60 backdrop-blur-xl shadow-2xl p-8 rounded-[3rem] overflow-hidden group">
+        <Card className="border-border/40 bg-white/60 backdrop-blur-xl shadow-2xl p-4 sm:p-8 rounded-2xl sm:rounded-[3rem] overflow-hidden group">
           <CardHeader className="px-0 pt-0 pb-8">
             <CardTitle className="text-sm font-black uppercase tracking-widest text-indigo-400 flex items-center gap-3">
               <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center">

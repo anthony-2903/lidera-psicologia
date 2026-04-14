@@ -513,7 +513,7 @@ export default function DpmsRauraPage() {
   }
 
   return (
-    <div className="relative min-h-[calc(100vh-100px)] flex flex-col selection:bg-primary/20 overflow-x-hidden p-6 md:p-8 space-y-12">
+    <div className="relative min-h-[calc(100vh-100px)] flex flex-col selection:bg-primary/20 overflow-x-hidden p-4 md:p-8 space-y-12">
       <DashboardHeader
         title={
           <>
@@ -539,7 +539,7 @@ export default function DpmsRauraPage() {
           },
           { id: "comments", icon: MessageSquare, label: "Mesa de Voz" },
         ]}
-        className={cn(selectedEntry ? "pr-[450px]" : "")}
+        className={cn(selectedEntry ? "lg:pr-[450px]" : "")}
       />
 
       {/* --- CONTENT AREA --- */}
@@ -547,7 +547,7 @@ export default function DpmsRauraPage() {
       <div
         className={cn(
           "flex-1 space-y-20 transition-all duration-1000 cubic-bezier(0.23, 1, 0.32, 1)",
-          selectedEntry ? "pr-[400px] lg:pr-[450px]" : "",
+          selectedEntry ? "lg:pr-[450px]" : "",
         )}
       >
         {activeTab === "general" && (
@@ -599,23 +599,23 @@ export default function DpmsRauraPage() {
             {/* MAIN CHARTS SECTION */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
               {/* RADAR DIMENSIONS */}
-              <Card className="rounded-[4rem] border-2 border-border/40 bg-white/40 backdrop-blur-2xl shadow-3xl overflow-hidden group/card relative hover:border-primary/30 transition-all duration-1000">
+              <Card className="rounded-3xl lg:rounded-[4rem] border-2 border-border/40 bg-white/40 backdrop-blur-2xl shadow-3xl overflow-hidden group/card relative hover:border-primary/30 transition-all duration-1000">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none"></div>
-                <CardHeader className="p-12 pb-0 flex flex-col items-center gap-3 text-center">
+                <CardHeader className="p-6 lg:p-12 pb-0 flex flex-col items-center gap-3 text-center">
                   <Badge
                     variant="outline"
                     className="text-primary border-primary/20 px-6 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.4em] mb-4"
                   >
                     Neural Vision
                   </Badge>
-                  <CardTitle className="text-4xl font-black tracking-tighter italic lg:text-5xl uppercase">
+                  <CardTitle className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tighter italic uppercase">
                     Dimensiones Críticas
                   </CardTitle>
                   <CardDescription className="text-sm font-black uppercase tracking-[0.4em] opacity-40">
                     Mapeo de Madurez Evolutiva
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="p-12 h-[500px]">
+                <CardContent className="p-6 lg:p-12 h-[400px] lg:h-[500px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <RadarChart
                       cx="50%"
@@ -659,22 +659,22 @@ export default function DpmsRauraPage() {
               </Card>
 
               {/* AREAS BAR CHART */}
-              <Card className="rounded-[4rem] border-2 border-border/40 bg-white/40 backdrop-blur-2xl shadow-3xl overflow-hidden group/card relative hover:border-emerald-500/30 transition-all duration-1000">
+              <Card className="rounded-3xl lg:rounded-[4rem] border-2 border-border/40 bg-white/40 backdrop-blur-2xl shadow-3xl overflow-hidden group/card relative hover:border-emerald-500/30 transition-all duration-1000">
                 <div className="absolute inset-x-0 bottom-0 h-2 bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-1000"></div>
-                <CardHeader className="p-12 pb-0 text-center">
+                <CardHeader className="p-6 lg:p-12 pb-0 text-center">
                   <div className="flex justify-center mb-6">
                     <div className="w-16 h-16 rounded-[1.5rem] bg-emerald-500/10 flex items-center justify-center text-emerald-500 shadow-xl group-hover:rotate-12 transition-transform">
                       <BarChart3 className="w-8 h-8" />
                     </div>
                   </div>
-                  <CardTitle className="text-4xl font-black tracking-tighter lg:text-5xl italic uppercase">
+                  <CardTitle className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tighter italic uppercase">
                     Performance Local
                   </CardTitle>
                   <CardDescription className="text-[11px] font-black uppercase tracking-[0.5em] text-emerald-600/60 mt-4">
                     Comparativa Entre Áreas Operativas
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="p-12 h-[500px]">
+                <CardContent className="p-6 lg:p-12 h-[400px] lg:h-[500px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={data.areas}
@@ -736,9 +736,9 @@ export default function DpmsRauraPage() {
               {/* BAR CHART SECTION (Previous areas bar chart now takes 2 cols if needed, or we keep 3 charts in a row) */}
               {/* Let's place the Pie chart in 1 col and the analysis in 2 cols */}
 
-              <Card className="rounded-[4rem] border-2 border-border/40 bg-white/40 backdrop-blur-2xl shadow-3xl overflow-hidden group/card relative hover:border-primary/30 transition-all duration-1000 lg:col-span-1">
-                <CardHeader className="p-10 pb-0 text-center">
-                  <CardTitle className="text-3xl font-black tracking-tighter italic uppercase">
+              <Card className="rounded-3xl lg:rounded-[4rem] border-2 border-border/40 bg-white/40 backdrop-blur-2xl shadow-3xl overflow-hidden group/card relative hover:border-primary/30 transition-all duration-1000 lg:col-span-1">
+                <CardHeader className="p-6 lg:p-10 pb-0 text-center">
+                  <CardTitle className="text-xl sm:text-3xl font-black tracking-tighter italic uppercase">
                     Nivel de Seguridad
                   </CardTitle>
                   <CardDescription className="text-[10px] font-black uppercase tracking-[0.4em] opacity-40">
@@ -778,7 +778,7 @@ export default function DpmsRauraPage() {
                 </CardContent>
               </Card>
 
-              <Card className="rounded-[4rem] border-2 border-border/40 bg-white/40 backdrop-blur-2xl shadow-3xl overflow-hidden relative lg:col-span-2 p-12 flex flex-col justify-center space-y-10 group">
+              <Card className="rounded-3xl lg:rounded-[4rem] border-2 border-border/40 bg-white/40 backdrop-blur-2xl shadow-3xl overflow-hidden relative lg:col-span-2 p-6 sm:p-10 lg:p-12 flex flex-col justify-center space-y-10 group">
                 <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:scale-110 transition-transform duration-1000">
                   <TrendingUp className="w-40 h-40 text-primary" />
                 </div>
@@ -800,7 +800,7 @@ export default function DpmsRauraPage() {
                       Nivel: {behaviorCategory.name}
                     </Badge>
                   </div>
-                  <h3 className="text-5xl font-black tracking-tighter text-foreground leading-none italic max-w-2xl">
+                  <h3 className="text-3xl lg:text-5xl font-black tracking-tighter text-foreground leading-none italic max-w-2xl">
                     Análisis de Comportamiento y{" "}
                     <span className="text-primary not-italic">
                       ADN Preventivo
@@ -858,7 +858,7 @@ export default function DpmsRauraPage() {
 
             {/* CULTURE ANALYSIS SECTION */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-              <Card className="rounded-[4rem] border-2 border-border/40 bg-white/40 backdrop-blur-2xl shadow-3xl overflow-hidden relative lg:col-span-2 p-12 flex flex-col justify-center space-y-8 group">
+              <Card className="rounded-3xl lg:rounded-[4rem] border-2 border-border/40 bg-white/40 backdrop-blur-2xl shadow-3xl overflow-hidden relative lg:col-span-2 p-6 sm:p-10 lg:p-12 flex flex-col justify-center space-y-8 group">
                 <div className="absolute -bottom-10 -left-10 p-10 opacity-5 group-hover:scale-110 transition-transform duration-1000 rotate-12">
                   <Users className="w-60 h-60 text-primary" />
                 </div>
@@ -880,7 +880,7 @@ export default function DpmsRauraPage() {
                       Nivel: {cultureData.label}
                     </Badge>
                   </div>
-                  <h3 className="text-5xl font-black tracking-tighter text-foreground leading-none italic max-w-2xl">
+                  <h3 className="text-3xl lg:text-5xl font-black tracking-tighter text-foreground leading-none italic max-w-2xl">
                     Nivel de{" "}
                     <span className="text-blue-500 not-italic">Cultura</span>{" "}
                     Organizativa
@@ -944,16 +944,16 @@ export default function DpmsRauraPage() {
                 </div>
               </Card>
 
-              <Card className="rounded-[4rem] border-2 border-border/40 bg-white/40 backdrop-blur-2xl shadow-3xl overflow-hidden group/card relative hover:border-blue-400/30 transition-all duration-1000 lg:col-span-1">
+              <Card className="rounded-2xl lg:rounded-[4rem] border-2 border-border/40 bg-white/40 backdrop-blur-2xl shadow-3xl overflow-hidden group/card relative hover:border-blue-400/30 transition-all duration-1000 lg:col-span-1">
                 <div className="absolute inset-0 bg-gradient-to-t from-blue-500/5 to-transparent pointer-events-none"></div>
-                <CardHeader className="p-10 pb-0 text-center">
+                <CardHeader className="p-6 lg:p-10 pb-0 text-center">
                   <Badge
                     variant="outline"
                     className="text-blue-500 border-blue-500/20 px-6 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.4em] mb-4"
                   >
                     Culture Gauge
                   </Badge>
-                  <CardTitle className="text-3xl font-black tracking-tighter italic uppercase text-foreground">
+                  <CardTitle className="text-xl lg:text-3xl font-black tracking-tighter italic uppercase text-foreground">
                     Nivel del entorno en seguridad
                   </CardTitle>
                 </CardHeader>
@@ -1010,7 +1010,7 @@ export default function DpmsRauraPage() {
                   placeholder="Escaneando patrones por Área o Puesto..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-24 h-24 bg-white/60 backdrop-blur-3xl border-border/40 rounded-[3rem] shadow-2xl focus:ring-8 focus:ring-primary/5 text-2xl font-black tracking-tight relative z-10 border-2"
+                  className="pl-14 sm:pl-24 h-16 sm:h-24 bg-white/60 backdrop-blur-3xl border-border/40 rounded-2xl sm:rounded-[3rem] shadow-2xl focus:ring-8 focus:ring-primary/5 text-lg sm:text-2xl font-black tracking-tight relative z-10 border-2"
                 />
               </div>
               <div className="hidden xl:flex items-center gap-8 bg-card px-16 py-7 rounded-[3rem] border-2 border-border/20 shadow-3xl group ">
@@ -1033,7 +1033,7 @@ export default function DpmsRauraPage() {
               </div>
             </div>
 
-            <Card className="rounded-[4rem] border-border/40 bg-white/40 backdrop-blur-3xl shadow-3xl border-2 overflow-hidden">
+            <Card className="rounded-2xl sm:rounded-[4rem] border-border/40 bg-white/40 backdrop-blur-3xl shadow-3xl border-2 overflow-hidden">
               <div className="overflow-x-auto custom-scrollbar">
                 <Table>
                   <TableHeader className="bg-muted/40">
@@ -1166,12 +1166,18 @@ export default function DpmsRauraPage() {
 
       {/* FLOATING ACTION PANEL */}
       {selectedEntry && (
-        <div className="fixed inset-y-0 right-0 w-full md:w-[450px] lg:w-[500px] z-[100] animate-in slide-in-from-right duration-700 cubic-bezier(0.23, 1, 0.32, 1)">
-          <EntryPanel
-            entry={selectedEntry}
-            onClose={() => setSelectedEntry(null)}
+        <>
+          <div 
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[90] lg:hidden animate-in fade-in duration-500"
+            onClick={() => setSelectedEntry(null)}
           />
-        </div>
+          <div className="fixed inset-y-0 right-0 w-full sm:w-[450px] lg:w-[500px] z-[100] animate-in slide-in-from-right duration-700 cubic-bezier(0.23, 1, 0.32, 1)">
+            <EntryPanel
+              entry={selectedEntry}
+              onClose={() => setSelectedEntry(null)}
+            />
+          </div>
+        </>
       )}
 
       {/* DESIGN DECORATIONS */}

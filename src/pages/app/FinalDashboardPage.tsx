@@ -374,7 +374,7 @@ export default function FinalDashboardPage() {
     <div className="relative min-h-[calc(100vh-100px)] flex flex-col selection:bg-primary/20 overflow-x-hidden">
       <div className={cn(
         "flex-1 space-y-12 pb-24 px-4 md:px-0 transition-all duration-1000 cubic-bezier(0.4, 0, 0.2, 1) print:hidden",
-        selectedIndividual ? "pr-0 lg:pr-[450px] xl:pr-[500px]" : ""
+        selectedIndividual ? "lg:pr-[450px] xl:pr-[500px]" : ""
       )}>
         
         <DashboardHeader 
@@ -389,7 +389,7 @@ export default function FinalDashboardPage() {
             { id: 'charts', icon: LayoutDashboard, label: 'Global View' },
             { id: 'list', icon: Users, label: 'Evaluated Base' },
           ]}
-          className={cn(selectedIndividual ? "pr-0 lg:pr-[450px] xl:pr-[500px]" : "")}
+          className={cn(selectedIndividual ? "lg:pr-[450px] xl:pr-[500px]" : "")}
         />
 
         {/* --- KPI SUMMARY BAR --- */}
@@ -407,7 +407,7 @@ export default function FinalDashboardPage() {
           <div className="space-y-16 animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-400 fill-mode-forwards">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
               {/* PERSONALITY */}
-              <Card className="border-border/40 bg-card/30 backdrop-blur-xl shadow-2xl rounded-[2.5rem] overflow-hidden group/card relative border-2 hover:border-primary/20 transition-colors duration-700">
+              <Card className="border-border/40 bg-card/30 backdrop-blur-xl shadow-2xl rounded-3xl lg:rounded-[2.5rem] overflow-hidden group/card relative border-2 hover:border-primary/20 transition-colors duration-700">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent pointer-events-none opacity-0 group-hover/card:opacity-100 transition-opacity duration-1000"></div>
                 <CardHeader className="border-b border-border/20 p-8 bg-muted/5">
                   <div className="flex items-center justify-between">
@@ -416,14 +416,14 @@ export default function FinalDashboardPage() {
                         <BarChart3 className="w-6 h-6" />
                       </div>
                       <div>
-                        <CardTitle className="text-2xl font-black tracking-tighter italic">Perfil de Personalidad</CardTitle>
+                        <CardTitle className="text-xl lg:text-2xl font-black tracking-tighter italic">Perfil de Personalidad</CardTitle>
                         <p className="text-[9px] font-bold uppercase tracking-[0.4em] text-blue-500/60 mt-1">Big Five Dimensional Mapping</p>
                       </div>
                     </div>
-                    <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest">Global Sync</Badge>
+                    <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest text-center">Global Sync</Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="p-8 h-[400px]">
+                <CardContent className="p-4 lg:p-8 h-[300px] lg:h-[400px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart layout="vertical" data={data.personality} margin={{ top: 0, right: 40, left: 40, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="15 15" horizontal={false} stroke="hsl(var(--border)/0.4)" />
@@ -442,7 +442,7 @@ export default function FinalDashboardPage() {
               </Card>
 
               {/* MOTIVATIONAL */}
-              <Card className="border-border/40 bg-card/30 backdrop-blur-xl shadow-2xl rounded-[2.5rem] overflow-hidden group/card relative border-2 hover:border-orange-500/20 transition-colors duration-700">
+              <Card className="border-border/40 bg-card/30 backdrop-blur-xl shadow-2xl rounded-3xl lg:rounded-[2.5rem] overflow-hidden group/card relative border-2 hover:border-orange-500/20 transition-colors duration-700">
                  <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent pointer-events-none opacity-0 group-hover/card:opacity-100 transition-opacity duration-1000"></div>
                 <CardHeader className="border-b border-border/20 p-8 bg-muted/5">
                   <div className="flex items-center justify-between">
@@ -451,14 +451,14 @@ export default function FinalDashboardPage() {
                         <TrendingUp className="w-6 h-6" />
                       </div>
                       <div>
-                        <CardTitle className="text-2xl font-black tracking-tighter italic">Perfil Motivacional</CardTitle>
+                        <CardTitle className="text-xl lg:text-2xl font-black tracking-tighter italic">Perfil Motivacional</CardTitle>
                         <p className="text-[9px] font-bold uppercase tracking-[0.4em] text-orange-500/60 mt-1">Intrinsic Engagement Factors</p>
                       </div>
                     </div>
-                    <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/20 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest">Multi-Axis</Badge>
+                    <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/20 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest text-center">Multi-Axis</Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="p-8 h-[400px]">
+                <CardContent className="p-4 lg:p-8 h-[300px] lg:h-[400px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart layout="vertical" data={data.motivational} margin={{ top: 0, right: 40, left: 40, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="15 15" horizontal={false} stroke="hsl(var(--border)/0.4)" />
@@ -478,26 +478,26 @@ export default function FinalDashboardPage() {
             </div>
 
             {/* TEAMWORK - FULL WIDTH */}
-            <Card className="border-border/40 bg-card/30 backdrop-blur-xl shadow-2xl rounded-[5rem] overflow-hidden group/card relative border-2 hover:border-emerald-500/20 transition-all duration-1000">
+            <Card className="border-border/40 bg-card/30 backdrop-blur-xl shadow-2xl rounded-3xl lg:rounded-[5rem] overflow-hidden group/card relative border-2 hover:border-emerald-500/20 transition-all duration-1000">
                <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/10 via-transparent to-transparent pointer-events-none opacity-60"></div>
-              <CardHeader className="border-b border-border/20 p-16 bg-muted/5 px-20">
+              <CardHeader className="border-b border-border/20 p-6 lg:p-16 bg-muted/5 lg:px-20">
                 <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-12">
-                  <div className="flex items-center gap-8">
-                    <div className="w-24 h-24 rounded-[2.5rem] bg-emerald-500/10 flex items-center justify-center text-emerald-500 shadow-2xl border border-emerald-500/20 group-hover/card:rotate-6 transition-transform duration-1000">
-                      <Users2 className="w-12 h-12" />
+                  <div className="flex items-center gap-4 lg:gap-8">
+                    <div className="w-16 h-16 lg:w-24 lg:h-24 rounded-2xl lg:rounded-[2.5rem] bg-emerald-500/10 flex items-center justify-center text-emerald-500 shadow-2xl border border-emerald-500/20 group-hover/card:rotate-6 transition-transform duration-1000">
+                      <Users2 className="w-8 h-8 lg:w-12 lg:h-12" />
                     </div>
                     <div>
-                      <CardTitle className="text-5xl md:text-7xl font-black tracking-tighter decoration-emerald-500/30 underline-offset-[16px] italic">Perfil de Trabajo en Equipo</CardTitle>
-                      <p className="text-sm font-black uppercase tracking-[0.5em] text-muted-foreground/60 mt-5">Team Belbin Matrix</p>
+                      <CardTitle className="text-2xl sm:text-5xl lg:text-7xl font-black tracking-tighter decoration-emerald-500/30 underline-offset-[16px] italic leading-tight">Perfil de Trabajo en Equipo</CardTitle>
+                      <p className="text-xs font-black uppercase tracking-[0.5em] text-muted-foreground/60 mt-3 sm:mt-5">Team Belbin Matrix</p>
                     </div>
                   </div>
-                  <div className="px-12 py-6 rounded-[3rem] bg-background/60 border-2 border-border/10 backdrop-blur-3xl shadow-xl group/badge hover:border-emerald-500/30 transition-all">
-                    <div className="text-[11px] font-black uppercase tracking-[0.3em] text-emerald-600 mb-2">Belbin Roles Index</div>
-                    <div className="text-4xl font-black text-foreground tabular-nums">09 <span className="text-xl font-medium text-muted-foreground italic">Axes Analytics</span></div>
+                  <div className="px-6 lg:px-12 py-4 lg:py-6 rounded-2xl lg:rounded-[3rem] bg-background/60 border-2 border-border/10 backdrop-blur-3xl shadow-xl group/badge hover:border-emerald-500/30 transition-all">
+                    <div className="text-[10px] lg:text-[11px] font-black uppercase tracking-[0.3em] text-emerald-600 mb-1 lg:mb-2">Belbin Roles Index</div>
+                    <div className="text-2xl lg:text-4xl font-black text-foreground tabular-nums">09 <span className="text-sm lg:text-xl font-medium text-muted-foreground italic">Axes Analytics</span></div>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="p-16 h-[650px] px-20">
+              <CardContent className="p-6 lg:p-16 h-[400px] lg:h-[650px] lg:px-20">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={data.teamwork} margin={{ top: 20, right: 20, left: 20, bottom: 60 }}>
                     <CartesianGrid strokeDasharray="10 10" vertical={false} stroke="hsl(var(--border)/0.3)" />
@@ -521,18 +521,19 @@ export default function FinalDashboardPage() {
             </Card>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+              {/* SMALL PERFILES GRID */}
               {[
                 { title: "Perfil Proyectivo", desc: "Índice de Estabilidad Proyectiva", data: data.projective, type: "bar", colors: PROJ_COLORS_3 },
                 { title: "Perfil Liderazgo", desc: "Mapa de Alineación", data: data.leadership, type: "pie", colors: LEAD_COLORS_4 },
                 { title: "Perfil Conductual", desc: "Dinámica Psicosocial", data: data.behavioral, type: "pie", colors: PROJ_COLORS_3 },
               ].map((item, i) => (
-                <Card key={i} className="border-2 bg-card/30 backdrop-blur-xl shadow-2xl rounded-[4rem] overflow-hidden group hover:-translate-y-4 transition-all duration-1000 relative border-border/40 hover:border-primary/30">
+                <Card key={i} className="border-2 bg-card/30 backdrop-blur-xl shadow-2xl rounded-3xl lg:rounded-[4rem] overflow-hidden group hover:-translate-y-4 transition-all duration-1000 relative border-border/40 hover:border-primary/30">
                   <div className="absolute inset-x-0 bottom-0 h-1.5 bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
-                  <CardHeader className="p-12 pb-0 text-center space-y-3">
-                    <CardTitle className="text-3xl font-black tracking-tighter italic">{item.title}</CardTitle>
-                    <CardDescription className="text-[11px] font-black uppercase tracking-[0.4em] text-primary/70">{item.desc}</CardDescription>
+                  <CardHeader className="p-8 lg:p-12 pb-0 text-center space-y-3">
+                    <CardTitle className="text-2xl lg:text-3xl font-black tracking-tighter italic">{item.title}</CardTitle>
+                    <CardDescription className="text-[10px] font-black uppercase tracking-[0.4em] text-primary/70">{item.desc}</CardDescription>
                   </CardHeader>
-                  <CardContent className={cn("p-12 flex items-center justify-center relative", item.type === 'bar' ? 'h-[400px]' : 'h-[420px]')}>
+                  <CardContent className={cn("p-6 lg:p-12 flex items-center justify-center relative", item.type === 'bar' ? 'h-[300px] lg:h-[400px]' : 'h-[320px] lg:h-[420px]')}>
                     <ResponsiveContainer width="100%" height="100%">
                       {item.type === 'bar' ? (
                         <BarChart data={item.data} margin={{ bottom: 30 }}>
@@ -581,12 +582,12 @@ export default function FinalDashboardPage() {
             <div className="flex flex-col lg:flex-row gap-8 lg:items-center justify-between">
               <div className="relative w-full lg:w-[800px] group">
                  <div className="absolute -inset-1.5 bg-gradient-to-r from-primary/30 to-blue-500/30 blur-2xl opacity-0 group-hover:opacity-100 transition duration-1000"></div>
-                <Search className="absolute left-8 top-1/2 -translate-y-1/2 w-6 h-6 text-primary relative z-10" />
+                <Search className="absolute left-6 sm:left-8 top-1/2 -translate-y-1/2 w-5 h-5 sm:w-6 h-6 text-primary relative z-10" />
                 <Input 
                   placeholder="Filtrar por nombre, DNI o cargo..." 
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-20 h-20 bg-card/50 backdrop-blur-3xl border-border/40 rounded-[2.5rem] shadow-xl focus:ring-4 focus:ring-primary/10 text-xl font-bold relative z-10 border-2"
+                  className="pl-14 sm:pl-20 h-16 sm:h-20 bg-card/50 backdrop-blur-3xl border-border/40 rounded-2xl sm:rounded-[2.5rem] shadow-xl focus:ring-4 focus:ring-primary/10 text-lg sm:text-xl font-bold relative z-10 border-2"
                 />
               </div>
               <div className="flex items-center gap-6 bg-card/80 backdrop-blur-2xl px-12 py-5 rounded-[2.5rem] border-2 border-border/20 shadow-2xl group hover:border-emerald-500/30 transition-all">
@@ -600,7 +601,7 @@ export default function FinalDashboardPage() {
                  </div>
               </div>
             </div>
-            <Card className="border-border/40 bg-card/40 backdrop-blur-3xl shadow-2xl rounded-[3rem] border-2">
+            <Card className="border-border/40 bg-card/40 backdrop-blur-3xl shadow-2xl rounded-2xl lg:rounded-[3rem] border-2">
               <div className="overflow-x-auto custom-scrollbar">
                 <Table>
                   <TableHeader className="bg-muted/50">
@@ -716,7 +717,7 @@ export default function FinalDashboardPage() {
       <div className={cn(
         "fixed top-0 right-0 h-screen z-50 transition-all duration-1000 cubic-bezier(0.4, 0, 0.2, 1)",
         selectedIndividual 
-          ? "w-full md:w-[450px] lg:w-[500px] xl:w-[550px] translate-x-0" 
+          ? "w-full sm:w-[500px] lg:w-[500px] xl:w-[550px] translate-x-0" 
           : "w-0 translate-x-full pointer-events-none"
       )}>
         {selectedIndividual && (
