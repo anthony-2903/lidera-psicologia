@@ -4,7 +4,7 @@ import { fetchLocusControlData, LocusControlEntry } from "@/lib/sheets-adapter";
 import { 
   Target, Brain, Zap, ShieldCheck, Users, Search, RefreshCw, AlertCircle,
   TrendingUp, ArrowRight, User, Filter, Globe, ChevronRight, LayoutDashboard, List,
-  X, FileDown, Sparkles, ActivityIcon
+  X, FileDown, Sparkles, ActivityIcon, FileSpreadsheet
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -200,7 +200,7 @@ const LocusIndividualPanel = ({ entry, onClose }: { entry: LocusControlEntry, on
            <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground/80 px-2 flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-primary" /> Regla de Dictamen Directo
            </h4>
-           <div className="bg-background/40 rounded-[2.5rem] p-8 border border-border/10 shadow-xl space-y-10 relative overflow-hidden">
+           <div id="individual-ruler" className="bg-background/40 rounded-[2.5rem] p-8 border border-border/10 shadow-xl space-y-10 relative overflow-hidden">
               <div className="flex justify-between text-[8px] font-black uppercase text-muted-foreground/40 px-1 italic">
                  <span>Dominancia Externa (Inapto)</span>
                  <span>Neutral</span>
@@ -255,7 +255,7 @@ const LocusIndividualPanel = ({ entry, onClose }: { entry: LocusControlEntry, on
            </div>
         </div>
 
-        <div className="p-6 bg-slate-900 rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden group">
+        <div id="individual-diagnosis" className="p-6 bg-slate-900 rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-[60px] -translate-y-1/2 translate-x-1/2 opacity-50" />
           <h4 className="text-[11px] font-black uppercase mb-4 text-primary flex items-center gap-2">
              <Sparkles className="w-4 h-4" /> Descriptivo Diagnóstico
@@ -268,6 +268,116 @@ const LocusIndividualPanel = ({ entry, onClose }: { entry: LocusControlEntry, on
           className="w-full h-14 rounded-2xl gap-3 bg-primary text-primary-foreground font-black uppercase tracking-widest text-xs shadow-xl shadow-primary/20"
         >
            <FileDown className="w-5 h-5" /> Descargar Informe PDF
+        </Button>
+        <Button 
+          onClick={async () => {
+            const excelWindow = window.open('', '_blank');
+            if (!excelWindow) return;
+            
+            const analysis = getAnalysis(entry.internalScore, entry.externalScore);
+            const diff = entry.internalScore - entry.externalScore;
+            const resultText = indIsApto ? 'APTO' : 'NO APTO';
+            const resultColor = indIsApto ? 'FFD1FAE5' : 'FFFEE2E2'; 
+            const resultTextCol = indIsApto ? 'FF059669' : 'FFDC2626'; 
+
+            // @ts-ignore
+            const h2c = window.html2canvas || await new Promise((resolve) => {
+              const script = document.createElement('script');
+              script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+              script.onload = () => resolve((window as any).html2canvas);
+              document.head.appendChild(script);
+            });
+
+            const rulerElement = document.getElementById('individual-ruler');
+            const diagnosisElement = document.getElementById('individual-diagnosis');
+            
+            const [rulerCanvas, diagCanvas] = await Promise.all([
+              h2c(rulerElement, { scale: 2, backgroundColor: null, useCORS: true }),
+              h2c(diagnosisElement, { scale: 2, backgroundColor: '#0f172a', useCORS: true })
+            ]);
+
+            const rulerImg = (rulerCanvas as any).toDataURL('image/png');
+            const diagImg = (diagCanvas as any).toDataURL('image/png');
+
+            const script = `
+              <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
+              <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+              <script>
+                window.onload = async () => {
+                  const workbook = new ExcelJS.Workbook();
+                  const worksheet = workbook.addWorksheet('Informe Individual');
+                  
+                  const headerStyle = {
+                    font: { bold: true, color: { argb: 'FFFFFFFF' } },
+                    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4F46E5' } },
+                    alignment: { horizontal: 'center' }
+                  };
+
+                  worksheet.mergeCells('A1:B1');
+                  worksheet.getCell('A1').value = 'DATOS DEL EVALUADO';
+                  worksheet.getCell('A1').style = headerStyle;
+
+                  const data = ${JSON.stringify({
+                    ID: `LOC-${entry.id}`,
+                    Nombre: entry.name,
+                    Empresa: entry.company,
+                    Puesto: entry.position,
+                    'Puntaje Interno': entry.internalScore,
+                    'Puntaje Externo': entry.externalScore,
+                    Balance: diff,
+                    Resultado: resultText
+                  })};
+
+                  let rowIdx = 2;
+                  Object.entries(data).forEach(([key, value]) => {
+                    const row = worksheet.getRow(rowIdx);
+                    row.getCell(1).value = key;
+                    row.getCell(2).value = value;
+                    row.getCell(1).font = { bold: true };
+                    
+                    if (key === 'Resultado') {
+                      row.getCell(2).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '${resultColor.replace('#', '')}' } };
+                      row.getCell(2).font = { bold: true, color: { argb: '${resultTextCol.replace('#', '')}' } };
+                    }
+                    rowIdx++;
+                  });
+
+                  let currentY = rowIdx + 1;
+                  const rulerImgSource = "${rulerImg}";
+                  if (rulerImgSource && rulerImgSource !== "null") {
+                    const imgId = workbook.addImage({ base64: rulerImgSource, extension: 'png' });
+                    worksheet.addImage(imgId, {
+                      tl: { col: 0, row: currentY },
+                      ext: { width: 600, height: 200 }
+                    });
+                    currentY += 12;
+                  }
+
+                  const diagImgSource = "${diagImg}";
+                  if (diagImgSource && diagImgSource !== "null") {
+                    const imgId = workbook.addImage({ base64: diagImgSource, extension: 'png' });
+                    worksheet.addImage(imgId, {
+                      tl: { col: 0, row: currentY },
+                      ext: { width: 600, height: 120 }
+                    });
+                  }
+
+                  worksheet.getColumn(1).width = 25;
+                  worksheet.getColumn(2).width = 40;
+
+                  const buffer = await workbook.xlsx.writeBuffer();
+                  saveAs(new Blob([buffer]), "Informe_Locus_${entry.name.replace(/\s+/g, '_')}.xlsx");
+                  setTimeout(() => window.close(), 1000);
+                };
+              </script>
+            `;
+            excelWindow.document.write(script);
+            excelWindow.document.close();
+          }}
+          variant="outline"
+          className="w-full h-14 rounded-2xl gap-3 border-primary/20 hover:bg-primary/5 text-primary font-black uppercase tracking-widest text-xs"
+        >
+           <FileSpreadsheet className="w-5 h-5" /> Descargar Excel
         </Button>
       </div>
     </div>
@@ -283,6 +393,136 @@ const LocusControlPage = () => {
     queryKey: ['locusControl', SHEET_ID],
     queryFn: () => fetchLocusControlData(SHEET_ID),
   });
+
+  const handleDownloadExcelDashboard = async () => {
+    const excelWindow = window.open('', '_blank');
+    if (!excelWindow) return;
+
+    // @ts-ignore
+    const h2c = window.html2canvas || await new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+      script.onload = () => resolve((window as any).html2canvas);
+      document.head.appendChild(script);
+    });
+
+    const pieElement = document.getElementById('dashboard-pie-chart');
+    const compElement = document.getElementById('dashboard-comparison-chart');
+
+    const [pieCanvas, compCanvas] = await Promise.all([
+      h2c(pieElement, { scale: 2, useCORS: true }),
+      h2c(compElement, { scale: 2, useCORS: true })
+    ]);
+
+    const pieImg = (pieCanvas as any).toDataURL('image/png');
+    const compImg = (compCanvas as any).toDataURL('image/png');
+
+    const excelData = filteredEntries.map(entry => ({
+      ID: `LOC-${entry.id}`,
+      Nombre: entry.name,
+      Empresa: entry.company,
+      Puesto: entry.position,
+      'Puntaje Interno': entry.internalScore,
+      'Puntaje Externo': entry.externalScore,
+      Balance: entry.internalScore - entry.externalScore,
+      Resultado: entry.result,
+      'Diagnóstico': entry.internalScore - entry.externalScore > 0 
+        ? "Perfil con dominancia interna. El evaluado asume responsabilidad directa sobre sus acciones y resultados, mostrando proactividad en seguridad." 
+        : "Perfil con dominancia externa. Existe una tendencia a atribuir resultados a factores ajenos, lo que sugiere una menor autonomía operativa."
+    }));
+
+      const script = `
+        <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+        <script>
+          window.onload = async () => {
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('Dashboard Data');
+            
+            // Título
+            worksheet.mergeCells('A1:I1');
+            const titleCell = worksheet.getCell('A1');
+            titleCell.value = 'REPORTE EJECUTIVO - LOCUS DE CONTROL';
+            titleCell.font = { size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+            titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E1B4B' } };
+            titleCell.alignment = { horizontal: 'center' };
+
+            // Gráficos
+            let currentY = 3;
+            const pieImgSource = "${pieImg}";
+            if (pieImgSource && pieImgSource !== "null") {
+              const imgId = workbook.addImage({ base64: pieImgSource, extension: 'png' });
+              worksheet.addImage(imgId, {
+                tl: { col: 0, row: currentY },
+                ext: { width: 350, height: 300 }
+              });
+            }
+
+            const compImgSource = "${compImg}";
+            if (compImgSource && compImgSource !== "null") {
+              const imgId = workbook.addImage({ base64: compImgSource, extension: 'png' });
+              worksheet.addImage(imgId, {
+                tl: { col: 4, row: currentY },
+                ext: { width: 550, height: 300 }
+              });
+            }
+
+            currentY += 18;
+
+            // Tabla de Datos
+            const headers = ['ID', 'Nombre', 'Empresa', 'Puesto', 'Interno', 'Externo', 'Balance', 'Resultado', 'Diagnóstico'];
+            const headerRow = worksheet.getRow(currentY);
+            headers.forEach((h, i) => {
+              const cell = headerRow.getCell(i + 1);
+              cell.value = h;
+              cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4F46E5' } };
+            });
+
+            const data = ${JSON.stringify(excelData)};
+            data.forEach((item, idx) => {
+              const row = worksheet.getRow(currentY + 1 + idx);
+              row.getCell(1).value = item.ID;
+              row.getCell(2).value = item.Nombre;
+              row.getCell(3).value = item.Empresa;
+              row.getCell(4).value = item.Puesto;
+              row.getCell(5).value = item['Puntaje Interno'];
+              row.getCell(6).value = item['Puntaje Externo'];
+              row.getCell(7).value = item.Balance;
+              row.getCell(8).value = item.Resultado;
+              row.getCell(9).value = item.Diagnóstico;
+
+              // Formato condicional colores
+              const resCell = row.getCell(8);
+              if (item.Resultado === 'APTO') {
+                resCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD1FAE5' } };
+                resCell.font = { color: { argb: 'FF059669' }, bold: true };
+              } else if (item.Resultado === 'RIESGO MEDIO') {
+                resCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEF3C7' } };
+                resCell.font = { color: { argb: 'FFD97706' }, bold: true };
+              } else {
+                resCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEE2E2' } };
+                resCell.font = { color: { argb: 'FFDC2626' }, bold: true };
+              }
+            });
+
+            // Ajustes de ancho
+            worksheet.getColumn(1).width = 12;
+            worksheet.getColumn(2).width = 30;
+            worksheet.getColumn(3).width = 20;
+            worksheet.getColumn(4).width = 25;
+            worksheet.getColumn(8).width = 15;
+            worksheet.getColumn(9).width = 50;
+
+            const buffer = await workbook.xlsx.writeBuffer();
+            saveAs(new Blob([buffer]), "Reporte_General_Locus.xlsx");
+            setTimeout(() => window.close(), 1000);
+          };
+        </script>
+      `;
+      excelWindow.document.write(script);
+      excelWindow.document.close();
+  };
 
   const handlePrintDashboard = () => {
     const printWindow = window.open('', '_blank');
@@ -414,6 +654,9 @@ const LocusControlPage = () => {
             <Button variant="ghost" size="icon" onClick={() => handlePrintDashboard()} className="rounded-xl text-primary hover:bg-primary/10">
               <FileDown className="w-4 h-4" />
             </Button>
+            <Button variant="ghost" size="icon" onClick={() => handleDownloadExcelDashboard()} className="rounded-xl text-emerald-600 hover:bg-emerald-500/10">
+              <FileSpreadsheet className="w-4 h-4" />
+            </Button>
             <Button variant="ghost" size="icon" onClick={() => refetch()} className="rounded-xl">
               <RefreshCw className={cn("w-4 h-4", isFetching && "animate-spin")} />
             </Button>
@@ -460,7 +703,7 @@ const LocusControlPage = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
               {/* Chart: Risk Distribution */}
-              <Card className="lg:col-span-4 border-2 shadow-2xl rounded-[2.5rem] overflow-hidden group">
+              <Card id="dashboard-pie-chart" className="lg:col-span-4 border-2 shadow-2xl rounded-[2.5rem] overflow-hidden group">
                 <CardHeader className="bg-muted/5 border-b border-border/20 p-8">
                   <CardTitle className="text-xl font-black italic tracking-tighter">Distribución de Aptitud</CardTitle>
                   <CardDescription className="text-[10px] font-bold uppercase tracking-widest text-primary/60">Segmentación por puntaje interno</CardDescription>
@@ -508,7 +751,7 @@ const LocusControlPage = () => {
               </Card>
 
               {/* Chart: Level Line Comparison */}
-              <Card className="lg:col-span-8 border-2 shadow-2xl rounded-[2.5rem] overflow-hidden group relative">
+              <Card id="dashboard-comparison-chart" className="lg:col-span-8 border-2 shadow-2xl rounded-[2.5rem] overflow-hidden group relative">
                 <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
                 <CardHeader className="bg-muted/5 border-b border-border/20 p-8">
                   <CardTitle className="text-xl font-black italic tracking-tighter">Comparativa Locus Interno vs Externo</CardTitle>
