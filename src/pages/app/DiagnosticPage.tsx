@@ -11,8 +11,15 @@ import {
   Loader2, RefreshCw, AlertCircle, ClipboardCheck, Users, Activity,
   BarChart3, TableIcon, Search, X, Eye, EyeOff, User,
   Calendar, Building2, Briefcase, GraduationCap, ArrowLeft, ChevronRight,
-  Pencil, Trash2,
+  Pencil, Trash2, Filter,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 const SHEET_ID = "1abuYNzrdEH_6YCzlq31SAA9zLrbov0kt03gWNQPKUeU";
@@ -248,85 +255,125 @@ const TableView = ({
       style={{ height: "calc(100vh - 80px)" }}>
 
       {/* ── Toolbar ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3
-                      px-4 md:px-8 py-3 border-b border-border/40 bg-card/80 backdrop-blur-md shrink-0">
-        <div className="flex items-center gap-3 min-w-0">
-          <Button variant="ghost" onClick={onBack}
-            className="gap-2 font-black uppercase text-[10px] tracking-widest text-muted-foreground hover:text-primary p-0 h-auto shrink-0">
-            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-              <ArrowLeft className="w-4 h-4" />
+      <div className="flex flex-col gap-4 px-4 md:px-8 py-4 border-b border-border/40 bg-card/80 backdrop-blur-md shrink-0">
+        
+        {/* Nivel 1: Título y Navegación */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <Button variant="ghost" onClick={onBack}
+              className="gap-2 font-black uppercase text-[10px] tracking-widest text-muted-foreground hover:text-primary p-0 h-auto shrink-0 group/back">
+              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center group-hover/back:bg-primary/10 group-hover/back:text-primary transition-all">
+                <ArrowLeft className="w-4 h-4" />
+              </div>
+              <span className="hidden sm:inline">Volver</span>
+            </Button>
+            <div className="h-5 w-px bg-border/50 shrink-0" />
+            <div className="flex flex-col">
+              <h2 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground leading-none">
+                Seguimiento de Aplicación
+              </h2>
+              <div className="flex items-center gap-2 mt-1">
+                <TableIcon className="w-3.5 h-3.5 text-primary" />
+                <h1 className="text-sm font-black uppercase tracking-tight text-foreground truncate">
+                  Visualización de Datos
+                </h1>
+                <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px] font-bold py-0.5">
+                  {filteredRows.length} {filteredRows.length === 1 ? 'Registro' : 'Registros'}
+                </Badge>
+              </div>
             </div>
-            Volver
-          </Button>
-          <div className="h-5 w-px bg-border/50 shrink-0" />
-          <h2 className="text-sm font-black uppercase tracking-tight text-foreground truncate">
-            Tabla — Seguimiento de Aplicación
-          </h2>
-          <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px] font-bold shrink-0">
-            {filteredRows.length} reg.
-          </Badge>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+             <button
+              onClick={handleRevealAll}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wide border transition-all shadow-sm",
+                allRevealed
+                  ? "bg-amber-500 text-white border-amber-600 hover:bg-amber-600"
+                  : "bg-background text-foreground border-border/40 hover:bg-muted"
+              )}
+            >
+              {allRevealed ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              <span className="hidden sm:inline">{allRevealed ? "Ocultar" : "Revelar Todo"}</span>
+            </button>
+          </div>
         </div>
 
-        {/* Right controls */}
-        <div className="flex items-center gap-2 shrink-0">
-          {/* Area pills */}
-          <div className="hidden lg:flex gap-1.5 flex-wrap">
-            {uniqueAreas.map((area) => (
-              <button key={area} onClick={() => setAreaFilter(area)}
-                className={cn(
-                  "px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wide border transition-all",
-                  areaFilter === area
-                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                    : "bg-muted/60 text-muted-foreground border-border/40 hover:bg-muted"
-                )}>
-                {area}
-              </button>
-            ))}
-          </div>
-          {/* Reveal All toggle */}
-          <button
-            onClick={handleRevealAll}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wide border transition-all",
-              allRevealed
-                ? "bg-amber-500/15 text-amber-700 border-amber-500/30 hover:bg-amber-500/25"
-                : "bg-muted text-muted-foreground border-border/40 hover:bg-muted/80"
+        {/* Nivel 2: Filtros y Búsqueda */}
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+          
+          {/* Filter Group */}
+          <div className="flex items-center gap-2 flex-1">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/40 rounded-xl border border-border/20 flex-1 md:flex-none">
+              <Filter className="w-3.5 h-3.5 text-muted-foreground" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mr-1">Área:</span>
+              
+              {uniqueAreas.length <= 5 ? (
+                <div className="flex gap-1">
+                  {uniqueAreas.map((area) => (
+                    <button 
+                      key={area} 
+                      onClick={() => setAreaFilter(area)}
+                      className={cn(
+                        "px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase transition-all whitespace-nowrap",
+                        areaFilter === area
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:bg-muted"
+                      )}
+                    >
+                      {area}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <Select value={areaFilter} onValueChange={setAreaFilter}>
+                  <SelectTrigger className="h-6 border-none bg-transparent p-0 text-[10px] font-bold uppercase tracking-wide focus:ring-0 w-auto min-w-[120px]">
+                    <SelectValue placeholder="Seleccionar área" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-border/40 shadow-2xl">
+                    {uniqueAreas.map((area) => (
+                      <SelectItem key={area} value={area} className="text-[10px] font-bold uppercase tracking-wide">
+                        {area}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+
+            {/* Clear Filters (if any) */}
+            {(areaFilter !== "TODOS" || search) && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => { setAreaFilter("TODOS"); setSearch(""); }}
+                className="h-8 px-2 text-[9px] font-bold uppercase text-muted-foreground hover:text-destructive gap-1 transition-colors"
+              >
+                <X className="w-3 h-3" /> Limpiar
+              </Button>
             )}
-          >
-            {allRevealed ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-            {allRevealed ? "Ocultar Todo" : "Revelar Todo"}
-          </button>
+          </div>
+
           {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/40" />
+          <div className="relative md:w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
             <Input
-              placeholder="Buscar..."
+              placeholder="Buscar por nombre, DNI o cargo..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 h-8 text-xs rounded-xl bg-background/80 border-border/40 w-44 md:w-56"
+              className="pl-9 h-10 text-xs rounded-xl bg-background border-border/60 focus:border-primary/40 focus:ring-primary/20 transition-all shadow-inner"
             />
             {search && (
-              <button onClick={() => setSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2">
+              <button 
+                onClick={() => setSearch("")} 
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full hover:bg-muted"
+              >
                 <X className="w-3.5 h-3.5 text-muted-foreground" />
               </button>
             )}
           </div>
         </div>
-      </div>
-
-      {/* Mobile area pills */}
-      <div className="lg:hidden flex gap-2 flex-wrap px-4 py-2 border-b border-border/30 bg-muted/10 shrink-0">
-        {uniqueAreas.map((area) => (
-          <button key={area} onClick={() => setAreaFilter(area)}
-            className={cn(
-              "px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wide border transition-all",
-              areaFilter === area
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-muted/60 text-muted-foreground border-border/40"
-            )}>
-            {area}
-          </button>
-        ))}
       </div>
 
       {/* ── Main content: table + person panel ── */}
