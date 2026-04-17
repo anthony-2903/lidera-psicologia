@@ -637,7 +637,9 @@ export const fetchRauraData = async (sheetId: string): Promise<RauraDashboardDat
 // FUNCION PARSER LOCUS DE CONTROL
 // ============================================
 export const fetchLocusControlData = async (sheetId: string): Promise<LocusControlData> => {
-  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+  // Use the specific GID for "BASE DE CONTROL"
+  const gid = "246660500";
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
 
   const response = await fetch(url);
   if (!response.ok) throw new Error('Failed to fetch Locus de Control data');
@@ -649,31 +651,47 @@ export const fetchLocusControlData = async (sheetId: string): Promise<LocusContr
       skipEmptyLines: true,
       complete: (results) => {
         const rows = results.data;
+        // The sheet has headers in the first row
         if (rows.length < 2) {
           reject(new Error("No data found in Locus de Control sheet"));
           return;
         }
+
+        const internalKey: Record<number, string> = {
+          1: 'b', 2: 'a', 3: 'a', 4: 'a', 5: 'b', 6: 'b', 7: 'b', 8: 'a', 9: 'a', 10: 'a',
+          11: 'a', 12: 'a', 13: 'b', 14: 'b', 15: 'b', 16: 'b', 17: 'b', 18: 'a', 19: 'b', 20: 'b',
+          21: 'a', 22: 'a', 23: 'b'
+        };
 
         const entries: LocusControlEntry[] = [];
         const riskCounts = { 'RIESGO ALTO': 0, 'RIESGO MEDIO': 0, 'APTO': 0 };
 
         for (let i = 1; i < rows.length; i++) {
           const r = rows[i];
-          if (!r[1]) continue;
+          if (!r[0] || r[0] === 'APELLIDOS Y NOMBRES') continue;
 
-          const internal = parseInt(r[4]) || 0;
-          const external = parseInt(r[5]) || 0;
+          let internalScore = 0;
+          // Questions P1 to P23 are in columns D to Z (indices 3 to 25)
+          for (let q = 1; q <= 23; q++) {
+            const responseValue = (r[q + 2] || '').trim().toLowerCase();
+            if (responseValue === internalKey[q]) {
+              internalScore++;
+            }
+          }
+
+          const externalScore = 23 - internalScore;
           
-          // Nueva Clasificación: Balance Interno vs Externo
-          const diff = internal - external;
+          // User Classification:
+          // 19 to 23 points: Apto
+          // 13 to 18 points: Riesgo medio
+          // 12 points or less: Riesgo alto
           let result: string;
-          
-          if (diff > 5) {
+          if (internalScore >= 19) {
             result = 'APTO';
-          } else if (diff < -5) {
-            result = 'RIESGO ALTO';
-          } else {
+          } else if (internalScore >= 13) {
             result = 'RIESGO MEDIO';
+          } else {
+            result = 'RIESGO ALTO';
           }
 
           if (riskCounts[result as keyof typeof riskCounts] !== undefined) {
@@ -681,19 +699,19 @@ export const fetchLocusControlData = async (sheetId: string): Promise<LocusContr
           }
 
           entries.push({
-            id: parseInt(r[0]) || i,
-            name: r[1],
-            company: r[2],
-            position: r[3],
-            internalScore: internal,
-            externalScore: external,
+            id: i,
+            name: r[0],
+            company: r[1],
+            position: r[2],
+            internalScore,
+            externalScore,
             result,
-            date: r[7] || ''
+            date: '2024-04-17' // Placeholder or extracting from somewhere if available
           });
         }
 
-        const avgInternal = entries.reduce((acc, curr) => acc + curr.internalScore, 0) / entries.length;
-        const avgExternal = entries.reduce((acc, curr) => acc + curr.externalScore, 0) / entries.length;
+        const avgInternal = entries.length > 0 ? entries.reduce((acc, curr) => acc + curr.internalScore, 0) / entries.length : 0;
+        const avgExternal = entries.length > 0 ? entries.reduce((acc, curr) => acc + curr.externalScore, 0) / entries.length : 0;
 
         const riskDistribution = [
           { name: 'RIESGO ALTO', value: riskCounts['RIESGO ALTO'] },

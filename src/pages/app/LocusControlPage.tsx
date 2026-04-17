@@ -17,7 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { KpiCard } from "@/components/dashboard/DashboardCards";
 import { cn } from "@/lib/utils";
 
-const SHEET_ID = "1W5-F5SXjJBsFehhBd_5EQwaxarP99HoE9Z1ak-93sSM";
+const SHEET_ID = "1nrHMcI8fWlBKIWIv9aprjElPhY-ccmXX";
 
 const RISK_COLORS = {
   'RIESGO ALTO': '#ef4444',   // Red-500
@@ -25,14 +25,57 @@ const RISK_COLORS = {
   'APTO': '#10b981'           // Emerald-500
 };
 
+const RECOMMENDATIONS = {
+  'APTO': {
+    title: '🟢 RECOMENDACIÓN: APTO (Bajo Riesgo)',
+    desc: 'Trabajadores con alto nivel de responsabilidad (control interno).',
+    rec: [
+      'Asignar tareas críticas sin restricción',
+      'Designarlos como mentores o referentes en seguridad',
+      'Reconocer su comportamiento seguro (motivación)',
+      'Incluirlos como apoyo en capacitaciones o talleres',
+      'Mantener seguimiento preventivo'
+    ],
+    followUp: 'Reevaluación cada 12 meses'
+  },
+  'RIESGO MEDIO': {
+    title: '🟡 RECOMENDACIÓN: RIESGO MEDIO (Riesgo Moderado)',
+    desc: 'Trabajadores con responsabilidad parcial, pero con tendencia a justificar errores.',
+    rec: [
+      'Realizar talleres de autorresponsabilidad en seguridad',
+      'Capacitación en: toma de decisiones, manejo de errores, cultura de seguridad',
+      'Brindar retroalimentación individual',
+      'Incluirlos en programas de: observación de conducta y seguimiento en campo',
+      'Reforzar supervisión en tareas críticas'
+    ],
+    followUp: 'Reevaluación cada 6 meses. Monitoreo trimestral de incidentes.'
+  },
+  'RIESGO ALTO': {
+    title: '🔴 RECOMENDACIÓN: RIESGO ALTO (Alto Riesgo)',
+    desc: 'Trabajadores con tendencia fuerte a no asumir responsabilidad.',
+    rec: [
+      'Realizar intervención psicológica individual',
+      'Restricción temporal de tareas críticas y zonas de alto riesgo',
+      'Implementar programas intensivos de: conducta segura y responsabilidad personal',
+      'Coordinación directa con RRHH y supervisores',
+      'Notificación formal del estado de riesgo'
+    ],
+    followUp: 'Evaluación cada 3 meses. Seguimiento mensual. Levantar restricciones solo si mejora su nivel.'
+  }
+};
+
 // Panel Lateral de Detalle Individual
-const LocusIndividualPanel = ({ entry, onClose }: { entry: LocusControlEntry, onClose: () => void }) => {
+const LocusIndividualPanel = ({ entry, distribution, onClose }: { 
+  entry: LocusControlEntry, 
+  distribution: { name: string, value: number }[],
+  onClose: () => void 
+}) => {
   const internalPct = (entry.internalScore / 23) * 100;
   
   const getAnalysis = (internal: number, external: number) => {
-    const diff = internal - external;
-    if (diff > 0) return "Perfil con dominancia interna. El evaluado asume responsabilidad directa sobre sus acciones y resultados, mostrando proactividad en seguridad. SE CONSIDERA APTO.";
-    return "Perfil con dominancia externa. Existe una tendencia a atribuir resultados a factores ajenos, lo que sugiere una menor autonomía operativa. NO SE CONSIDERA APTO.";
+    if (internal >= 19) return "Perfil con dominancia interna sólida (Apto). El evaluado asume responsabilidad directa sobre sus acciones y resultados, mostrando un alto compromiso con la seguridad operativa y el cumplimiento de normas.";
+    if (internal >= 13) return "Perfil con control de riesgo medio. Si bien asume responsabilidad, aún existe una tendencia parcial a atribuir eventos a factores externos. Se recomienda reforzamiento en cultura de seguridad.";
+    return "Perfil con dominancia externa (Riesgo Alto). Existe una marcada tendencia a atribuir los resultados a factores ajenos a su voluntad, lo que aumenta la probabilidad de conductas inseguras por falta de responsabilidad personal.";
   };
 
   const handlePrint = () => {
@@ -41,8 +84,10 @@ const LocusIndividualPanel = ({ entry, onClose }: { entry: LocusControlEntry, on
 
     const analysis = getAnalysis(entry.internalScore, entry.externalScore);
     const date = new Date().toLocaleDateString();
-    const diff = entry.internalScore - entry.externalScore;
-    const isApto = diff > 0;
+    const isApto = entry.result === 'APTO';
+    const isMedio = entry.result === 'RIESGO MEDIO';
+    const resultColor = isApto ? "#10b981" : (isMedio ? "#f59e0b" : "#ef4444");
+    const currentRecs = RECOMMENDATIONS[entry.result as keyof typeof RECOMMENDATIONS];
 
     const reportHtml = `
       <!DOCTYPE html>
@@ -94,7 +139,7 @@ const LocusIndividualPanel = ({ entry, onClose }: { entry: LocusControlEntry, on
                   <td style="padding: 10px 0; color: #64748b; font-weight: 700;">PUESTO:</td>
                   <td style="font-weight: 900;">${entry.position}</td>
                   <td style="padding: 10px 0; color: #64748b; font-weight: 700;">RESULTADO FINAL:</td>
-                  <td style="font-weight: 900; color: ${isApto ? "#10b981" : "#ef4444"}">${isApto ? 'APTO' : 'POR MEJORAR (No Apto)'}</td>
+                  <td style="font-weight: 900; color: ${resultColor}">${entry.result}</td>
                 </tr>
               </table>
             </div>
@@ -108,20 +153,31 @@ const LocusIndividualPanel = ({ entry, onClose }: { entry: LocusControlEntry, on
                   <span>DOMINANCIA INTERNA (CUMPLIMIENTO)</span>
                 </div>
                 <div class="ruler">
-                  <div style="width: 50%; background: #ef4444; opacity: 0.3;"></div>
-                  <div style="width: 50%; background: #10b981; opacity: 0.3;"></div>
+                  <div style="width: 54.3%; background: #ef4444; opacity: 0.3;"></div>
+                  <div style="width: 26.1%; background: #f59e0b; opacity: 0.3;"></div>
+                  <div style="width: 19.6%; background: #10b981; opacity: 0.3;"></div>
                 </div>
-                <div class="pointer" style="left: ${((diff + 23) / 46) * 100}%">
-                  <div class="pointer-line"></div>
-                  <div class="pointer-val">${isApto ? 'APTO' : 'NO APTO'} (${diff} pts)</div>
+                <div class="pointer" style="left: ${(entry.internalScore / 23) * 100}%">
+                  <div class="pointer-line" style="background: ${resultColor}"></div>
+                  <div class="pointer-val" style="background: ${resultColor}">${entry.result} (${entry.internalScore} pts)</div>
                 </div>
               </div>
             </div>
 
-            <div class="section">
-              <div class="section-title">III. Conclusión Diagnóstica</div>
-              <div class="ai-box" style="background: #0f172a; color: #e2e8f0; padding: 30px; border-radius: 20px; font-style: italic; line-height: 1.6;">
-                "${analysis}"
+            <div class="section" id="individual-diagnosis">
+              <div class="section-title">III. Diagnóstico y Recomendaciones</div>
+              <div class="analysis-box" style="background: #0f172a; color: #e2e8f0; padding: 30px; border-radius: 20px; font-style: italic; line-height: 1.6;">
+                <p style="margin-bottom: 20px;">"${analysis}"</p>
+                <div style="background: rgba(255,255,255,0.05); padding: 25px; border-radius: 15px; border-left: 6px solid ${resultColor}; font-style: normal;">
+                  <h4 style="color: ${resultColor}; margin-top: 0; font-size: 16px; text-transform: uppercase; font-weight: 900;">${currentRecs.title}</h4>
+                  <p style="font-size: 13px; margin-bottom: 12px; font-weight: 700;">${currentRecs.desc}</p>
+                  <ul style="font-size: 12px; padding-left: 20px; margin-bottom: 20px; column-count: 1;">
+                    ${currentRecs.rec.map(r => `<li style="margin-bottom: 8px;">${r}</li>`).join('')}
+                  </ul>
+                  <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; font-size: 11px;">
+                    <span style="font-weight: 900; color: ${resultColor}; text-transform: uppercase;">PLAN DE SEGUIMIENTO:</span> ${currentRecs.followUp}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -152,8 +208,9 @@ const LocusIndividualPanel = ({ entry, onClose }: { entry: LocusControlEntry, on
     printWindow.document.close();
   };
 
-  const indDiff = entry.internalScore - entry.externalScore;
-  const indIsApto = indDiff > 0;
+  const indScore = entry.internalScore;
+  const indResult = entry.result;
+  const indIsApto = indResult === 'APTO';
 
   return (
     <div className={cn(
@@ -189,10 +246,13 @@ const LocusIndividualPanel = ({ entry, onClose }: { entry: LocusControlEntry, on
            </Card>
            <Card className="rounded-3xl border-border/20 bg-background/50 p-4">
               <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Dictamen Individual</p>
-              <p className={cn("text-sm font-black italic uppercase", indIsApto ? "text-emerald-500" : "text-red-500")}>
-                {indIsApto ? 'APTO' : 'NO APTO'}
+              <p className={cn(
+                "text-sm font-black italic uppercase",
+                indResult === 'APTO' ? "text-emerald-500" : (indResult === 'RIESGO MEDIO' ? "text-amber-500" : "text-red-500")
+              )}>
+                {indResult}
               </p>
-           </Card>
+            </Card>
         </div>
 
         {/* Aptitude Ruler Scale (Regla de Balance Binario) */}
@@ -202,22 +262,23 @@ const LocusIndividualPanel = ({ entry, onClose }: { entry: LocusControlEntry, on
            </h4>
            <div id="individual-ruler" className="bg-background/40 rounded-[2.5rem] p-8 border border-border/10 shadow-xl space-y-10 relative overflow-hidden">
               <div className="flex justify-between text-[8px] font-black uppercase text-muted-foreground/40 px-1 italic">
-                 <span>Dominancia Externa (Inapto)</span>
-                 <span>Neutral</span>
-                 <span>Dominancia Interna (Apto)</span>
+                 <span>Riesgo Alto (0-12)</span>
+                 <span>Riesgo Medio (13-18)</span>
+                 <span>Apto (19-23)</span>
               </div>
               
               <div className="relative h-12 w-full flex items-center">
-                 {/* The Ruler Background - Binary Split */}
+                 {/* The Ruler Background - Three Regions */}
                  <div className="absolute inset-x-0 h-3 bg-muted/20 rounded-full flex overflow-hidden border border-border/10">
-                    <div className="h-full bg-red-500/40 border-r border-white/20" style={{ width: `50%` }} />
-                    <div className="h-full bg-emerald-500/40" style={{ width: `50%` }} />
+                    <div className="h-full bg-red-500/40 border-r border-white/10" style={{ width: `${(12/23)*100}%` }} />
+                    <div className="h-full bg-amber-500/40 border-r border-white/10" style={{ width: `${(6/23)*100}%` }} />
+                    <div className="h-full bg-emerald-500/40" style={{ width: `${(5/23)*100}%` }} />
                  </div>
 
                  {/* Ticks */}
                  <div className="absolute inset-x-0 h-8 flex justify-between px-0.5 pointer-events-none">
-                    {[-23, -10, 0, 10, 23].map((tick) => (
-                      <div key={tick} className="flex flex-col items-center">
+                    {[0, 6, 12, 18, 23].map((tick) => (
+                      <div key={tick} className="flex flex-col items-center" style={{ left: `${(tick/23)*100}%`, position: 'absolute', transform: 'translateX(-50%)' }}>
                         <div className="w-px h-2 bg-border/40 mb-1" />
                         <span className="text-[7px] font-bold text-muted-foreground/30">{tick}</span>
                       </div>
@@ -227,40 +288,73 @@ const LocusIndividualPanel = ({ entry, onClose }: { entry: LocusControlEntry, on
                  {/* Balance Pointer */}
                  <div 
                     className="absolute z-20 transition-all duration-1000 ease-out"
-                    style={{ left: `${((indDiff + 23) / 46) * 100}%` }}
+                    style={{ left: `${(indScore / 23) * 100}%` }}
                  >
                     <div className="relative -translate-x-1/2 flex flex-col items-center">
                        <div className={cn(
-                         "w-1 h-16 -mt-2 shadow-xl rounded-full",
-                         indIsApto ? "bg-emerald-500" : "bg-red-500"
+                         "w-1.5 h-16 -mt-2 shadow-xl rounded-full",
+                         indResult === 'APTO' ? "bg-emerald-500" : (indResult === 'RIESGO MEDIO' ? "bg-amber-500" : "bg-red-500")
                        )} />
                        <div className={cn(
                          "mt-1 px-3 py-1 rounded-full text-[10px] font-black shadow-2xl border border-white/20 whitespace-nowrap",
-                         indIsApto ? "bg-emerald-500 text-white" : "bg-red-500 text-white"
+                         indResult === 'APTO' ? "bg-emerald-500 text-white" : (indResult === 'RIESGO MEDIO' ? "bg-amber-500 text-white" : "bg-red-500 text-white")
                        )}>
-                         {indIsApto ? 'APTO' : 'NO APTO'} ({indDiff})
+                         {indResult} ({indScore} pts)
                        </div>
                     </div>
                  </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 pt-4">
-                 <div className={cn("text-center p-3 rounded-2xl border border-dashed transition-all", !indIsApto ? "bg-red-500/10 border-red-500/30 ring-1 ring-red-500/20 shadow-lg shadow-red-500/10 scale-105" : "opacity-30")}>
-                    <p className="text-[10px] font-black uppercase text-red-600">No Apto</p>
+              <div className="grid grid-cols-3 gap-2 pt-4">
+                 <div className={cn("text-center p-3 rounded-2xl border border-dashed transition-all", indResult === 'RIESGO ALTO' ? "bg-red-500/10 border-red-500/30 ring-1 ring-red-500/20 shadow-lg shadow-red-500/10 scale-105" : "opacity-30")}>
+                    <p className="text-[9px] font-black uppercase text-red-600">Riesgo Alto</p>
                  </div>
-                 <div className={cn("text-center p-3 rounded-2xl border border-dashed transition-all", indIsApto ? "bg-emerald-500/10 border-emerald-500/30 ring-1 border-emerald-500/20 shadow-lg shadow-emerald-500/10 scale-105" : "opacity-30")}>
-                    <p className="text-[10px] font-black uppercase text-emerald-600">Apto</p>
+                 <div className={cn("text-center p-3 rounded-2xl border border-dashed transition-all", indResult === 'RIESGO MEDIO' ? "bg-amber-500/10 border-amber-500/30 ring-1 border-amber-500/20 shadow-lg shadow-amber-500/10 scale-105" : "opacity-30")}>
+                    <p className="text-[9px] font-black uppercase text-amber-600">Riesgo Medio</p>
+                 </div>
+                 <div className={cn("text-center p-3 rounded-2xl border border-dashed transition-all", indResult === 'APTO' ? "bg-emerald-500/10 border-emerald-500/30 ring-1 border-emerald-500/20 shadow-lg shadow-emerald-500/10 scale-105" : "opacity-30")}>
+                    <p className="text-[9px] font-black uppercase text-emerald-600">Apto</p>
                  </div>
               </div>
            </div>
         </div>
 
-        <div id="individual-diagnosis" className="p-6 bg-slate-900 rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden group">
+        <div id="individual-diagnosis" className="p-8 bg-slate-900 rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-[60px] -translate-y-1/2 translate-x-1/2 opacity-50" />
-          <h4 className="text-[11px] font-black uppercase mb-4 text-primary flex items-center gap-2">
-             <Sparkles className="w-4 h-4" /> Descriptivo Diagnóstico
+          <h4 className="text-[11px] font-black uppercase mb-6 text-primary flex items-center gap-2 tracking-widest">
+             <Sparkles className="w-4 h-4" /> Diagnóstico & Plan de Acción
           </h4>
-          <p className="text-sm font-medium text-slate-300 leading-relaxed italic">"{getAnalysis(entry.internalScore, entry.externalScore)}"</p>
+          
+          <div className="space-y-6 relative z-10">
+            <p className="text-sm font-medium text-slate-300 leading-relaxed italic border-b border-white/5 pb-6">"{getAnalysis(entry.internalScore, entry.externalScore)}"</p>
+            
+            <div className="space-y-4">
+               <div className={cn(
+                 "p-6 rounded-2xl border flex flex-col gap-3",
+                 entry.result === 'APTO' ? "bg-emerald-500/5 border-emerald-500/10" : (entry.result === 'RIESGO MEDIO' ? "bg-amber-500/5 border-amber-500/10" : "bg-red-500/5 border-red-500/10")
+               )}>
+                  <p className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2" style={{ color: RISK_COLORS[entry.result as keyof typeof RISK_COLORS] }}>
+                    <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: RISK_COLORS[entry.result as keyof typeof RISK_COLORS] }} />
+                    Recomendaciones Críticas
+                  </p>
+                  <ul className="space-y-3">
+                     {RECOMMENDATIONS[entry.result as keyof typeof RECOMMENDATIONS].rec.map((r, i) => (
+                       <li key={i} className="text-[11px] text-slate-400 leading-snug flex gap-2">
+                         <span className="text-primary font-bold">»</span>
+                         {r}
+                       </li>
+                     ))}
+                  </ul>
+               </div>
+
+               <div className="p-5 rounded-2xl bg-white/5 border border-white/5 space-y-2">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Plan de Seguimiento</p>
+                  <p className="text-[11px] font-bold text-slate-300 leading-snug italic">
+                     {RECOMMENDATIONS[entry.result as keyof typeof RECOMMENDATIONS].followUp}
+                  </p>
+               </div>
+            </div>
+          </div>
         </div>
 
         <Button 
@@ -276,9 +370,10 @@ const LocusIndividualPanel = ({ entry, onClose }: { entry: LocusControlEntry, on
             
             const analysis = getAnalysis(entry.internalScore, entry.externalScore);
             const diff = entry.internalScore - entry.externalScore;
-            const resultText = indIsApto ? 'APTO' : 'NO APTO';
-            const resultColor = indIsApto ? 'FFD1FAE5' : 'FFFEE2E2'; 
-            const resultTextCol = indIsApto ? 'FF059669' : 'FFDC2626'; 
+            const resultText = entry.result;
+            const isMedio = entry.result === 'RIESGO MEDIO';
+            const resultColor = entry.result === 'APTO' ? 'FFD1FAE5' : (isMedio ? 'FFFEF3C7' : 'FFFEE2E2'); 
+            const resultTextCol = entry.result === 'APTO' ? 'FF059669' : (isMedio ? 'FFD97706' : 'FFDC2626'); 
 
             // @ts-ignore
             const h2c = window.html2canvas || await new Promise((resolve) => {
@@ -290,14 +385,17 @@ const LocusIndividualPanel = ({ entry, onClose }: { entry: LocusControlEntry, on
 
             const rulerElement = document.getElementById('individual-ruler');
             const diagnosisElement = document.getElementById('individual-diagnosis');
+            const pieElement = document.getElementById('dashboard-pie-chart');
             
-            const [rulerCanvas, diagCanvas] = await Promise.all([
+            const [rulerCanvas, diagCanvas, pieCanvas] = await Promise.all([
               h2c(rulerElement, { scale: 2, backgroundColor: null, useCORS: true }),
-              h2c(diagnosisElement, { scale: 2, backgroundColor: '#0f172a', useCORS: true })
+              h2c(diagnosisElement, { scale: 2, backgroundColor: '#0f172a', useCORS: true }),
+              pieElement ? h2c(pieElement, { scale: 2, useCORS: true }) : Promise.resolve(null)
             ]);
 
             const rulerImg = (rulerCanvas as any).toDataURL('image/png');
             const diagImg = (diagCanvas as any).toDataURL('image/png');
+            const pieImg = pieCanvas ? (pieCanvas as any).toDataURL('image/png') : null;
 
             const script = `
               <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
@@ -309,61 +407,146 @@ const LocusIndividualPanel = ({ entry, onClose }: { entry: LocusControlEntry, on
                   
                   const headerStyle = {
                     font: { bold: true, color: { argb: 'FFFFFFFF' } },
-                    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4F46E5' } },
+                    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } },
+                    alignment: { horizontal: 'center' },
+                    border: { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'}}
+                  };
+
+                  const cellStyle = {
+                    border: { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'}},
                     alignment: { horizontal: 'center' }
                   };
 
-                  worksheet.mergeCells('A1:B1');
-                  worksheet.getCell('A1').value = 'DATOS DEL EVALUADO';
+                  // APELLIDOS Y NOMBRES
+                  worksheet.getCell('A1').value = 'APELLIDOS Y NOMBRES';
                   worksheet.getCell('A1').style = headerStyle;
+                  worksheet.getCell('A2').value = ${JSON.stringify(entry.name)};
+                  worksheet.getCell('A2').font = { bold: true };
+                  worksheet.getCell('A2').border = cellStyle.border;
 
-                  const data = ${JSON.stringify({
-                    ID: `LOC-${entry.id}`,
-                    Nombre: entry.name,
-                    Empresa: entry.company,
-                    Puesto: entry.position,
-                    'Puntaje Interno': entry.internalScore,
-                    'Puntaje Externo': entry.externalScore,
-                    Balance: diff,
-                    Resultado: resultText
-                  })};
+                  // TABLA RESULTADOS
+                  worksheet.mergeCells('C1:D1');
+                  worksheet.getCell('C1').value = 'RESULTADOS';
+                  worksheet.getCell('C1').style = headerStyle;
 
-                  let rowIdx = 2;
-                  Object.entries(data).forEach(([key, value]) => {
-                    const row = worksheet.getRow(rowIdx);
-                    row.getCell(1).value = key;
-                    row.getCell(2).value = value;
-                    row.getCell(1).font = { bold: true };
+                  const resultsData = [
+                    ['INTERNO', ${entry.internalScore}],
+                    ['EXTERNO', ${entry.externalScore}],
+                    ['LOCUS DE CONTR', ${JSON.stringify(resultText)}]
+                  ];
+
+                  resultsData.forEach((row, i) => {
+                    const rowNum = i + 2;
+                    worksheet.getCell('C' + rowNum).value = row[0];
+                    worksheet.getCell('D' + rowNum).value = row[1];
+                    worksheet.getCell('C' + rowNum).style = {...cellStyle, font: {bold: true}};
+                    worksheet.getCell('D' + rowNum).style = cellStyle;
                     
-                    if (key === 'Resultado') {
-                      row.getCell(2).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '${resultColor.replace('#', '')}' } };
-                      row.getCell(2).font = { bold: true, color: { argb: '${resultTextCol.replace('#', '')}' } };
+                    if (row[0] === 'LOCUS DE CONTR') {
+                       worksheet.getCell('D' + rowNum).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ${JSON.stringify(resultColor.replace('#', ''))} } };
+                       worksheet.getCell('D' + rowNum).font = { bold: true, color: { argb: ${JSON.stringify(resultTextCol.replace('#', ''))} } };
                     }
-                    rowIdx++;
                   });
 
-                  let currentY = rowIdx + 1;
+                  // REGLAS
+                  const rules = [
+                    ['<=12', 'RIESGO ALTO'],
+                    ['13 a 18', 'RIESGO MEDIO'],
+                    ['19 a 23', 'APTO']
+                  ];
+                  let ruleRow = 6;
+                  worksheet.mergeCells('C' + ruleRow + ':D' + ruleRow);
+                  worksheet.getCell('C' + ruleRow).value = 'ESCALA DE CALIFICACION';
+                  worksheet.getCell('C' + ruleRow).style = headerStyle;
+                  ruleRow++;
+                  rules.forEach((rule, i) => {
+                    worksheet.getCell('C' + (ruleRow + i)).value = rule[0];
+                    worksheet.getCell('D' + (ruleRow + i)).value = rule[1];
+                    worksheet.getCell('C' + (ruleRow + i)).style = cellStyle;
+                    worksheet.getCell('D' + (ruleRow + i)).style = cellStyle;
+                  });
+
+                  // RECOMENDACIONES EN EXCEL (A la izquierda debajo del nombre)
+                  let recRow = 4;
+                  worksheet.mergeCells('A' + recRow + ':B' + recRow);
+                  worksheet.getCell('A' + recRow).value = 'DIAGNÓSTICO Y RECOMENDACIONES';
+                  worksheet.getCell('A' + recRow).style = headerStyle;
+                  recRow++;
+                  
+                  const recs = ${JSON.stringify(RECOMMENDATIONS)}[${JSON.stringify(resultText)}];
+                  
+                  worksheet.getCell('A' + recRow).value = 'Situación:';
+                  worksheet.getCell('B' + recRow).value = ${JSON.stringify(analysis)};
+                  worksheet.getCell('A' + recRow).font = { bold: true };
+                  worksheet.getCell('B' + recRow).alignment = { wrapText: true, vertical: 'middle' };
+                  recRow += 2;
+
+                  worksheet.getCell('A' + recRow).value = 'Acciones Correctivas:';
+                  worksheet.getCell('A' + recRow).font = { bold: true };
+                  recRow++;
+                  recs.rec.forEach(r => {
+                    worksheet.getCell('A' + recRow).value = '• ' + r;
+                    worksheet.mergeCells('A' + recRow + ':B' + recRow);
+                    worksheet.getCell('A' + recRow).alignment = { wrapText: true, vertical: 'middle', horizontal: 'left' };
+                    recRow++;
+                  });
+                  recRow++;
+                  
+                  worksheet.getCell('A' + recRow).value = 'Plan de Seguimiento:';
+                  worksheet.getCell('B' + recRow).value = recs.followUp;
+                  worksheet.getCell('A' + recRow).font = { bold: true };
+                  worksheet.getCell('B' + recRow).alignment = { wrapText: true, vertical: 'middle' };
+                  worksheet.getCell('B' + recRow).font = { bold: true, color: { argb: ${JSON.stringify(resultTextCol.replace('#', ''))} } };
+
+
+                  // TABLA DISTRIBUCIÓN
+                  let distRow = 11;
+                  worksheet.mergeCells('C' + distRow + ':D' + distRow);
+                  worksheet.getCell('C' + distRow).value = 'RESUMEN GRUPAL';
+                  worksheet.getCell('C' + distRow).style = headerStyle;
+                  distRow++;
+                  const distributionData = ${JSON.stringify(distribution)};
+                  distributionData.forEach((item, i) => {
+                    worksheet.getCell('C' + (distRow + i)).value = item.name;
+                    worksheet.getCell('D' + (distRow + i)).value = item.value;
+                    worksheet.getCell('C' + (distRow + i)).style = cellStyle;
+                    worksheet.getCell('D' + (distRow + i)).style = cellStyle;
+                  });
+
+                  // IMAGENES (A LA DERECHA)
                   const rulerImgSource = "${rulerImg}";
                   if (rulerImgSource && rulerImgSource !== "null") {
                     const imgId = workbook.addImage({ base64: rulerImgSource, extension: 'png' });
                     worksheet.addImage(imgId, {
-                      tl: { col: 0, row: currentY },
-                      ext: { width: 600, height: 200 }
+                      tl: { col: 5, row: 1 },
+                      ext: { width: 500, height: 280 }
                     });
-                    currentY += 12;
+                  }
+
+                  const pieImgSource = "${pieImg}";
+                  if (pieImgSource && pieImgSource !== "null") {
+                    const imgId = workbook.addImage({ base64: pieImgSource, extension: 'png' });
+                    worksheet.addImage(imgId, {
+                      tl: { col: 5, row: 18 },
+                      ext: { width: 400, height: 350 }
+                    });
                   }
 
                   const diagImgSource = "${diagImg}";
                   if (diagImgSource && diagImgSource !== "null") {
                     const imgId = workbook.addImage({ base64: diagImgSource, extension: 'png' });
                     worksheet.addImage(imgId, {
-                      tl: { col: 0, row: currentY },
-                      ext: { width: 600, height: 120 }
+                      tl: { col: 5, row: 40 },
+                      ext: { width: 500, height: 120 }
                     });
                   }
 
-                  worksheet.getColumn(1).width = 25;
-                  worksheet.getColumn(2).width = 40;
+                  worksheet.getColumn(1).width = 40;
+                  worksheet.getColumn(2).width = 5; // Separator
+                  worksheet.getColumn(3).width = 22;
+                  worksheet.getColumn(4).width = 22;
+                  worksheet.getColumn(5).width = 3; // Space before charts
+                  worksheet.getColumn(6).width = 80; // Chart column
 
                   const buffer = await workbook.xlsx.writeBuffer();
                   saveAs(new Blob([buffer]), "Informe_Locus_${entry.name.replace(/\s+/g, '_')}.xlsx");
@@ -387,6 +570,7 @@ const LocusIndividualPanel = ({ entry, onClose }: { entry: LocusControlEntry, on
 const LocusControlPage = () => {
   const [view, setView] = useState<'dashboard' | 'list'>('dashboard');
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [selectedEntry, setSelectedEntry] = useState<LocusControlEntry | null>(null);
 
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
@@ -449,7 +633,7 @@ const LocusControlPage = () => {
 
             // Gráficos
             let currentY = 3;
-            const pieImgSource = "${pieImg}";
+            const pieImgSource = ${JSON.stringify(pieImg)};
             if (pieImgSource && pieImgSource !== "null") {
               const imgId = workbook.addImage({ base64: pieImgSource, extension: 'png' });
               worksheet.addImage(imgId, {
@@ -458,7 +642,7 @@ const LocusControlPage = () => {
               });
             }
 
-            const compImgSource = "${compImg}";
+            const compImgSource = ${JSON.stringify(compImg)};
             if (compImgSource && compImgSource !== "null") {
               const imgId = workbook.addImage({ base64: compImgSource, extension: 'png' });
               worksheet.addImage(imgId, {
@@ -491,6 +675,7 @@ const LocusControlPage = () => {
               row.getCell(7).value = item.Balance;
               row.getCell(8).value = item.Resultado;
               row.getCell(9).value = item.Diagnóstico;
+              row.getCell(9).alignment = { wrapText: true, vertical: 'middle' };
 
               // Formato condicional colores
               const resCell = row.getCell(8);
@@ -579,11 +764,13 @@ const LocusControlPage = () => {
 
   const filteredEntries = useMemo(() => {
     if (!data?.entries) return [];
-    return data.entries.filter(entry => 
-      entry.name.toLowerCase().includes(search.toLowerCase()) ||
-      entry.company.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [data, search]);
+    return data.entries.filter(entry => {
+      const matchesSearch = entry.name.toLowerCase().includes(search.toLowerCase()) ||
+                           entry.company.toLowerCase().includes(search.toLowerCase());
+      const matchesStatus = statusFilter === "ALL" || entry.result === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [data, search, statusFilter]);
 
   if (isLoading) {
     return (
@@ -662,6 +849,55 @@ const LocusControlPage = () => {
             </Button>
           </div>
         </div>
+        
+        {/* Intro Info Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card className="lg:col-span-2 border-none bg-gradient-to-br from-indigo-600 to-indigo-800 text-white shadow-2xl rounded-[2.5rem] p-8 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2" />
+            <div className="relative z-10 flex flex-col h-full justify-between gap-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30">
+                    <ActivityIcon className="w-5 h-5 text-white" />
+                  </div>
+                  <h2 className="text-xl font-black uppercase tracking-tighter italic">¿Qué es el Locus de Control?</h2>
+                </div>
+                <p className="text-indigo-100 text-sm leading-relaxed max-w-2xl font-medium">
+                  Define cómo una persona interpreta las causas de los eventos que le suceden. En el <span className="font-bold text-white uppercase italic">contexto minero</span>, identificamos si los trabajadores asumen la responsabilidad de lo que ocurre en su trabajo o si tienden a atribuirlo a factores externos (suerte, entorno o terceros), influyendo directamente en la <span className="font-bold text-white uppercase italic">seguridad operativa</span>.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black uppercase text-indigo-300">Control Interno</p>
+                  <p className="text-xs font-medium">Sus acciones influyen en los resultados. Asociado a proactividad y cumplimiento seguro.</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black uppercase text-indigo-300">Control Externo</p>
+                  <p className="text-xs font-medium">Depende de factores fuera de su control. Relacionado con mayor riesgo y conductas inseguras.</p>
+                </div>
+              </div>
+            </div>
+          </Card>
+          <Card className="border-none bg-slate-900 shadow-2xl rounded-[2.5rem] p-8 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+            <div className="relative z-10 flex flex-col h-full justify-between">
+              <div className="space-y-4">
+                <h3 className="text-xl font-black text-white italic tracking-tighter uppercase">Objetivo</h3>
+                <p className="text-slate-400 text-sm leading-relaxed italic">
+                  "Identificar el nivel de responsabilidad de los operadores para clasificar riesgos, asignar tareas críticas y diseñar programas de capacitación focalizados que reduzcan ostensiblemente la tasa de accidentabilidad."
+                </p>
+              </div>
+              <div className="space-y-2 mt-6">
+                {['Clasificar por Riesgo', 'Decisiones de Asignación', 'Programas de Capacitación'].map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-3 text-[10px] font-black uppercase text-slate-300">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Card>
+        </div>
 
         {view === 'dashboard' ? (
           <div className="space-y-10">
@@ -737,12 +973,17 @@ const LocusControlPage = () => {
                        }} />
                       <Legend verticalAlign="bottom" height={36} content={({ payload }) => (
                         <div className="flex justify-center gap-6 mt-4">
-                          {payload?.map((entry: any, index: number) => (
-                            <div key={index} className="flex items-center gap-2">
-                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
-                              <span className="text-[9px] font-black uppercase tracking-widest opacity-60">{entry.value}</span>
-                            </div>
-                          ))}
+                          {payload?.map((entry: any, index: number) => {
+                            const count = data.riskDistribution.find(d => d.name === entry.value)?.value || 0;
+                            return (
+                              <div key={index} className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                                <span className="text-[10px] font-black uppercase tracking-tighter">
+                                  {entry.value}: <span className="text-primary italic">{count}</span>
+                                </span>
+                              </div>
+                            );
+                          })}
                         </div>
                       )} />
                     </PieChart>
@@ -828,26 +1069,96 @@ const LocusControlPage = () => {
                     <TrendingUp className="w-8 h-8 text-muted-foreground/30" />
                 </div>
                 <div>
-                    <h4 className="text-lg font-bold text-foreground italic uppercase">Análisis Neural Sugerido</h4>
+                    <h4 className="text-lg font-bold text-foreground italic uppercase">Análisis Ejecutivo del Grupo</h4>
                     <p className="text-muted-foreground text-sm max-w-lg mt-1 italic">
-                      "El promedio de {data.avgInternal.toFixed(1)} en el locus interno indica una tendencia hacia la responsabilidad operativa, permitiendo una mejor adherencia a protocolos de seguridad crítica."
+                      "La gran mayoría de trabajadores no presenta un nivel óptimo de responsabilidad personal. El grupo de riesgo alto representa el mayor peligro, requiriendo intervención inmediata."
                     </p>
+                    <div className="mt-4 p-4 bg-muted/40 rounded-2xl text-[10px] font-black uppercase text-indigo-600 tracking-widest animate-pulse">
+                      Se utilizó la Escala I-E de Rotter (23 ítems)
+                    </div>
                 </div>
               </Card>
+            </div>
+
+            {/* Recommendations / Action Plan */}
+            <div className="space-y-8">
+               <h3 className="text-2xl font-black italic tracking-tighter uppercase px-2">Acciones según Resultados</h3>
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="p-8 rounded-[2.5rem] bg-emerald-500/5 border border-emerald-500/10 space-y-4">
+                     <p className="text-[10px] font-black uppercase text-emerald-600 tracking-widest">Para Personal Apto</p>
+                     <ul className="space-y-3 text-xs font-medium text-slate-600 leading-tight italic decoration-emerald-500/50">
+                        <li>• Líderes o mentores de seguridad</li>
+                        <li>• Asignación a tareas críticas</li>
+                        <li>• Seguimiento anual preventivo</li>
+                     </ul>
+                  </div>
+                  <div className="p-8 rounded-[2.5rem] bg-amber-500/5 border border-amber-500/10 space-y-4">
+                     <p className="text-[10px] font-black uppercase text-amber-600 tracking-widest">Para Riesgo Medio</p>
+                     <ul className="space-y-3 text-xs font-medium text-slate-600 leading-tight italic">
+                        <li>• Capacitación intensiva en seguridad</li>
+                        <li>• Seguimiento constante por supervisores</li>
+                        <li>• Reevaluación técnica en 6 meses</li>
+                     </ul>
+                  </div>
+                  <div className="p-8 rounded-[2.5rem] bg-red-500/5 border border-red-500/10 space-y-4">
+                     <p className="text-[10px] font-black uppercase text-red-600 tracking-widest">Para Riesgo Alto</p>
+                     <ul className="space-y-3 text-xs font-medium text-slate-600 leading-tight italic">
+                        <li>• Intervención psicológica obligatoria</li>
+                        <li>• Restricción temporal de tareas críticas</li>
+                        <li>• Seguimiento semanal y reevaluación en 3 meses</li>
+                     </ul>
+                  </div>
+               </div>
             </div>
           </div>
         ) : (
           /* List View */
           <div className="space-y-6 animate-in slide-in-from-bottom-5 duration-700">
             <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-              <div className="relative w-full max-w-lg group">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                  <Input 
-                    placeholder="Buscar por nombre o empresa..." 
-                    className="pl-12 h-14 bg-card shadow-xl border-border/50 rounded-2xl focus:ring-2 focus:ring-primary/20"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                  />
+              <div className="flex flex-col md:flex-row gap-4 w-full max-w-2xl">
+                <div className="relative flex-1 group">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                    <Input 
+                      placeholder="Buscar por nombre o empresa..." 
+                      className="pl-12 h-14 bg-card shadow-xl border-border/50 rounded-2xl focus:ring-2 focus:ring-primary/20"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                    />
+                </div>
+                <div className="flex bg-muted/30 p-1 rounded-2xl border border-border/50 backdrop-blur-md">
+                    <Button 
+                      variant={statusFilter === 'ALL' ? 'default' : 'ghost'} 
+                      size="sm" 
+                      onClick={() => setStatusFilter('ALL')}
+                      className={cn("rounded-xl px-4 text-[10px] font-black uppercase tracking-widest", statusFilter === 'ALL' && "shadow-lg shadow-primary/20")}
+                    >
+                      Todos
+                    </Button>
+                    <Button 
+                      variant={statusFilter === 'APTO' ? 'default' : 'ghost'} 
+                      size="sm" 
+                      onClick={() => setStatusFilter('APTO')}
+                      className={cn("rounded-xl px-4 text-[10px] font-black uppercase tracking-widest", statusFilter === 'APTO' && "bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20")}
+                    >
+                      Apto
+                    </Button>
+                    <Button 
+                      variant={statusFilter === 'RIESGO MEDIO' ? 'default' : 'ghost'} 
+                      size="sm" 
+                      onClick={() => setStatusFilter('RIESGO MEDIO')}
+                      className={cn("rounded-xl px-4 text-[10px] font-black uppercase tracking-widest", statusFilter === 'RIESGO MEDIO' && "bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20")}
+                    >
+                      Medio
+                    </Button>
+                    <Button 
+                      variant={statusFilter === 'RIESGO ALTO' ? 'default' : 'ghost'} 
+                      size="sm" 
+                      onClick={() => setStatusFilter('RIESGO ALTO')}
+                      className={cn("rounded-xl px-4 text-[10px] font-black uppercase tracking-widest", statusFilter === 'RIESGO ALTO' && "bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/20")}
+                    >
+                      Alto
+                    </Button>
+                </div>
               </div>
               <div className="flex items-center gap-3 bg-muted/30 px-6 py-3 rounded-2xl border border-border/50">
                   <Filter className="w-4 h-4 text-muted-foreground" />
@@ -908,7 +1219,8 @@ const LocusControlPage = () => {
                   ))}
                 </TableBody>
               </Table>
-            </Card>
+            </div>
+          </Card>
           </div>
         )}
       </div>
@@ -923,6 +1235,7 @@ const LocusControlPage = () => {
         {selectedEntry && (
           <LocusIndividualPanel 
             entry={selectedEntry} 
+            distribution={data.riskDistribution}
             onClose={() => setSelectedEntry(null)} 
           />
         )}
