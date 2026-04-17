@@ -103,18 +103,19 @@ const ResultsPage = () => {
       </Card>
 
       {/* Table Section */}
-      <Card className="border-border/40 bg-card/40 backdrop-blur-md shadow-2xl overflow-hidden border-none ring-1 ring-white/10">
-        <Table>
-          <TableHeader className="bg-muted/50">
-            <TableRow className="hover:bg-transparent border-border/40">
-              <TableHead className="w-[300px] font-black text-[10px] uppercase tracking-widest text-muted-foreground py-6 pl-8">Personal</TableHead>
-              <TableHead className="font-black text-[10px] uppercase tracking-widest text-muted-foreground">Grupo</TableHead>
-              <TableHead className="font-black text-[10px] uppercase tracking-widest text-muted-foreground">Puntaje</TableHead>
-              <TableHead className="font-black text-[10px] uppercase tracking-widest text-muted-foreground">Estado</TableHead>
-              <TableHead className="font-black text-[10px] uppercase tracking-widest text-muted-foreground">Fecha Eval.</TableHead>
-              <TableHead className="text-right font-black text-[10px] uppercase tracking-widest text-muted-foreground pr-8">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
+      <Card className="border-border/40 bg-card/40 backdrop-blur-3xl shadow-2xl rounded-[3rem] overflow-hidden border-2 relative">
+        <div className="max-h-[750px] overflow-y-auto overflow-x-auto custom-scrollbar relative">
+          <Table>
+            <TableHeader className="bg-slate-100/90 backdrop-blur-md sticky top-0 z-40">
+              <TableRow className="hover:bg-transparent border-border/40">
+                <TableHead className="w-[300px] font-black text-[10px] uppercase tracking-widest text-muted-foreground py-4 pl-8 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Personal</TableHead>
+                <TableHead className="font-black text-[10px] uppercase tracking-widest text-muted-foreground py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Grupo</TableHead>
+                <TableHead className="font-black text-[10px] uppercase tracking-widest text-muted-foreground py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Puntaje</TableHead>
+                <TableHead className="font-black text-[10px] uppercase tracking-widest text-muted-foreground py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Estado</TableHead>
+                <TableHead className="font-black text-[10px] uppercase tracking-widest text-muted-foreground py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Fecha Eval.</TableHead>
+                <TableHead className="text-right font-black text-[10px] uppercase tracking-widest text-muted-foreground py-4 pr-8 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
           <TableBody>
             {filteredResults.length > 0 ? (
               filteredResults.map((item) => (

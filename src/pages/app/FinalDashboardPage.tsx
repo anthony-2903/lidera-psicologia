@@ -601,18 +601,18 @@ export default function FinalDashboardPage() {
                  </div>
               </div>
             </div>
-            <Card className="border-border/40 bg-card/40 backdrop-blur-3xl shadow-2xl rounded-2xl lg:rounded-[3rem] border-2">
-              <div className="overflow-x-auto custom-scrollbar">
+            <Card className="border-border/40 bg-card/40 backdrop-blur-3xl shadow-2xl rounded-2xl lg:rounded-[3rem] border-2 overflow-hidden">
+              <div className="max-h-[750px] overflow-y-auto overflow-x-auto custom-scrollbar relative">
                 <Table>
-                  <TableHeader className="bg-muted/50">
+                  <TableHeader className="bg-slate-100/90 backdrop-blur-md sticky top-0 z-40">
                     <TableRow className="border-border/40 hover:bg-transparent">
-                      <TableHead className="w-[80px] font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 py-8 pl-10">ID</TableHead>
-                      <TableHead className="font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 py-8">Nombre del Evaluado</TableHead>
-                      <TableHead className="font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 py-8">Progreso</TableHead>
-                      <TableHead className="font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 py-8">Estilo Liderazgo</TableHead>
-                      <TableHead className="font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 py-8">Perfil Conductual</TableHead>
-                      <TableHead className="font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 py-8">Estado Neural</TableHead>
-                      <TableHead className="text-right font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 py-8 pr-10">Acción</TableHead>
+                      <TableHead className="w-[80px] font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 py-4 pl-10 sticky top-0 bg-slate-100/90 z-40 shadow-sm">ID</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Nombre del Evaluado</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Progreso</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Estilo Liderazgo</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Perfil Conductual</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Estado Neural</TableHead>
+                      <TableHead className="text-right font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 py-4 pr-10 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Acción</TableHead>
                     </TableRow>
                   </TableHeader>
                 <TableBody>

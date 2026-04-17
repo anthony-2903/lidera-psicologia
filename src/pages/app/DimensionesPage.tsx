@@ -354,16 +354,17 @@ export default function DimensionesPage() {
                 </div>
 
                 <GlassCard className="rounded-[3rem] overflow-hidden border border-white p-2 shadow-2xl bg-white/80">
+                  <div className="max-h-[750px] overflow-y-auto overflow-x-auto custom-scrollbar relative">
                     <Table>
-                        <TableHeader className="bg-slate-50/50">
+                        <TableHeader className="bg-slate-100/90 backdrop-blur-md sticky top-0 z-40">
                             <TableRow className="hover:bg-transparent border-b border-slate-100">
-                                <TableHead className="font-black uppercase text-[10px] tracking-widest text-slate-400 py-6 px-10">ID</TableHead>
-                                <TableHead className="font-black uppercase text-[10px] tracking-widest text-slate-400 py-6">Colaborador</TableHead>
-                                <TableHead className="font-black uppercase text-[10px] tracking-widest text-slate-400 py-6">Identidad</TableHead>
-                                <TableHead className="font-black uppercase text-[10px] tracking-widest text-slate-400 py-6">Cargo Actual</TableHead>
-                                <TableHead className="font-black uppercase text-[10px] tracking-widest text-slate-400 py-6 text-center">Liderazgo</TableHead>
-                                <TableHead className="font-black uppercase text-[10px] tracking-widest text-slate-400 py-6 text-center">Percepción</TableHead>
-                                <TableHead className="font-black uppercase text-[10px] tracking-widest text-slate-400 py-6 text-right px-10">Dimensiones</TableHead>
+                                <TableHead className="font-black uppercase text-[10px] tracking-widest text-slate-400 py-4 px-10 sticky top-0 bg-slate-100/90 z-40 shadow-sm">ID</TableHead>
+                                <TableHead className="font-black uppercase text-[10px] tracking-widest text-slate-400 py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Colaborador</TableHead>
+                                <TableHead className="font-black uppercase text-[10px] tracking-widest text-slate-400 py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Identidad</TableHead>
+                                <TableHead className="font-black uppercase text-[10px] tracking-widest text-slate-400 py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Cargo Actual</TableHead>
+                                <TableHead className="font-black uppercase text-[10px] tracking-widest text-slate-400 py-4 text-center sticky top-0 bg-slate-100/90 z-40 shadow-sm">Liderazgo</TableHead>
+                                <TableHead className="font-black uppercase text-[10px] tracking-widest text-slate-400 py-4 text-center sticky top-0 bg-slate-100/90 z-40 shadow-sm">Percepción</TableHead>
+                                <TableHead className="font-black uppercase text-[10px] tracking-widest text-slate-400 py-4 text-right px-10 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Dimensiones</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>

@@ -540,7 +540,7 @@ export const fetchRauraData = async (sheetId: string): Promise<RauraDashboardDat
         }
 
         const entries: RauraEntry[] = [];
-        const questions = rows[0].slice(4, 33);
+        const questions = rows[0].slice(6, 35);
         
         const scoreMap: Record<string, number> = {
           'SIEMPRE': 5,
@@ -551,22 +551,22 @@ export const fetchRauraData = async (sheetId: string): Promise<RauraDashboardDat
         };
 
         const getScore = (val: string) => {
-          const v = val.trim();
+          const v = (val || "").trim();
           if (/^[1-5]$/.test(v)) return parseInt(v);
           return scoreMap[v.toUpperCase()] || 0;
         };
 
-        // Question Grouping Indices (0-indexed from CSV)
+        // Question Grouping Indices (0-indexed from CSV) - SHIFTED BY 2 (Col G start)
         const catIndices = {
-          liderazgo: [4, 7, 8, 9, 11],
-          gestion: [5, 6, 10, 12, 27, 28, 31],
-          participacion: [13, 14, 15, 16, 20, 30, 32],
-          cultura: [17, 18, 19, 21, 22, 23, 24, 25, 26, 29]
+          liderazgo: [6, 9, 10, 11, 13],
+          gestion: [7, 8, 12, 14, 29, 30, 33],
+          participacion: [15, 16, 17, 18, 22, 32, 34],
+          cultura: [19, 20, 21, 23, 24, 25, 26, 27, 28, 31]
         };
 
         for (let i = 1; i < rows.length; i++) {
           const r = rows[i];
-          if (!r[0]) continue;
+          if (!r[1]) continue;
 
           const calcAvg = (indices: number[]) => {
             const scores = indices.map(idx => getScore(r[idx])).filter(s => s > 0);
@@ -584,14 +584,14 @@ export const fetchRauraData = async (sheetId: string): Promise<RauraDashboardDat
 
           entries.push({
             id: i,
-            area: r[0],
-            fecha: r[1],
-            puesto: r[2] || 'No especificado',
-            empresa: r[3],
+            area: (r[1] || 'SIN ÁREA').trim().toUpperCase(),
+            fecha: r[2],
+            puesto: r[3] || 'No especificado',
+            empresa: r[5] || 'No especificada', // FILTRO COLUMNA F (index 5)
             scores,
             totalScore,
-            comentarios: r[33] || '',
-            rawResponses: r.slice(4, 33),
+            comentarios: r[35] || '',
+            rawResponses: r.slice(6, 35),
             questions
           });
         }

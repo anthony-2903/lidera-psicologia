@@ -125,7 +125,7 @@ const GroupsPage = () => {
             </Card>
 
             {/* Lista Grupos */}
-            <Card className="lg:col-span-2 border-border/40 bg-card/60 backdrop-blur-sm shadow-xl">
+            <Card className="lg:col-span-2 border-border/40 bg-card/60 backdrop-blur-sm shadow-xl overflow-hidden">
               <CardHeader className="flex flex-row items-center justify-between space-y-0">
                 <div>
                   <CardTitle className="text-lg">Grupos Registrados</CardTitle>
@@ -137,15 +137,16 @@ const GroupsPage = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-border/40">
-                      <TableHead>Nombre</TableHead>
-                      <TableHead className="text-center">Integrantes</TableHead>
-                      <TableHead>F. Creación</TableHead>
-                      <TableHead className="text-right">Acciones</TableHead>
-                    </TableRow>
-                  </TableHeader>
+                <div className="max-h-[500px] overflow-y-auto overflow-x-auto custom-scrollbar relative">
+                  <Table>
+                    <TableHeader className="bg-slate-100/90 backdrop-blur-md sticky top-0 z-40">
+                      <TableRow className="border-border/40">
+                        <TableHead className="py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Nombre</TableHead>
+                        <TableHead className="text-center py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Integrantes</TableHead>
+                        <TableHead className="py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">F. Creación</TableHead>
+                        <TableHead className="text-right py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Acciones</TableHead>
+                      </TableRow>
+                    </TableHeader>
                   <TableBody>
                     {groups.map((group) => (
                       <TableRow key={group.id} className="border-border/40 hover:bg-muted/30 transition-colors">
@@ -165,7 +166,8 @@ const GroupsPage = () => {
                     ))}
                   </TableBody>
                 </Table>
-              </CardContent>
+              </div>
+            </CardContent>
             </Card>
           </div>
         </TabsContent>
@@ -297,7 +299,7 @@ const GroupsPage = () => {
             </Card>
 
             {/* Lista Evaluados */}
-            <Card className="xl:col-span-8 border-border/40 bg-card/60 backdrop-blur-sm shadow-xl">
+            <Card className="xl:col-span-8 border-border/40 bg-card/60 backdrop-blur-sm shadow-xl overflow-hidden">
               <CardHeader className="flex flex-row items-center justify-between space-y-0">
                 <div>
                   <CardTitle className="text-lg">Lista de Evaluados</CardTitle>
@@ -314,17 +316,18 @@ const GroupsPage = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-border/40">
-                      <TableHead>Nombre Completo</TableHead>
-                      <TableHead>Contacto</TableHead>
-                      <TableHead>Cargo</TableHead>
-                      <TableHead>Grupo</TableHead>
-                      <TableHead>Género / Edad</TableHead>
-                      <TableHead className="text-right">Acciones</TableHead>
-                    </TableRow>
-                  </TableHeader>
+                <div className="max-h-[600px] overflow-y-auto overflow-x-auto custom-scrollbar relative">
+                  <Table>
+                    <TableHeader className="bg-slate-100/90 backdrop-blur-md sticky top-0 z-40">
+                      <TableRow className="border-border/40">
+                        <TableHead className="py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Nombre Completo</TableHead>
+                        <TableHead className="py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Contacto</TableHead>
+                        <TableHead className="py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Cargo</TableHead>
+                        <TableHead className="py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Grupo</TableHead>
+                        <TableHead className="py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Género / Edad</TableHead>
+                        <TableHead className="text-right py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Acciones</TableHead>
+                      </TableRow>
+                    </TableHeader>
                   <TableBody>
                     {evaluated.map((person) => (
                       <TableRow key={person.id} className="border-border/40 hover:bg-muted/30 transition-colors">
@@ -361,7 +364,8 @@ const GroupsPage = () => {
                     ))}
                   </TableBody>
                 </Table>
-              </CardContent>
+              </div>
+            </CardContent>
             </Card>
           </div>
         </TabsContent>

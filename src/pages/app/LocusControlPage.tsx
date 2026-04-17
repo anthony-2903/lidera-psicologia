@@ -613,17 +613,18 @@ const LocusControlPage = () => {
             </div>
 
             <Card className="border-2 shadow-2xl rounded-[2.5rem] overflow-hidden">
-              <Table>
-                <TableHeader className="bg-muted/50 border-b-2">
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="font-black text-[10px] uppercase tracking-widest py-6 px-8">ID</TableHead>
-                    <TableHead className="font-black text-[10px] uppercase tracking-widest py-6">Evaluado</TableHead>
-                    <TableHead className="font-black text-[10px] uppercase tracking-widest py-6">Puesto / Empresa</TableHead>
-                    <TableHead className="font-black text-[10px] uppercase tracking-widest py-6">Interno</TableHead>
-                    <TableHead className="font-black text-[10px] uppercase tracking-widest py-6">Externo</TableHead>
-                    <TableHead className="font-black text-[10px] uppercase tracking-widest py-6">Condición</TableHead>
-                  </TableRow>
-                </TableHeader>
+              <div className="max-h-[750px] overflow-y-auto overflow-x-auto custom-scrollbar relative">
+                <Table>
+                  <TableHeader className="bg-slate-100/90 backdrop-blur-md sticky top-0 z-40">
+                    <TableRow className="hover:bg-transparent border-b-2">
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 px-8 sticky top-0 bg-slate-100/90 z-40 shadow-sm">ID</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Evaluado</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Puesto / Empresa</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Interno</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Externo</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Condición</TableHead>
+                    </TableRow>
+                  </TableHeader>
                 <TableBody>
                   {filteredEntries.map((entry) => (
                     <TableRow 

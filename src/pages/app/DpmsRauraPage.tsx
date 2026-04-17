@@ -32,6 +32,13 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -75,6 +82,33 @@ const SHEET_ID = "1-yiLe8BFRiw8XbUyn9vdl2e2M3y7ENYQXgKajhEBwUA";
 
 // --- Paletas ---
 const CAT_COLORS = DASHBOARD_PALETTES.rauraCategories;
+
+// --- Helpers ---
+const getInterpretation = (val: string) => {
+  if (!val) return "";
+  const v = val.trim();
+  const map: Record<string, string> = {
+    "1": "Nivel Reactivo - Acción basada en instinto y miedo.",
+    "2": "Nivel Dependiente - Acción basada en supervisión y reglas.",
+    "3": "Nivel Independiente - Acción basada en autovigilancia y convicción.",
+    "4": "Nivel Interdependiente - Acción basada en el cuidado mutuo y proactividad.",
+    "5": "Excelente / Liderazgo - Cultura preventiva plenamente integrada y ejemplar."
+  };
+  return map[v] || val;
+};
+
+const getQuestionText = (val: string) => {
+  if (!val) return "";
+  const v = val.trim();
+  const map: any = { 
+    "1": "Nunca", 
+    "2": "Pocas veces", 
+    "3": "Algunas veces", 
+    "4": "Muchas veces", 
+    "5": "Siempre" 
+  };
+  return map[v] || v;
+};
 
 // --- Componentes Internos ---
 
@@ -188,6 +222,14 @@ const EntryPanel = ({
             </p>
             <p className="text-xs font-bold text-foreground truncate uppercase">
               {entry.puesto}
+            </p>
+          </div>
+          <div className="p-4 rounded-[1.5rem] bg-white/60 border border-white/20 shadow-sm transition-all hover:shadow-md">
+            <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">
+              Empresa
+            </p>
+            <p className="text-xs font-bold text-foreground truncate uppercase">
+              {entry.empresa}
             </p>
           </div>
           <div className="p-4 rounded-[1.5rem] bg-white/60 border border-white/20 shadow-sm transition-all hover:shadow-md">
@@ -311,7 +353,7 @@ const EntryPanel = ({
               <Zap className="w-4 h-4 fill-primary" /> Transcripción Crítica
             </h4>
             <p className="text-sm font-medium text-slate-200 leading-relaxed italic relative z-10 selection:bg-primary/30">
-              "{entry.comentarios}"
+              "{getInterpretation(entry.comentarios)}"
             </p>
           </div>
         )}
@@ -324,10 +366,6 @@ const EntryPanel = ({
           <div className="space-y-3">
              {entry.questions?.map((q, i) => {
                const val = entry.rawResponses[i];
-               const getInt = (v: string) => {
-                 const map: any = { "1": "Nunca", "2": "Pocas veces", "3": "Algunas veces", "4": "Muchas veces", "5": "Siempre" };
-                 return map[v] || v;
-               };
                const score = parseInt(val) || 0;
                if (!q) return null;
 
@@ -340,7 +378,7 @@ const EntryPanel = ({
                       score >= 3 ? "bg-amber-500/10 text-amber-600" :
                       "bg-red-500/10 text-red-600"
                     )}>
-                      {getInt(val)}
+                      {getQuestionText(val)}
                     </Badge>
                  </div>
                );
@@ -358,23 +396,66 @@ export default function DpmsRauraPage() {
   >("general");
   const [search, setSearch] = useState("");
   const [selectedEntry, setSelectedEntry] = useState<RauraEntry | null>(null);
+  const [selectedCompany, setSelectedCompany] = useState<string>("all");
 
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ["rauraData", SHEET_ID],
     queryFn: () => fetchRauraData(SHEET_ID),
   });
 
+  const companies = useMemo(() => {
+    if (!data?.entries) return [];
+    return Array.from(new Set(data.entries.map((e) => e.empresa))).sort();
+  }, [data]);
+
   const filteredEntries = useMemo(() => {
     if (!data?.entries) return [];
-    return data.entries.filter(
-      (e) =>
-        e.area.toLowerCase().includes(search.toLowerCase()) ||
-        e.puesto.toLowerCase().includes(search.toLowerCase()),
-    );
-  }, [data, search]);
+    return data.entries
+      .filter((e) => {
+        const matchesSearch =
+          e.area.toLowerCase().includes(search.toLowerCase()) ||
+          e.puesto.toLowerCase().includes(search.toLowerCase()) ||
+          e.empresa.toLowerCase().includes(search.toLowerCase());
+        const matchesCompany =
+          selectedCompany === "all" || e.empresa === selectedCompany;
+        return matchesSearch && matchesCompany;
+      })
+      .sort((a, b) => a.id - b.id);
+  }, [data, search, selectedCompany]);
+
+  const statsMetrix = useMemo(() => {
+    if (!filteredEntries.length) return { avg: 0, leadership: 0, safety: 0, voice: 0 };
+    
+    const avg = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+    
+    const categories = [
+      { name: 'Liderazgo Visible', value: avg(filteredEntries.map(e => e.scores.liderazgo)) },
+      { name: 'Gestión y Cumplimiento', value: avg(filteredEntries.map(e => e.scores.gestion)) },
+      { name: 'Participación', value: avg(filteredEntries.map(e => e.scores.participacion)) },
+      { name: 'Cultura y Comunicación', value: avg(filteredEntries.map(e => e.scores.cultura)) }
+    ];
+
+    const areaGroups: Record<string, number[]> = {};
+    filteredEntries.forEach(e => {
+      if (!areaGroups[e.area]) areaGroups[e.area] = [];
+      areaGroups[e.area].push(e.totalScore);
+    });
+
+    const areas = Object.keys(areaGroups).map(name => ({
+      name,
+      score: Math.round(avg(areaGroups[name]))
+    })).sort((a, b) => b.score - a.score);
+
+    return {
+      avg: avg(filteredEntries.map(e => e.totalScore)),
+      categories,
+      areas,
+      voice: filteredEntries.filter(e => e.comentarios).length
+    };
+  }, [filteredEntries]);
 
   const maturityData = useMemo(() => {
-    if (!data?.entries) return [];
+    if (!filteredEntries.length) return [];
     const levels = [
       {
         name: "Reactivo",
@@ -402,7 +483,7 @@ export default function DpmsRauraPage() {
       },
     ];
 
-    data.entries.forEach((e) => {
+    filteredEntries.forEach((e) => {
       const s = e.totalScore;
       if (s <= 25) levels[0].value++;
       else if (s <= 50) levels[1].value++;
@@ -411,11 +492,11 @@ export default function DpmsRauraPage() {
     });
 
     return levels.filter((l) => l.value > 0);
-  }, [data]);
+  }, [filteredEntries]);
 
   const cultureData = useMemo(() => {
-    if (!data?.entries) return { avg: 0, distribution: [], label: "N/A" };
-    const avgCulture = data.categories[3].value;
+    if (!filteredEntries.length) return { avg: 0, distribution: [], label: "N/A" };
+    const avgCulture = statsMetrix.categories[3].value;
 
     const levels = [
       { name: "Reactivo", value: 0, color: "#ef4444", range: "0-25%" },
@@ -424,7 +505,7 @@ export default function DpmsRauraPage() {
       { name: "Interdependiente", value: 0, color: "#10b981", range: "76-100%" },
     ];
 
-    data.entries.forEach((e) => {
+    filteredEntries.forEach((e) => {
       const s = e.scores.cultura;
       if (s <= 25) levels[0].value++;
       else if (s <= 50) levels[1].value++;
@@ -455,16 +536,16 @@ export default function DpmsRauraPage() {
       label: currentLabel,
       color: currentColor,
     };
-  }, [data]);
+  }, [filteredEntries, statsMetrix]);
 
   const behaviorCategory = useMemo(() => {
-    if (!data) return { name: "N/A", color: "#cbd5e1" };
-    const s = data.globalAverage;
+    if (!filteredEntries.length) return { name: "N/A", color: "#cbd5e1" };
+    const s = statsMetrix.avg;
     if (s <= 25) return { name: "Reactivo", color: "#ef4444" };
     if (s <= 50) return { name: "Dependiente", color: "#f59e0b" };
     if (s <= 75) return { name: "Independiente", color: "#3b82f6" };
     return { name: "Interdependiente", color: "#10b981" };
-  }, [data]);
+  }, [filteredEntries, statsMetrix]);
 
   if (isLoading) {
     return (
@@ -556,17 +637,17 @@ export default function DpmsRauraPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
               <KpiCard
                 label="Maturity Score"
-                value={`${Math.round(data.globalAverage)}%`}
+                value={`${Math.round(statsMetrix.avg)}%`}
                 icon={Target}
                 color="text-primary"
                 bg="bg-primary/10"
                 border="border-primary/20"
                 glowColor="primary/20"
-                description="Alineamiento global"
+                description="Promedio en filtro"
               />
               <KpiCard
                 label="Liderazgo"
-                value={`${Math.round(data.categories[0].value)}%`}
+                value={`${Math.round(statsMetrix.categories[0].value)}%`}
                 icon={Star}
                 color="text-purple-500"
                 bg="bg-purple-500/10"
@@ -576,7 +657,7 @@ export default function DpmsRauraPage() {
               />
               <KpiCard
                 label="Seguridad Site"
-                value={`${Math.round(data.categories[1].value)}%`}
+                value={`${Math.round(statsMetrix.categories[1].value)}%`}
                 icon={ShieldCheck}
                 color="text-blue-500"
                 bg="bg-blue-500/10"
@@ -586,7 +667,7 @@ export default function DpmsRauraPage() {
               />
               <KpiCard
                 label="Voz del Equipo"
-                value={data.entries.filter((e) => e.comentarios).length}
+                value={statsMetrix.voice}
                 icon={MessageSquare}
                 color="text-orange-500"
                 bg="bg-orange-500/10"
@@ -621,7 +702,7 @@ export default function DpmsRauraPage() {
                       cx="50%"
                       cy="50%"
                       outerRadius="80%"
-                      data={data.categories}
+                      data={statsMetrix.categories}
                     >
                       <PolarGrid
                         stroke="rgba(0,0,0,0.08)"
@@ -677,7 +758,7 @@ export default function DpmsRauraPage() {
                 <CardContent className="p-6 lg:p-12 h-[400px] lg:h-[500px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
-                      data={data.areas}
+                      data={statsMetrix.areas}
                       layout="vertical"
                       margin={{ left: 60, right: 40 }}
                     >
@@ -711,7 +792,7 @@ export default function DpmsRauraPage() {
                         animationDuration={2000}
                         animationBegin={800}
                       >
-                        {data.areas.map((entry: any, index: number) => (
+                        {statsMetrix.areas.map((entry: any, index: number) => (
                           <Cell
                             key={`cell-${index}`}
                             fill={
@@ -769,7 +850,7 @@ export default function DpmsRauraPage() {
                   </ResponsiveContainer>
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                     <p className="text-4xl font-black tracking-tighter text-foreground italic">
-                      {data.totalRespondents}
+                      {filteredEntries.length}
                     </p>
                     <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 leading-none">
                       Muestras
@@ -834,7 +915,7 @@ export default function DpmsRauraPage() {
                   <p className="text-sm font-medium text-slate-500 italic max-w-3xl leading-relaxed">
                     El diagnóstico actual refleja un{" "}
                     <span className="font-black text-foreground">
-                      {Math.round(data.globalAverage)}%
+                      {Math.round(statsMetrix.avg)}%
                     </span>{" "}
                     de alineamiento global. La concentración mayoritaria en el
                     nivel{" "}
@@ -846,9 +927,9 @@ export default function DpmsRauraPage() {
                       }
                     </span>{" "}
                     sugiere que la organización{" "}
-                    {data.globalAverage > 75
+                    {statsMetrix.avg > 75
                       ? "posee una base robusta para la interdependencia."
-                      : data.globalAverage > 50
+                      : statsMetrix.avg > 50
                         ? "se encuentra en una etapa de transición crítica hacia la autogestión."
                         : "requiere un refuerzo inmediato en liderazgo visible y supervisión."}
                   </p>
@@ -920,7 +1001,7 @@ export default function DpmsRauraPage() {
                         ((cultureData.distribution.find(
                           (d) => d.name === cultureData.label,
                         )?.value || 0) /
-                          data.totalRespondents) *
+                          filteredEntries.length) *
                           100,
                       )}
                       %
@@ -1002,16 +1083,32 @@ export default function DpmsRauraPage() {
 
         {activeTab === "individual" && (
           <div className="space-y-12 animate-in fade-in slide-in-from-right-16 duration-1000 fill-mode-forwards">
-            <div className="flex flex-col lg:flex-row gap-10 lg:items-center justify-between">
-              <div className="relative w-full lg:w-[900px] group">
-                <div className="absolute -inset-1.5 bg-gradient-to-r from-primary/30 to-blue-500/30 blur-2xl opacity-0 group-hover:opacity-100 transition duration-1000"></div>
-                <Search className="absolute left-10 top-1/2 -translate-y-1/2 w-8 h-8 text-primary relative z-10" />
-                <Input
-                  placeholder="Escaneando patrones por Área o Puesto..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-14 sm:pl-24 h-16 sm:h-24 bg-white/60 backdrop-blur-3xl border-border/40 rounded-2xl sm:rounded-[3rem] shadow-2xl focus:ring-8 focus:ring-primary/5 text-lg sm:text-2xl font-black tracking-tight relative z-10 border-2"
-                />
+            <div className="flex flex-col lg:flex-row gap-6 lg:items-center justify-between">
+              <div className="flex flex-col sm:flex-row gap-6 flex-1 items-center">
+                <div className="relative flex-1 group w-full">
+                  <div className="absolute -inset-1.5 bg-gradient-to-r from-primary/30 to-blue-500/30 blur-2xl opacity-0 group-hover:opacity-100 transition duration-1000"></div>
+                  <Search className="absolute left-8 top-1/2 -translate-y-1/2 w-6 h-6 text-primary relative z-10" />
+                  <Input
+                    placeholder="Buscando por Área, Puesto o Empresa..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-20 h-20 bg-white/60 backdrop-blur-3xl border-border/40 rounded-[2rem] shadow-2xl focus:ring-8 focus:ring-primary/5 text-xl font-black tracking-tight relative z-10 border-2"
+                  />
+                </div>
+
+                <Select value={selectedCompany} onValueChange={setSelectedCompany}>
+                  <SelectTrigger className="w-full sm:w-[280px] h-20 bg-white/60 backdrop-blur-3xl border-border/40 rounded-[2rem] shadow-2xl text-lg font-black tracking-tight border-2 px-8">
+                    <SelectValue placeholder="Filtrar por Empresa" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl border-2 bg-white/90 backdrop-blur-xl">
+                    <SelectItem value="all" className="font-bold py-3">Todas las Empresas</SelectItem>
+                    {companies.map((c) => (
+                      <SelectItem key={c} value={c} className="font-bold py-3 uppercase">
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="hidden xl:flex items-center gap-8 bg-card px-16 py-7 rounded-[3rem] border-2 border-border/20 shadow-3xl group ">
                 <div className="text-right border-r-2 border-border/20 pr-10">
@@ -1034,26 +1131,29 @@ export default function DpmsRauraPage() {
             </div>
 
             <Card className="rounded-2xl sm:rounded-[4rem] border-border/40 bg-white/40 backdrop-blur-3xl shadow-3xl border-2 overflow-hidden">
-              <div className="overflow-x-auto custom-scrollbar">
+              <div className="max-h-[750px] overflow-y-auto overflow-x-auto custom-scrollbar relative">
                 <Table>
-                  <TableHeader className="bg-muted/40">
+                  <TableHeader className="bg-slate-100/90 backdrop-blur-md sticky top-0 z-40">
                     <TableRow className="border-border/40 hover:bg-transparent">
-                      <TableHead className="w-[120px] font-black text-[11px] uppercase tracking-[0.4em] text-muted-foreground/60 py-10 pl-14 italic">
+                      <TableHead className="w-[120px] font-black text-[11px] uppercase tracking-[0.4em] text-muted-foreground/60 py-4 pl-14 italic sticky top-0 bg-slate-100/90 z-40 shadow-sm">
                         Identity
                       </TableHead>
-                      <TableHead className="font-black text-[11px] uppercase tracking-[0.4em] text-muted-foreground/60 py-10">
+                      <TableHead className="font-black text-[11px] uppercase tracking-[0.4em] text-muted-foreground/60 py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">
                         Área Operativa
                       </TableHead>
-                      <TableHead className="font-black text-[11px] uppercase tracking-[0.4em] text-muted-foreground/60 py-10">
+                      <TableHead className="font-black text-[11px] uppercase tracking-[0.4em] text-muted-foreground/60 py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">
+                        Empresa / Contrata
+                      </TableHead>
+                      <TableHead className="font-black text-[11px] uppercase tracking-[0.4em] text-muted-foreground/60 py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">
                         Puesto / Nivel
                       </TableHead>
-                      <TableHead className="font-black text-[11px] uppercase tracking-[0.4em] text-muted-foreground/60 py-10">
+                      <TableHead className="font-black text-[11px] uppercase tracking-[0.4em] text-muted-foreground/60 py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">
                         Neural Maturity
                       </TableHead>
-                      <TableHead className="font-black text-[11px] uppercase tracking-[0.4em] text-muted-foreground/60 py-10">
+                      <TableHead className="font-black text-[11px] uppercase tracking-[0.4em] text-muted-foreground/60 py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">
                         Fecha
                       </TableHead>
-                      <TableHead className="text-right font-black text-[11px] uppercase tracking-[0.4em] text-muted-foreground/60 py-10 pr-14">
+                      <TableHead className="text-right font-black text-[11px] uppercase tracking-[0.4em] text-muted-foreground/60 py-4 pr-14 sticky top-0 bg-slate-100/90 z-40 shadow-sm">
                         Detalle
                       </TableHead>
                     </TableRow>
@@ -1078,6 +1178,11 @@ export default function DpmsRauraPage() {
                         <TableCell>
                           <span className="text-lg font-black text-foreground group-hover:translate-x-1 transition-transform uppercase italic tracking-tight">
                             {entry.area}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-[11px] font-bold text-primary px-3 py-1 bg-primary/5 rounded-full uppercase italic">
+                            {entry.empresa}
                           </span>
                         </TableCell>
                         <TableCell>
@@ -1143,7 +1248,7 @@ export default function DpmsRauraPage() {
                     </CardHeader>
                     <CardContent className="p-10 pt-0 flex-1 flex flex-col justify-center">
                       <p className="text-xl font-medium leading-relaxed italic text-slate-700 select-none pb-8 border-b border-border/10">
-                        "{e.comentarios}"
+                        "{getInterpretation(e.comentarios)}"
                       </p>
                       <div className="mt-8 flex items-center justify-between">
                         <div className="flex items-center gap-3">
