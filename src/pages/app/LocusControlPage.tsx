@@ -42,11 +42,11 @@ const RECOMMENDATIONS = {
     title: '🟡 RECOMENDACIÓN: RIESGO MEDIO (Riesgo Moderado)',
     desc: 'Trabajadores con responsabilidad parcial, pero con tendencia a justificar errores.',
     rec: [
-      'Realizar talleres de autorresponsabilidad en seguridad',
-      'Capacitación en: toma de decisiones, manejo de errores, cultura de seguridad',
-      'Brindar retroalimentación individual',
-      'Incluirlos en programas de: observación de conducta y seguimiento en campo',
-      'Reforzar supervisión en tareas críticas'
+      'Realizar charlas cortas focalizadas en responsabilidad personal, toma de decisiones, condiciones personales y fallos graves.',
+      'Supervisión más cercana en tareas críticas.',
+      'Retroalimentación directa del supervisor sea inmediata y específica.',
+      'Establecer sensibilización con los compromisos conductuales de seguridad.',
+      'Brindar retroalimentación individual.'
     ],
     followUp: 'Reevaluación cada 6 meses. Monitoreo trimestral de incidentes.'
   },
