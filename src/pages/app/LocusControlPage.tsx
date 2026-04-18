@@ -66,9 +66,6 @@ const RECOMMENDATIONS = {
     followUp: 'Evaluación cada 3 meses. Seguimiento mensual. Levantar restricciones solo si mejora su nivel.'
   }
 };
-si mejora su nivel.'
-  }
-};
 
 const getAnalysis = (internal: number) => {
   if (internal >= 19) return "Perfil con dominancia interna sólida (Apto). El evaluado asume responsabilidad directa sobre sus acciones y resultados, mostrando un alto compromiso con la seguridad operativa y el cumplimiento de normas.";
