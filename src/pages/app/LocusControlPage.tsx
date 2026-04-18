@@ -64,6 +64,12 @@ const RECOMMENDATIONS = {
   }
 };
 
+const getAnalysis = (internal: number) => {
+  if (internal >= 19) return "Perfil con dominancia interna sólida (Apto). El evaluado asume responsabilidad directa sobre sus acciones y resultados, mostrando un alto compromiso con la seguridad operativa y el cumplimiento de normas.";
+  if (internal >= 13) return "Perfil con control de riesgo medio. Si bien asume responsabilidad, aún existe una tendencia parcial a atribuir eventos a factores externos. Se recomienda reforzamiento en cultura de seguridad.";
+  return "Perfil con dominancia externa (Riesgo Alto). Existe una marcada tendencia a atribuir los resultados a factores ajenos a su voluntad, lo que aumenta la probabilidad de conductas inseguras por falta de responsabilidad personal.";
+};
+
 // Panel Lateral de Detalle Individual
 const LocusIndividualPanel = ({ entry, distribution, onClose }: { 
   entry: LocusControlEntry, 
@@ -72,17 +78,12 @@ const LocusIndividualPanel = ({ entry, distribution, onClose }: {
 }) => {
   const internalPct = (entry.internalScore / 23) * 100;
   
-  const getAnalysis = (internal: number, external: number) => {
-    if (internal >= 19) return "Perfil con dominancia interna sólida (Apto). El evaluado asume responsabilidad directa sobre sus acciones y resultados, mostrando un alto compromiso con la seguridad operativa y el cumplimiento de normas.";
-    if (internal >= 13) return "Perfil con control de riesgo medio. Si bien asume responsabilidad, aún existe una tendencia parcial a atribuir eventos a factores externos. Se recomienda reforzamiento en cultura de seguridad.";
-    return "Perfil con dominancia externa (Riesgo Alto). Existe una marcada tendencia a atribuir los resultados a factores ajenos a su voluntad, lo que aumenta la probabilidad de conductas inseguras por falta de responsabilidad personal.";
-  };
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    const analysis = getAnalysis(entry.internalScore, entry.externalScore);
+    const analysis = getAnalysis(entry.internalScore);
     const date = new Date().toLocaleDateString();
     const isApto = entry.result === 'APTO';
     const isMedio = entry.result === 'RIESGO MEDIO';
@@ -326,7 +327,7 @@ const LocusIndividualPanel = ({ entry, distribution, onClose }: {
           </h4>
           
           <div className="space-y-6 relative z-10">
-            <p className="text-sm font-medium text-slate-300 leading-relaxed italic border-b border-white/5 pb-6">"{getAnalysis(entry.internalScore, entry.externalScore)}"</p>
+            <p className="text-sm font-medium text-slate-300 leading-relaxed italic border-b border-white/5 pb-6">"{getAnalysis(entry.internalScore)}"</p>
             
             <div className="space-y-4">
                <div className={cn(
@@ -368,7 +369,7 @@ const LocusIndividualPanel = ({ entry, distribution, onClose }: {
             const excelWindow = window.open('', '_blank');
             if (!excelWindow) return;
             
-            const analysis = getAnalysis(entry.internalScore, entry.externalScore);
+            const analysis = getAnalysis(entry.internalScore);
             const diff = entry.internalScore - entry.externalScore;
             const resultText = entry.result;
             const isMedio = entry.result === 'RIESGO MEDIO';
@@ -772,6 +773,195 @@ const LocusControlPage = () => {
     });
   }, [data, search, statusFilter]);
 
+  const handleExportBulkExcel = async () => {
+    const excelWindow = window.open('', '_blank');
+    if (!excelWindow) return;
+    
+    excelWindow.document.write(`
+      <html>
+        <head>
+          <title>Generando Base Completa...</title>
+          <style>
+            body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #f8fafc; color: #1e293b; }
+            .loader { border: 4px solid #f3f3f3; border-top: 4px solid #6366f1; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 20px; }
+            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+            .status { font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+          </style>
+        </head>
+        <body>
+          <div class="loader"></div>
+          <div id="status">Sincronizando ${filteredEntries.length} Participantes...</div>
+          <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+          <script>
+            (async function() {
+              try {
+                // Wait for ExcelJS if it's not immediately available
+                let attempts = 0;
+                while (!window.ExcelJS && attempts < 50) {
+                  await new Promise(resolve => setTimeout(resolve, 100));
+                  attempts++;
+                }
+
+                if (!window.ExcelJS) throw new Error("ExcelJS focus timeout");
+
+                const workbook = new ExcelJS.Workbook();
+              const entries = ${JSON.stringify(filteredEntries)};
+              const RECS = ${JSON.stringify(RECOMMENDATIONS)};
+              
+              const headerStyle = {
+                font: { bold: true, color: { argb: 'FFFFFFFF' } },
+                fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } },
+                alignment: { horizontal: 'center' },
+                border: { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'}}
+              };
+
+              const cellStyle = {
+                border: { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'}},
+                alignment: { horizontal: 'center' }
+              };
+
+              for (const entry of entries) {
+                const safeName = entry.name.substring(0, 31).replace(/[\\\\\\/\\?\\*\\:\\[\\]]/g, '') || 'Participante';
+                const worksheet = workbook.addWorksheet(safeName);
+                
+                worksheet.getColumn(1).width = 30;
+                worksheet.getColumn(2).width = 90;
+                worksheet.getColumn(3).width = 25;
+                worksheet.getColumn(4).width = 25;
+                worksheet.getColumn(5).width = 5;
+
+                worksheet.getCell('A1').value = 'APELLIDOS Y NOMBRES';
+                worksheet.getCell('A1').style = headerStyle;
+                worksheet.getCell('A2').value = entry.name;
+                worksheet.getCell('A2').font = { bold: true };
+                worksheet.getCell('A2').border = cellStyle.border;
+
+                worksheet.mergeCells('C1:D1');
+                worksheet.getCell('C1').value = 'RESULTADOS';
+                worksheet.getCell('C1').style = headerStyle;
+
+                const resultColor = entry.result === 'APTO' ? 'FFD1FAE5' : (entry.result === 'RIESGO MEDIO' ? 'FFFEF3C7' : 'FFFEE2E2');
+                const resultTextCol = entry.result === 'APTO' ? 'FF059669' : (entry.result === 'RIESGO MEDIO' ? 'FFD97706' : 'FFDC2626');
+
+                const resultsData = [
+                  ['INTERNO', entry.internalScore],
+                  ['EXTERNO', entry.externalScore],
+                  ['LOCUS DE CONTR', entry.result]
+                ];
+
+                resultsData.forEach((row, i) => {
+                  const rNum = i + 2;
+                  worksheet.getCell('C' + rNum).value = row[0];
+                  worksheet.getCell('D' + rNum).value = row[1];
+                  worksheet.getCell('C' + rNum).style = {...cellStyle, font: {bold: true}};
+                  worksheet.getCell('D' + rNum).style = cellStyle;
+                  if (row[0] === 'LOCUS DE CONTR') {
+                    worksheet.getCell('D' + rNum).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: resultColor.replace('#', '') } };
+                    worksheet.getCell('D' + rNum).font = { bold: true, color: { argb: resultTextCol.replace('#', '') } };
+                  }
+                });
+
+                // DRAW CHART
+                const canvas = document.createElement('canvas');
+                canvas.width = 800;
+                canvas.height = 160;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, 800, 160);
+                
+                const barY = 70;
+                const barH = 30;
+                // Red segment
+                ctx.fillStyle = '#fecaca'; // Red-200
+                ctx.fillRect(50, barY, 700 * 0.543, barH);
+                // Amber segment
+                ctx.fillStyle = '#fef3c7'; // Amber-100
+                ctx.fillRect(50 + 700 * 0.543, barY, 700 * 0.261, barH);
+                // Green segment
+                ctx.fillStyle = '#d1fae5'; // Emerald-100
+                ctx.fillRect(50 + 700 * (0.543 + 0.261), barY, 700 * 0.196, barH);
+                
+                // Pointer
+                const pX = 50 + (entry.internalScore / 23) * 700;
+                const pColor = entry.result === 'APTO' ? '#10b981' : (entry.result === 'RIESGO MEDIO' ? '#d97706' : '#dc2626');
+                ctx.fillStyle = pColor;
+                ctx.fillRect(pX - 3, barY - 15, 6, barH + 30);
+                
+                // Text
+                ctx.font = 'bold 18px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(entry.result + ' (' + entry.internalScore + ' pts)', pX, barY - 25);
+                
+                // Legend
+                ctx.font = '12px Arial';
+                ctx.fillStyle = '#64748b';
+                ctx.textAlign = 'left';
+                ctx.fillText('EXTERNO (RIESGO)', 50, barY + barH + 20);
+                ctx.textAlign = 'right';
+                ctx.fillText('INTERNO (APTO)', 750, barY + barH + 20);
+
+                const chartImgId = workbook.addImage({
+                  base64: canvas.toDataURL('image/png'),
+                  extension: 'png',
+                });
+                
+                worksheet.addImage(chartImgId, {
+                  tl: { col: 5.2, row: 1 },
+                  ext: { width: 600, height: 120 }
+                });
+
+                let rR = 5;
+                worksheet.mergeCells('A' + rR + ':B' + rR);
+                worksheet.getCell('A' + rR).value = 'DIAGNÓSTICO Y RECOMENDACIONES';
+                worksheet.getCell('A' + rR).style = headerStyle;
+                rR++;
+
+                const getAnalysisText = (internal) => {
+                  if (internal >= 19) return "Perfil con dominancia interna sólida (Apto). El evaluado asume responsabilidad directa sobre sus acciones y resultados, mostrando un alto compromiso con la seguridad operativa y el cumplimiento de normas.";
+                  if (internal >= 13) return "Perfil con control de riesgo medio. Si bien asume responsabilidad, aún existe una tendencia parcial a atribuir eventos a factores externos. Se recomienda reforzamiento en cultura de seguridad.";
+                  return "Perfil con dominancia externa (Riesgo Alto). Existe una marcada tendencia a atribuir los resultados a factores ajenos a su voluntad, lo que aumenta la probabilidad de conductas inseguras por falta de responsabilidad personal.";
+                };
+
+                worksheet.getCell('A' + rR).value = 'Situación:';
+                worksheet.getCell('B' + rR).value = getAnalysisText(entry.internalScore);
+                worksheet.getCell('A' + rR).font = { bold: true };
+                worksheet.getCell('B' + rR).alignment = { wrapText: true, vertical: 'middle' };
+                rR += 2;
+
+                const pRecs = RECS[entry.result];
+                worksheet.getCell('A' + rR).value = 'Acciones Correctivas:';
+                worksheet.getCell('A' + rR).font = { bold: true };
+                rR++;
+                pRecs.rec.forEach(r => {
+                  worksheet.getCell('A' + rR).value = '• ' + r;
+                  worksheet.mergeCells('A' + rR + ':B' + rR);
+                  worksheet.getCell('A' + rR).alignment = { wrapText: true, vertical: 'middle', horizontal: 'left' };
+                  rR++;
+                });
+                rR++;
+
+                worksheet.getCell('A' + rR).value = 'Plan de Seguimiento:';
+                worksheet.getCell('B' + rR).value = pRecs.followUp;
+                worksheet.getCell('A' + rR).font = { bold: true };
+                worksheet.getCell('B' + rR).alignment = { wrapText: true, vertical: 'middle' };
+                worksheet.getCell('B' + rR).font = { bold: true, color: { argb: resultTextCol.replace('#', '') } };
+              }
+
+              const buff = await workbook.xlsx.writeBuffer();
+              saveAs(new Blob([buff]), "Base_Locus_Control_Global.xlsx");
+              setTimeout(() => window.close(), 1500);
+              } catch (err) {
+                document.getElementById('status').innerHTML = "ERROR: " + err.message;
+                console.error(err);
+              }
+            })();
+          </script>
+        </body>
+      </html>
+    `);
+  };
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
@@ -1159,6 +1349,17 @@ const LocusControlPage = () => {
                       Alto
                     </Button>
                 </div>
+                
+                <Button 
+                  onClick={handleExportBulkExcel}
+                  className="h-14 px-8 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xl shadow-emerald-500/20 gap-3 group transition-all active:scale-95 border-0"
+                >
+                  <FileSpreadsheet className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                  <div className="text-left leading-none">
+                    <p className="text-[8px] font-black uppercase tracking-widest opacity-70 mb-0.5">Descargar Base</p>
+                    <p className="text-sm font-black tracking-tighter uppercase italic">Excel Grupal</p>
+                  </div>
+                </Button>
               </div>
               <div className="flex items-center gap-3 bg-muted/30 px-6 py-3 rounded-2xl border border-border/50">
                   <Filter className="w-4 h-4 text-muted-foreground" />
