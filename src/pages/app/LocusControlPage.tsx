@@ -541,11 +541,11 @@ const LocusIndividualPanel = ({ entry, distribution, onClose }: {
                     });
                   }
 
-                  worksheet.getColumn(1).width = 40;
-                  worksheet.getColumn(2).width = 5; // Separator
-                  worksheet.getColumn(3).width = 22;
-                  worksheet.getColumn(4).width = 22;
-                  worksheet.getColumn(5).width = 3; // Space before charts
+                  worksheet.getColumn(1).width = 30;
+                  worksheet.getColumn(2).width = 90; // Much wider for recommendations
+                  worksheet.getColumn(3).width = 25;
+                  worksheet.getColumn(4).width = 25;
+                  worksheet.getColumn(5).width = 5; // Space
                   worksheet.getColumn(6).width = 80; // Chart column
 
                   const buffer = await workbook.xlsx.writeBuffer();
