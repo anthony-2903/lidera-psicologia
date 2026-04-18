@@ -402,6 +402,7 @@ export default function DimensionesPage() {
                             ))}
                         </TableBody>
                     </Table>
+                  </div>
                 </GlassCard>
             </div>
         )}
