@@ -30,11 +30,12 @@ const RECOMMENDATIONS = {
     title: '🟢 RECOMENDACIÓN: APTO (Bajo Riesgo)',
     desc: 'Trabajadores con alto nivel de responsabilidad (control interno).',
     rec: [
-      'Asignar tareas críticas sin restricción',
-      'Designarlos como mentores o referentes en seguridad',
-      'Reconocer su comportamiento seguro (motivación)',
-      'Incluirlos como apoyo en capacitaciones o talleres',
-      'Mantener seguimiento preventivo'
+      'Mantener en tareas críticas, asegurando continuidad del desempeño.',
+      'Designar como modelo de conducta segura dentro del equipo.',
+      'Refuerzo mediante reconocimiento conductual (feedback positivo).',
+      'Involucrar en inducciones o charlas de seguridad como referente.',
+      'Seguimiento periódico (no intensivo) para asegurar sostenibilidad.',
+      'Considerar en procesos de liderazgo.'
     ],
     followUp: 'Reevaluación cada 12 meses'
   },
@@ -54,13 +55,18 @@ const RECOMMENDATIONS = {
     title: '🔴 RECOMENDACIÓN: RIESGO ALTO (Alto Riesgo)',
     desc: 'Trabajadores con tendencia fuerte a no asumir responsabilidad.',
     rec: [
-      'Realizar intervención psicológica individual',
-      'Restricción temporal de tareas críticas y zonas de alto riesgo',
-      'Implementar programas intensivos de: conducta segura y responsabilidad personal',
-      'Coordinación directa con RRHH y supervisores',
-      'Notificación formal del estado de riesgo'
+      'Implementar plan de intervención conductual individual.',
+      'Seguimiento por la supervisión en campo estricto y continuo.',
+      'Participación obligatoria en programas de sensibilización en seguridad.',
+      'Retroalimentación directa e inmediata ante desviaciones comportamentales.',
+      'Evaluar antecedentes (incidentes, incumplimientos, reportes).',
+      'Reasignación temporal a funciones de menor exposición al riesgo.',
+      'Reevaluación obligatoria antes de reincorporación a tareas críticas.'
     ],
     followUp: 'Evaluación cada 3 meses. Seguimiento mensual. Levantar restricciones solo si mejora su nivel.'
+  }
+};
+si mejora su nivel.'
   }
 };
 
