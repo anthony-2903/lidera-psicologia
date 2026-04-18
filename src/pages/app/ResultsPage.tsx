@@ -202,7 +202,8 @@ const ResultsPage = () => {
             )}
           </TableBody>
         </Table>
-      </Card>
+      </div>
+    </Card>
 
       {/* Summary Footer */}
       <div className="flex items-center justify-between px-2">
