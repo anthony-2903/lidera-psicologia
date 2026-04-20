@@ -120,6 +120,13 @@ export interface LocusControlData {
   entries: LocusControlEntry[];
 }
 
+export interface DimensionReport {
+  tipo: string;
+  fortalezas: string;
+  riesgos: string;
+  enfoque: string;
+}
+
 export interface DimensionesEntry {
   id: number;
   nombre: string;
@@ -128,7 +135,7 @@ export interface DimensionesEntry {
   area: string;
   cargo: string;
   puntuacionLiderazgo: number;
-  puntuacionPercepcion: number; // Mapping EMA/Others to Perception for now as placeholder
+  puntuacionPercepcion: number;
   total: number;
   nivel: string;
   perfil: string;
@@ -138,6 +145,12 @@ export interface DimensionesEntry {
   emaScore: number;
   bigFiveScore: number;
   entrevistaScore: number;
+  insightPercepcion?: string;
+  // Reportes cualitativos de las hojas adicionales
+  culturaReport?: DimensionReport;
+  comunicacionReport?: DimensionReport;
+  percepcionReport?: DimensionReport;
+  liderazgoReport?: DimensionReport;
 }
 
 export interface DimensionesDashboardData {
@@ -735,73 +748,186 @@ export const fetchLocusControlData = async (sheetId: string): Promise<LocusContr
 // ============================================
 // FUNCION PARSER DIMENSIONES
 // ============================================
-export const fetchDimensionesData = async (sheetId: string): Promise<DimensionesDashboardData> => {
-  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+// Helper: fetch and parse a report sheet into a name→report map
+const fetchReportSheet = async (
+  sheetId: string,
+  gid: string
+): Promise<Map<string, DimensionReport>> => {
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return new Map();
+    const csv = await res.text();
+    const map = new Map<string, DimensionReport>();
+    await new Promise<void>((resolve) => {
+      Papa.parse(csv, {
+        header: false,
+        skipEmptyLines: false,
+        complete: (results) => {
+          const rows = results.data as string[][];
+          // Row 0 is header, data starts from row 1
+          for (let i = 1; i < rows.length; i++) {
+            const r = rows[i];
+            const name = (r[1] || '').trim();
+            if (!name) continue;
+            map.set(name.toUpperCase(), {
+              tipo: (r[2] || '').trim(),
+              fortalezas: (r[3] || '').trim(),
+              riesgos: (r[4] || '').trim(),
+              enfoque: (r[5] || '').trim(),
+            });
+          }
+          resolve();
+        },
+      });
+    });
+    return map;
+  } catch {
+    return new Map();
+  }
+};
 
-  const response = await fetch(url);
-  if (!response.ok) throw new Error('Failed to fetch Dimensiones data');
-  const csvText = await response.text();
+export const fetchDimensionesData = async (sheetId: string): Promise<DimensionesDashboardData> => {
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=pagina%20principal`;
+
+  // Fetch all sheets in parallel
+  const [mainRes, culturaMap, comunicacionMap, percepcionMap, liderazgoMap] = await Promise.all([
+    fetch(url),
+    fetchReportSheet(sheetId, '1175296027'),
+    fetchReportSheet(sheetId, '656786103'),
+    fetchReportSheet(sheetId, '495762530'),
+    fetchReportSheet(sheetId, '1509919201'),
+  ]);
+
+  if (!mainRes.ok) throw new Error('Failed to fetch Dimensiones data');
+  const csvText = await mainRes.text();
 
   return new Promise((resolve, reject) => {
-    Papa.parse<string[]>(csvText, {
-      header: false,
+    Papa.parse(csvText, {
+      header: true,
       skipEmptyLines: true,
       complete: (results) => {
-        const rows = results.data;
-        if (rows.length < 2) {
-          reject(new Error("No data found in Dimensiones sheet"));
+        const rows = results.data as any[];
+        if (rows.length === 0) {
+          reject(new Error("No data found in Dimensiones sheet (pagina principal)"));
           return;
         }
 
-        const entries: DimensionesEntry[] = [];
-        // Skip header row (index 0)
-        for (let i = 1; i < rows.length; i++) {
-          const r = rows[i];
-          if (!r[0] || r[0].trim() === "") continue;
+        // Clean headers from meta.fields (more reliable than Object.keys)
+        const keys = (results.meta.fields || []);
+        
+        // Helper to find column key by keywords
+        const getK = (keywords: string[]) => keys.find(k => {
+           const s = k.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+           return keywords.some(kw => s.includes(kw));
+        });
 
-          // Clean percentages (e.g., "75.45%" -> 75.45)
-          const cleanPct = (val: string) => {
-             if (!val) return 0;
-             const v = val.replace('%', '').trim();
+        // Dynamic mapping based on header analysis
+        const map = {
+            nombre: getK(["NOMBRE", "APELLIDOS", "COLABORADOR", "PACIENTE", "EVALUADO"]) || keys[0],
+            dni: getK(["DNI", "NUMERO DNI", "NRO DNI", "D.N.I."]) || keys[2], // Columna C (index 2)
+            empresa: getK(["EMPRESA"]),
+            area: getK(["AREA", "ÁREA"]),
+            cargo: getK(["CARGO", "PUESTO", "CARGO ACTUAL"]),
+            lba: getK(["LIDERAZGO %", "% LIDERAZGO", "LBA"]) || keys[7], // Columna H (index 7)
+            lbaNivel: getK(["NIVEL LIDERAZGO", "LIDERAZGO NIVEL", "VALOR LIDERAZGO"]) || keys[8], // Columna I (index 8)
+            percepcion: getK(["PERCEPCION %", "% PERCEPCION", "RIESGOS %", "RIESGO %"]) || keys[10], // Columna K (index 10)
+            percepcionNivel: getK(["NIVEL PERCEPCION", "RIESGOS NIVEL", "VALOR RIESGO"]) || keys[11], // Columna L (index 11)
+            belbin: getK(["BELBIN"]),
+            ema: getK(["EMA"]),
+            bf: getK(["BIG FIVE", "BF", "PERSONALIDAD"]),
+            entrevista: getK(["ENTREVISTA"]),
+            total: getK(["TOTAL", "PUNTUACION"]),
+            nivel: getK(["NIVEL"]),
+            perfil: getK(["PERFIL"]),
+            sexo: getK(["SEXO", "GENERO", "SEX", "H/M"]),
+            insightPercepcion: getK(["INSIGHT PERCEPCION", "COMENTARIO RIESGO", "ACCION RIESGO"]) || keys[12] // Columna M (index 12)
+        };
+
+        const entries: DimensionesEntry[] = [];
+        
+        rows.forEach((r, i) => {
+          if (!r[map.nombre] || r[map.nombre].trim() === "") return;
+
+          const cleanPct = (val: any) => {
+             if (val === undefined || val === null) return 0;
+             const v = String(val).replace('%', '').trim();
              return parseFloat(v) || 0;
           };
 
-          // Column Mapping based on CSV analysis:
-          // 0: Nombre, 1: DNI, 2: Empresa, 3: Area, 4: Cargo
-          // 5: LBA (Liderazgo), 10: Total, 11: Nivel, 12: Perfil
+          // Calculation logic based on mapped columns
+          const lbaPct = cleanPct(r[map.lba || ""]);
+          const percepcionPct = cleanPct(r[map.percepcion || ""]);
           
-          const liderazgoPct = cleanPct(r[5]); // Weighted 30%
-          const liderazgoReal = (liderazgoPct / 30) * 100;
+          // Priorizamos los porcentajes directos proporcionados por el usuario
+          const liderazgoReal = lbaPct;
+          const percepcionReal = percepcionPct;
 
-          const totalScore = cleanPct(r[10]);
+          const totalScore = cleanPct(r[map.total || ""]);
           
-          // EMA or Big Five as proxy for perception
-          const percepcionPct = cleanPct(r[8]) || cleanPct(r[7]); 
-          const weight = r[8] ? 20 : 15;
-          const percepcionReal = (percepcionPct / weight) * 100;
+          // EMA or Big Five as proxy for other scores if needed, but for perception we use percepcionReal
+          const bfVal = cleanPct(r[map.bf || ""]);
+          const emaVal = cleanPct(r[map.ema || ""]);
           
-          const genero = detectGender(r[0]);
+          let genero: 'MASCULINO' | 'FEMENINO' = 'MASCULINO';
+          const sexoVal = (r[map.sexo || ""] || "").trim().toUpperCase();
+          
+          if (sexoVal === 'M' || sexoVal === 'MASCULINO' || sexoVal === 'HOMBRE') {
+            genero = 'MASCULINO';
+          } else if (sexoVal === 'F' || sexoVal === 'FEMENINO' || sexoVal === 'MUJER') {
+            genero = 'FEMENINO';
+          } else {
+            // Fallback al detector por nombre si la columna sexo está vacía o es ambigua
+            genero = detectGender(r[map.nombre] || '');
+          }
+
+          // Extracción inteligente de DNI: Debe contener números y no parecer un nombre largo
+          let dniVal = "";
+          const dniCandidates = [map.dni, keys[2], keys[1], keys[0]]; 
+          for (const cand of dniCandidates) {
+            if (!cand) continue;
+            let val = String(r[cand] || "").trim();
+            
+            // Normalización: Corregir 'O' por '0' (error común de tipeo)
+            val = val.replace(/O/g, '0');
+
+            // Si contiene al menos un número y no tiene ráfagas de letras largas (evita nombres)
+            if (/\d/.test(val) && !/[a-zA-Z]{5,}/.test(val)) {
+              // Si parece un DNI peruano de 8 dígitos y le falta el cero inicial
+              if (/^\d{7}$/.test(val)) val = "0" + val;
+              dniVal = val;
+              break;
+            }
+          }
+
+          const nameKey = (r[map.nombre] || '').trim().toUpperCase();
 
           entries.push({
-            id: i,
-            nombre: r[0],
-            dni: r[1],
-            empresa: r[2],
-            area: r[3],
-            cargo: r[4],
+            id: i + 1,
+            nombre: r[map.nombre],
+            dni: dniVal || "No registrado",
+            empresa: (r[map.empresa || ""] || r[keys[4]] || "").trim(),
+            area: (r[map.area || ""] || r[keys[5]] || "").trim(),
+            cargo: (r[map.cargo || ""] || r[keys[6]] || "").trim(),
             puntuacionLiderazgo: liderazgoReal,
             puntuacionPercepcion: percepcionReal,
             total: totalScore,
-            nivel: (r[11] || "Normal").trim(),
-            perfil: (r[12] || "").trim(),
+            nivel: (r[map.nivel || ""] || r[map.lbaNivel || ""] || "Normal").trim(),
+            perfil: (r[map.perfil || ""] || r[map.percepcionNivel || ""] || "").trim(),
             genero,
-            lbaScore: cleanPct(r[5]),
-            belbinScore: cleanPct(r[6]),
-            emaScore: cleanPct(r[7]),
-            bigFiveScore: cleanPct(r[8]),
-            entrevistaScore: cleanPct(r[9])
+            lbaScore: lbaPct,
+            belbinScore: cleanPct(r[map.belbin || ""]),
+            emaScore: emaVal,
+            bigFiveScore: bfVal,
+            entrevistaScore: cleanPct(r[map.entrevista || ""]),
+            insightPercepcion: (r[map.insightPercepcion || ""] || "").trim(),
+            // JOIN con las hojas de reporte cualitativo
+            culturaReport: culturaMap.get(nameKey),
+            comunicacionReport: comunicacionMap.get(nameKey),
+            percepcionReport: percepcionMap.get(nameKey),
+            liderazgoReport: liderazgoMap.get(nameKey),
           });
-        }
+        });
 
         resolve({
           entries,
