@@ -302,17 +302,6 @@ const OrbCard = ({ orb, lines, delay }: OrbCardProps) => {
       </motion.div>
     </motion.div>
   );
-};t-[12px] text-white leading-relaxed font-medium">
-                    {line}
-                  </p>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
-    </motion.div>
-  );
 };
 
 const DimensionesPage = () => {
