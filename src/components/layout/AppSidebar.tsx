@@ -33,6 +33,7 @@ export const navItems = [
   { label: "Resultados", icon: TrendingUp, path: "/app/results" },
   { label: "Dashboard Final", icon: LayoutDashboard, path: "/app/final-dashboard" },
   { label: "DPMS-Raura", icon: Activity, path: "/app/dpms-raura" },
+  { label: "Carga de Entrevistas DPMS", icon: FileText, path: "/app/dpms-raura/upload-interview" },
   { label: "Locus de Control", icon: Brain, path: "/app/locus-control" },
   { label: "Dimensiones", icon: Layers, path: "/app/dimensiones" },
 ];

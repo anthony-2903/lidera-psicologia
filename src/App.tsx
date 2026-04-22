@@ -22,10 +22,11 @@ const ImprovementPage = lazy(() => import("./pages/app/ImprovementPage"));
 const ActionPlanPage = lazy(() => import("./pages/app/ActionPlanPage"));
 const ResultsPage = lazy(() => import("./pages/app/ResultsPage"));
 const FinalDashboardPage = lazy(() => import("./pages/app/FinalDashboardPage"));
-const DpmsRauraPage = lazy(() => import("./pages/app/DpmsRauraPage"));
-const LocusControlPage = lazy(() => import("./pages/app/LocusControlPage"));
+const DpmsRauraPage = lazy(() => import("./pages/app/dpms-raura/DpmsRauraPage"));
+const LocusControlPage = lazy(() => import("./pages/app/locus-control/LocusControlPage"));
 const AdminUsersPage = lazy(() => import("./pages/app/AdminUsersPage"));
 const DimensionesPage = lazy(() => import("./pages/app/DimensionesPage"));
+const UploadDpmsPage = lazy(() => import("./pages/app/dpms-raura/UploadDpmsPage"));
 const WelcomePage = lazy(() => import("./pages/app/WelcomePage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -76,6 +77,7 @@ const App = () => (
                   <Route path="results" element={<ResultsPage />} />
                   <Route path="final-dashboard" element={<FinalDashboardPage />} />
                   <Route path="dpms-raura" element={<DpmsRauraPage />} />
+                  <Route path="dpms-raura/upload-interview" element={<UploadDpmsPage />} />
                   <Route path="locus-control" element={<LocusControlPage />} />
                    <Route path="dimensiones" element={<DimensionesPage />} />
                    <Route path="admin" element={<AdminUsersPage />} />
