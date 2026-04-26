@@ -78,7 +78,7 @@ const AppLayout = () => {
 
         {/* Content Area - Now part of the main scroll */}
         <div className="flex-1">
-          <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="container mx-auto p-4 md:p-8 max-w-none animate-in fade-in slide-in-from-bottom-4 duration-700">
             <Outlet />
           </div>
         </div>

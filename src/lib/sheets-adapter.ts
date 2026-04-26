@@ -164,13 +164,15 @@ export interface SheetRow {
   'APELLIDOS Y NOMBRES': string;
   DNI: string;
   EMPRESA: string;
-  ÁREA: string;
+  AREA: string;
+  'ÁREA'?: string;
   PUESTO: string;
   'GRADO DE INSTRUCCIÓN': string;
   'BATERIAS PSICOLOGICAS': string;
   'ENTREVISTA POR COMPETENCIAS': string;
   ESTADO: string;
-  'FECHA DE EVALUACION': string;
+  'FECHA DE EVALUACIÓN': string;
+  'FECHA DE EVALUACION'?: string;
 }
 
 export interface StatGroup {
@@ -229,7 +231,7 @@ export const fetchSheetData = async (sheetId: string): Promise<GroupMetric[]> =>
         const groups: Record<string, GroupMetric> = {};
         
         rows.forEach((row) => {
-          const area = row.ÁREA || 'Sin Área';
+          const area = row.AREA || row.ÁREA || 'Sin Área';
           if (!groups[area]) {
             groups[area] = {
               id: Object.keys(groups).length + 1,

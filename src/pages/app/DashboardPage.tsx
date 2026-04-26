@@ -252,75 +252,107 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      {/* Primary Summary KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
-        {[
-          { label: "Áreas Activas", value: summaryData.totalGroups, icon: UsersRound, color: "bg-blue-500/10 text-blue-600" },
-          { label: "Participantes Totales", value: summaryData.totalEvaluated, icon: Users, color: "bg-indigo-500/10 text-indigo-600" },
-          { label: "Promedio General", value: `${summaryData.avgSystemScore}%`, icon: TrendingUp, color: "bg-emerald-500/10 text-emerald-600" },
-        ].map((kpi) => (
-          <Card key={kpi.label} className="border-border/40 bg-card/60 backdrop-blur-md shadow-xl overflow-hidden group">
-            <CardContent className="p-4 md:p-6 relative">
-              <div className="flex items-center justify-between relative z-10">
-                <div className="space-y-0.5">
-                  <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">{kpi.label}</p>
-                  <p className="text-2xl md:text-4xl font-black text-foreground tabular-nums group-hover:scale-105 transition-transform duration-500 origin-left">
-                    {kpi.value}
-                  </p>
-                </div>
-                <div className={cn("w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl flex items-center justify-center transition-transform group-hover:rotate-12 duration-500", kpi.color)}>
-                  <kpi.icon className="w-5 h-5 md:w-7 h-7" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      {/* Primary Summary KPIs - Redesigned to match image styles */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* EVALUACIONES APLICADAS */}
+        <div className="bg-white border-2 border-emerald-500/20 rounded-[32px] p-6 flex items-center gap-6 shadow-sm relative overflow-hidden group hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-500">
+           <div className="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-lg shrink-0">
+             <CheckCircle className="w-8 h-8" />
+           </div>
+           <div className="flex-1 text-center">
+             <p className="text-[10px] font-black leading-tight text-emerald-700 uppercase tracking-widest">EVALUACIONES<br/>APLICADAS</p>
+             <p className="text-4xl font-black text-emerald-600 mt-1">{groupMetrics.reduce((acc, g) => acc + g.statusStats.completo, 0)}</p>
+             <div className="mt-1 bg-emerald-500 text-white font-black text-xs px-3 py-0.5 rounded-full inline-block">
+               {summaryData.totalEvaluated > 0 ? Math.round((groupMetrics.reduce((acc, g) => acc + g.statusStats.completo, 0) / summaryData.totalEvaluated) * 100) : 0}%
+             </div>
+           </div>
+        </div>
+
+        {/* EN PROCESO */}
+        <div className="bg-white border-2 border-amber-500/20 rounded-[32px] p-6 flex items-center gap-6 shadow-sm relative overflow-hidden group hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-500">
+           <div className="w-16 h-16 rounded-full bg-amber-500 flex items-center justify-center text-white shadow-lg shrink-0">
+             <Clock className="w-8 h-8 animate-pulse" />
+           </div>
+           <div className="flex-1 text-center">
+             <p className="text-[10px] font-black leading-tight text-amber-700 uppercase tracking-widest">EN PROCESO DE<br/>APLICACIÓN</p>
+             <p className="text-4xl font-black text-amber-500 mt-1">{groupMetrics.reduce((acc, g) => acc + g.statusStats.proceso, 0)}</p>
+             <div className="mt-1 bg-amber-500 text-white font-black text-xs px-3 py-0.5 rounded-full inline-block">
+               {summaryData.totalEvaluated > 0 ? Math.round((groupMetrics.reduce((acc, g) => acc + g.statusStats.proceso, 0) / summaryData.totalEvaluated) * 100) : 0}%
+             </div>
+           </div>
+        </div>
+
+        {/* PENDIENTES */}
+        <div className="bg-white border-2 border-red-500/20 rounded-[32px] p-6 flex items-center gap-6 shadow-sm relative overflow-hidden group hover:shadow-xl hover:shadow-red-500/10 transition-all duration-500">
+           <div className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center text-white shadow-lg shrink-0">
+             <AlertCircle className="w-8 h-8" />
+           </div>
+           <div className="flex-1 text-center">
+             <p className="text-[10px] font-black leading-tight text-red-700 uppercase tracking-widest">PENDIENTES DE<br/>APLICACIÓN</p>
+             <p className="text-4xl font-black text-red-500 mt-1">{groupMetrics.reduce((acc, g) => acc + g.statusStats.falta, 0)}</p>
+             <div className="mt-1 bg-red-500 text-white font-black text-xs px-3 py-0.5 rounded-full inline-block">
+               {summaryData.totalEvaluated > 0 ? Math.round((groupMetrics.reduce((acc, g) => acc + g.statusStats.falta, 0) / summaryData.totalEvaluated) * 100) : 0}%
+             </div>
+           </div>
+        </div>
       </div>
 
       {/* Charts Summary: Restored Old View with Premium Touch */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="border-border/40 bg-white/60 backdrop-blur-xl shadow-2xl p-4 sm:p-8 rounded-2xl sm:rounded-[3rem] overflow-hidden group">
           <CardHeader className="px-0 pt-0 pb-8">
-            <CardTitle className="text-sm font-black uppercase tracking-widest text-primary/60 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+            <CardTitle className="text-sm font-black uppercase tracking-widest text-[#1e293b] flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-[#1e293b]/10 flex items-center justify-center text-[#1e293b]">
                 <PieChartIcon className="w-4 h-4" />
               </div>
-              Distribución por Género
+              Distribución por Estado
             </CardTitle>
           </CardHeader>
           <CardContent className="px-0 pb-0">
-            <div className="h-[250px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={summaryData.genderData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={90}
-                    dataKey="value"
-                    paddingAngle={8}
-                  >
-                    {summaryData.genderData.map((entry, index) => (
-                      <Cell key={index} fill={entry.color} stroke="none" />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="flex justify-center gap-10 mt-6">
-              {summaryData.genderData.map((g) => (
-                <div key={g.name} className="flex flex-col items-center gap-1">
-                  <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: g.color }} />
-                    {g.name}
-                  </div>
-                  <div className="text-xl font-black text-slate-700">{g.value}</div>
-                </div>
-              ))}
+            <div className="flex flex-col md:flex-row items-center gap-8">
+              <div className="h-[250px] w-full md:w-1/2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart split-type="donut">
+                    <Pie
+                      data={[
+                        { name: 'Aplicadas', value: groupMetrics.reduce((acc, g) => acc + g.statusStats.completo, 0), color: "#22c55e" },
+                        { name: 'En Proceso', value: groupMetrics.reduce((acc, g) => acc + g.statusStats.proceso, 0), color: "#f59e0b" },
+                        { name: 'Pendientes', value: groupMetrics.reduce((acc, g) => acc + g.statusStats.falta, 0), color: "#ef4444" },
+                      ]}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={85}
+                      dataKey="value"
+                      paddingAngle={5}
+                    >
+                      {[
+                        { color: "#22c55e" },
+                        { color: "#f59e0b" },
+                        { color: "#ef4444" },
+                      ].map((entry, index) => (
+                        <Cell key={index} fill={entry.color} stroke="none" />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex flex-col gap-4 flex-1">
+                 {[
+                   { label: 'Aplicadas', value: groupMetrics.reduce((acc, g) => acc + g.statusStats.completo, 0), color: "#22c55e" },
+                   { label: 'En Proceso', value: groupMetrics.reduce((acc, g) => acc + g.statusStats.proceso, 0), color: "#f59e0b" },
+                   { label: 'Pendientes', value: groupMetrics.reduce((acc, g) => acc + g.statusStats.falta, 0), color: "#ef4444" },
+                 ].map((stat) => (
+                   <div key={stat.label} className="flex items-center justify-between p-3 rounded-2xl bg-muted/20 border border-border/10">
+                      <div className="flex items-center gap-3">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: stat.color }} />
+                        <span className="text-xs font-bold text-muted-foreground uppercase">{stat.label}</span>
+                      </div>
+                      <span className="text-lg font-black">{stat.value}</span>
+                   </div>
+                 ))}
+              </div>
             </div>
           </CardContent>
         </Card>
