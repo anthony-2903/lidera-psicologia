@@ -686,12 +686,12 @@ export const fetchLocusControlData = async (sheetId: string): Promise<LocusContr
 
         for (let i = 1; i < rows.length; i++) {
           const r = rows[i];
-          if (!r[0] || r[0] === 'APELLIDOS Y NOMBRES') continue;
+          if (!r[1] || r[1] === 'APELLIDOS Y NOMBRES') continue;
 
           let internalScore = 0;
-          // Questions P1 to P23 are in columns D to Z (indices 3 to 25)
+          // Questions P1 to P23 are now in columns E to AA (indices 4 to 26)
           for (let q = 1; q <= 23; q++) {
-            const responseValue = (r[q + 2] || '').trim().toLowerCase();
+            const responseValue = (r[q + 3] || '').trim().toLowerCase();
             if (responseValue === internalKey[q]) {
               internalScore++;
             }
@@ -717,10 +717,10 @@ export const fetchLocusControlData = async (sheetId: string): Promise<LocusContr
           }
 
           entries.push({
-            id: i,
-            name: r[0],
-            company: r[1],
-            position: r[2],
+            id: parseInt(r[0]) || i,
+            name: r[1],
+            company: r[2],
+            position: r[3],
             internalScore,
             externalScore,
             result,
