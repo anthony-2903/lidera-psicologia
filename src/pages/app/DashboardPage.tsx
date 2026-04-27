@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Users, UsersRound, CheckCircle, Calendar, Clock, AlertCircle, TrendingUp, BarChart3, PieChart as PieChartIcon, Info, ChevronLeft, ArrowLeft, Loader2, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, RadarChart, PolarGrid, PolarAngleAxis, Radar } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, RadarChart, PolarGrid, PolarAngleAxis, Radar, LabelList } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -25,20 +25,23 @@ const DashboardPage = () => {
   });
 
   const summaryData = useMemo(() => {
-    if (!groupMetrics.length) return { totalGroups: 0, totalEvaluated: 0, totalCompleted: 0, avgSystemScore: 0, genderData: [], areaData: [] };
+    if (!groupMetrics.length) return { totalGroups: 0, totalEvaluated: 0, totalCompleted: 0, avgSystemScore: 0, genderData: [], companyData: [] };
     
+    const totalEvaluated = groupMetrics.reduce((acc, g) => acc + g.total, 0);
+
     return {
       totalGroups: groupMetrics.length,
-      totalEvaluated: groupMetrics.reduce((acc, g) => acc + g.total, 0),
+      totalEvaluated,
       totalCompleted: groupMetrics.reduce((acc, g) => acc + g.completed, 0),
       avgSystemScore: Math.round(groupMetrics.reduce((acc, g) => acc + g.avgScore, 0) / groupMetrics.length),
       genderData: [
         { name: "Hombre", value: groupMetrics.reduce((acc, g) => acc + g.genderData[0].value, 0), color: "hsl(var(--primary))" },
         { name: "Mujer", value: groupMetrics.reduce((acc, g) => acc + g.genderData[1].value, 0), color: "#10b981" },
       ],
-      areaData: groupMetrics.map(g => ({
-        area: g.name,
-        count: g.total
+      companyData: groupMetrics.map(g => ({
+        company: g.name,
+        count: g.total,
+        percentage: totalEvaluated > 0 ? ((g.total / totalEvaluated) * 100).toFixed(1) : 0
       }))
     };
   }, [groupMetrics]);
@@ -221,7 +224,7 @@ const DashboardPage = () => {
                 </div>
                 <h3 className="text-lg md:text-xl font-black leading-tight">Insight Estratégico</h3>
                 <p className="text-indigo-50 text-xs md:text-sm font-medium leading-relaxed">
-                  El área de <strong>{selectedGroup.name}</strong> presenta un avance del {selectedGroup.avgScore}%.
+                  La empresa <strong>{selectedGroup.name}</strong> presenta un avance del {selectedGroup.avgScore}%.
                 </p>
                 <Button className="w-full bg-white text-indigo-600 hover:bg-indigo-50 font-black uppercase text-[9px] md:text-[10px] tracking-widest py-4 md:py-6 rounded-xl md:rounded-2xl transition-all">
                   Generar Reporte PDF
@@ -359,39 +362,68 @@ const DashboardPage = () => {
 
         <Card className="border-border/40 bg-white/60 backdrop-blur-xl shadow-2xl p-4 sm:p-8 rounded-2xl sm:rounded-[3rem] overflow-hidden group">
           <CardHeader className="px-0 pt-0 pb-8">
-            <CardTitle className="text-sm font-black uppercase tracking-widest text-indigo-400 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center">
-                <UsersRound className="w-4 h-4" />
+            <CardTitle className="text-sm font-black uppercase tracking-widest text-[#6366f1] flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-500 text-white flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform">
+                <UsersRound className="w-5 h-5" />
               </div>
-              Participantes por Áreas
+              Participantes por Empresa
             </CardTitle>
           </CardHeader>
           <CardContent className="px-0 pb-0">
-            <div className="h-[250px] w-full">
+            <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={summaryData.areaData} layout="vertical" margin={{ left: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} strokeOpacity={0.1} />
+                <BarChart data={summaryData.companyData} layout="vertical" margin={{ left: 20, right: 30 }}>
+                  <defs>
+                    <linearGradient id="barGradient" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#6366f1" stopOpacity={0.8} />
+                      <stop offset="100%" stopColor="#ec4899" stopOpacity={1} />
+                    </linearGradient>
+                    {summaryData.companyData.map((_, i) => (
+                      <linearGradient key={`grad-${i}`} id={`grad-${i}`} x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor={[
+                          "#6366f1", "#ec4899", "#8b5cf6", "#10b981", "#f59e0b", "#3b82f6", "#ef4444", "#06b6d4"
+                        ][i % 8]} stopOpacity={0.7} />
+                        <stop offset="100%" stopColor={[
+                          "#6366f1", "#ec4899", "#8b5cf6", "#10b981", "#f59e0b", "#3b82f6", "#ef4444", "#06b6d4"
+                        ][i % 8]} stopOpacity={1} />
+                      </linearGradient>
+                    ))}
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} strokeOpacity={0.05} />
                   <XAxis type="number" hide />
                   <YAxis 
                     type="category" 
-                    dataKey="area" 
-                    width={100} 
-                    tick={{ fontSize: 10, fontWeight: 900, fill: "hsl(var(--foreground))" }} 
+                    dataKey="company" 
+                    width={120} 
+                    tick={{ fontSize: 9, fontWeight: 900, fill: "hsl(var(--foreground))" }} 
                     axisLine={false} 
                     tickLine={false}
                   />
                   <Tooltip 
-                    cursor={{ fill: 'transparent' }}
+                    cursor={{ fill: 'rgba(99, 102, 241, 0.05)', radius: 10 }}
                     contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
                   />
                   <Bar 
                     dataKey="count" 
-                    fill="hsl(var(--primary))" 
-                    radius={[0, 12, 12, 0]} 
-                    barSize={20}
+                    radius={[0, 20, 20, 0]} 
+                    barSize={24}
+                    isAnimationActive={true}
+                    animationDuration={1500}
+                    animationEasing="ease-out"
                   >
-                    {summaryData.areaData.map((entry, index) => (
-                      <Cell key={index} fill={index % 2 === 0 ? "hsl(var(--primary))" : "hsl(var(--primary)/0.6)"} />
+                    <LabelList 
+                      dataKey="percentage" 
+                      position="right" 
+                      formatter={(val: string) => `${val}%`}
+                      style={{ fontSize: '10px', fontWeight: '900', fill: 'hsl(var(--muted-foreground))' }}
+                      offset={10}
+                    />
+                    {summaryData.companyData.map((entry, index) => (
+                      <Cell 
+                        key={index} 
+                        fill={`url(#grad-${index})`}
+                        className="hover:opacity-80 transition-opacity cursor-pointer"
+                      />
                     ))}
                   </Bar>
                 </BarChart>
@@ -407,7 +439,7 @@ const DashboardPage = () => {
           <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-primary/10 flex items-center justify-center text-primary">
             <BarChart3 className="w-4 h-4 md:w-5 h-5" />
           </div>
-          <h2 className="text-base md:text-xl font-black uppercase tracking-tight">Desglose por Áreas</h2>
+          <h2 className="text-base md:text-xl font-black uppercase tracking-tight">Desglose por Empresa</h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">

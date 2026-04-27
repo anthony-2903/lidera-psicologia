@@ -205,11 +205,14 @@ export interface GroupMetric {
 }
 
 const COLORS = [
-  "hsl(212, 52%, 25%)", // Deep Blue
-  "hsl(142, 71%, 45%)", // Green
-  "hsl(38, 92%, 50%)",  // Amber
-  "hsl(262, 83%, 58%)", // Purple
-  "hsl(10, 81%, 59%)",  // Red
+  "#6366f1", // Indigo
+  "#ec4899", // Pink
+  "#8b5cf6", // Violet
+  "#10b981", // Emerald
+  "#f59e0b", // Amber
+  "#3b82f6", // Blue
+  "#ef4444", // Red
+  "#06b6d4", // Cyan
 ];
 
 export const fetchSheetData = async (sheetId: string): Promise<GroupMetric[]> => {
@@ -231,11 +234,11 @@ export const fetchSheetData = async (sheetId: string): Promise<GroupMetric[]> =>
         const groups: Record<string, GroupMetric> = {};
         
         rows.forEach((row) => {
-          const area = row.AREA || row.ÁREA || 'Sin Área';
-          if (!groups[area]) {
-            groups[area] = {
+          const empresa = row.EMPRESA || 'Sin Empresa';
+          if (!groups[empresa]) {
+            groups[empresa] = {
               id: Object.keys(groups).length + 1,
-              name: area,
+              name: empresa,
               total: 0,
               completed: 0,
               inProgress: 0,
@@ -259,7 +262,7 @@ export const fetchSheetData = async (sheetId: string): Promise<GroupMetric[]> =>
             };
           }
           
-          const group = groups[area];
+          const group = groups[empresa];
           group.total++;
           
           // Psychology Stats
