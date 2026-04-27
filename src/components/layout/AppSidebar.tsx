@@ -22,15 +22,8 @@ import { cn } from "@/lib/utils";
 import logo from "@/assets/logo.png";
 
 export const navItems = [
-  { label: "Presentación", icon: FileText, path: "/app/presentation" },
-  { label: "Grupos", icon: UsersRound, path: "/app/groups" },
-  { label: "Evaluación", icon: FileText, path: "/app/evaluations" },
-  { label: "Aplicación de Pruebas", icon: ClipboardCheck, path: "/app/test-application" },
   { label: "Dashboard General", icon: LayoutDashboard, path: "/app/dashboard" },
   { label: "Seguimiento de Aplicación", icon: BarChart3, path: "/app/diagnostic" },
-  { label: "Mejora Conductual", icon: Target, path: "/app/improvement" },
-  { label: "Plan de Acción", icon: CheckSquare, path: "/app/action-plan" },
-  { label: "Resultados", icon: TrendingUp, path: "/app/results" },
   { label: "Dashboard Final", icon: LayoutDashboard, path: "/app/final-dashboard" },
   { label: "DPMS-Raura", icon: Activity, path: "/app/dpms-raura" },
   { label: "Carga de Entrevistas DPMS", icon: FileText, path: "/app/dpms-raura/upload-interview" },

@@ -10,17 +10,7 @@ const LoginPage = lazy(() => import("./pages/LoginPage"));
 const RecoveryPage = lazy(() => import("./pages/RecoveryPage"));
 const AppLayout = lazy(() => import("./components/layout/AppLayout"));
 const DashboardPage = lazy(() => import("./pages/app/DashboardPage"));
-const PresentationPage = lazy(() => import("./pages/app/PresentationPage"));
-const GroupsPage = lazy(() => import("./pages/app/GroupsPage"));
-const TestApplicationPage = lazy(() => import("./pages/app/TestApplicationPage"));
-const EvaluatedPage = lazy(() => import("./pages/app/EvaluatedPage"));
-const EvaluationsPage = lazy(() => import("./pages/app/EvaluationsPage"));
-const DiagramPage = lazy(() => import("./pages/app/DiagramPage"));
-const ParticipantsPage = lazy(() => import("./pages/app/ParticipantsPage"));
 const DiagnosticPage = lazy(() => import("./pages/app/DiagnosticPage"));
-const ImprovementPage = lazy(() => import("./pages/app/ImprovementPage"));
-const ActionPlanPage = lazy(() => import("./pages/app/ActionPlanPage"));
-const ResultsPage = lazy(() => import("./pages/app/ResultsPage"));
 const FinalDashboardPage = lazy(() => import("./pages/app/FinalDashboardPage"));
 const DpmsRauraPage = lazy(() => import("./pages/app/dpms-raura/DpmsRauraPage"));
 const LocusControlPage = lazy(() => import("./pages/app/locus-control/LocusControlPage"));
@@ -65,16 +55,7 @@ const App = () => (
               <Route element={<ProtectedRoute />}>
                 <Route path="/app" element={<AppLayout />}>
                   <Route path="dashboard" element={<DashboardPage />} />
-                  <Route path="presentation" element={<PresentationPage />} />
-                  <Route path="groups" element={<GroupsPage />} />
-                  <Route path="test-application" element={<TestApplicationPage />} />
-                  <Route path="evaluations" element={<EvaluationsPage />} />
-                  <Route path="diagram" element={<DiagramPage />} />
-                  <Route path="participants" element={<ParticipantsPage />} />
                   <Route path="diagnostic" element={<DiagnosticPage />} />
-                  <Route path="improvement" element={<ImprovementPage />} />
-                  <Route path="action-plan" element={<ActionPlanPage />} />
-                  <Route path="results" element={<ResultsPage />} />
                   <Route path="final-dashboard" element={<FinalDashboardPage />} />
                   <Route path="dpms-raura" element={<DpmsRauraPage />} />
                   <Route path="dpms-raura/upload-interview" element={<UploadDpmsPage />} />

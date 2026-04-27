@@ -680,7 +680,7 @@ export default function UploadDpmsPage() {
             <div className="flex flex-col min-h-[700px] bg-muted/10 relative overflow-hidden lg:flex-row">
               
               {/* SIDEBAR: Table of individuals */}
-              <div className={`transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] border-r border-border/50 bg-background flex flex-col h-[700px] shrink-0 ${selectedEvaluado ? 'w-full lg:w-1/3' : 'w-full'}`}>
+              <div className={`transition-all duration-700 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)] border-r border-border/50 bg-background flex flex-col h-[700px] shrink-0 ${selectedEvaluado ? 'w-full lg:w-1/3' : 'w-full'}`}>
                 <div className="p-5 border-b border-border/50 bg-muted/30">
                   <h3 className="font-black text-lg flex items-center gap-2"><Users className="w-5 h-5 text-primary"/> Evaluados ({evaluados.length})</h3>
                   <p className="text-xs text-muted-foreground">Selecciona un individuo para ver su perfil analítico.</p>
@@ -727,7 +727,7 @@ export default function UploadDpmsPage() {
               </div>
 
               {/* MAIN: Orbital Dashboard */}
-              <div className={`transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] flex flex-col items-center justify-center shrink-0 overflow-hidden bg-gradient-to-br from-background to-muted/20 ${selectedEvaluado ? 'w-full lg:w-2/3 opacity-100' : 'w-0 opacity-0 hidden lg:flex'}`}>
+              <div className={`transition-all duration-700 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)] flex flex-col items-center justify-center shrink-0 overflow-hidden bg-gradient-to-br from-background to-muted/20 ${selectedEvaluado ? 'w-full lg:w-2/3 opacity-100' : 'w-0 opacity-0 hidden lg:flex'}`}>
                 {selectedEvaluado && (
                   <div className="w-full h-full overflow-y-auto custom-scrollbar p-4 md:p-8 animate-in slide-in-from-right-10 fade-in duration-500 flex flex-col items-center justify-center relative">
                     <div className="w-full max-w-4xl space-y-8 md:space-y-12">
@@ -748,7 +748,7 @@ export default function UploadDpmsPage() {
                         <div className="hidden lg:block absolute top-1/4 left-1/4 right-1/4 bottom-1/4 border border-border/40 rounded-full -z-10 bg-muted/5 animate-in zoom-in fade-in duration-1000 delay-150 fill-mode-both" />
 
                         {/* CENTER - IMAGE (On mobile it spans top, on desktop center) */}
-                        <div className="col-span-2 lg:col-span-1 lg:col-start-2 lg:row-start-2 flex items-center justify-center relative py-6 lg:py-0 animate-in zoom-in-50 fade-in duration-700 delay-[200ms] fill-mode-both">
+                        <div className="col-span-2 lg:col-span-1 lg:col-start-2 lg:row-start-2 flex items-center justify-center relative py-6 lg:py-0 animate-in zoom-in-50 fade-in duration-700 [animation-delay:200ms] fill-mode-both">
                           <div className="absolute inset-0 bg-slate-900/10 dark:bg-slate-500/10 rounded-full animate-pulse blur-2xl scale-[1.3] lg:scale-[1.8]"></div>
                           <div className="absolute inset-0 border-[1px] border-dashed border-primary/30 rounded-full animate-[spin_20s_linear_infinite] scale-[1.1] lg:scale-[1.5]"></div>
                           <div className="w-28 h-28 md:w-32 md:h-32 lg:w-40 lg:h-40 rounded-full border-[6px] border-background shadow-2xl overflow-hidden relative z-10 bg-slate-100 flex items-center justify-center">
@@ -761,21 +761,21 @@ export default function UploadDpmsPage() {
                           score={selectedEvaluado.q6_responsabilidad} 
                           max={10} 
                           colorClass={getCardColor(selectedEvaluado.q6_responsabilidad, 10)} 
-                          delayClass="delay-[200ms]"
+                          delayClass="[animation-delay:200ms]"
                         />
                         <OrbitalCard 
                           title="Involucramiento del Líder" 
                           score={selectedEvaluado.q4_involucramiento} 
                           max={10} 
                           colorClass={getCardColor(selectedEvaluado.q4_involucramiento, 10)} 
-                          delayClass="delay-[300ms]"
+                          delayClass="[animation-delay:300ms]"
                         />
                         <OrbitalCard 
                           title="Calidad de Capacitaciones" 
                           score={selectedEvaluado.q4_calidad} 
                           max={10} 
                           colorClass={getCardColor(selectedEvaluado.q4_calidad, 10)} 
-                          delayClass="delay-[400ms]"
+                          delayClass="[animation-delay:400ms]"
                         />
 
                         <OrbitalCard 
@@ -783,7 +783,7 @@ export default function UploadDpmsPage() {
                           score={selectedEvaluado.q9_gestion} 
                           max={3} 
                           colorClass={getCardColor(selectedEvaluado.q9_gestion, 3)} 
-                          delayClass="delay-[500ms]"
+                          delayClass="[animation-delay:500ms]"
                         />
 
                         <OrbitalCard 
@@ -791,7 +791,7 @@ export default function UploadDpmsPage() {
                           score={selectedEvaluado.q4_seguimiento} 
                           max={10} 
                           colorClass={getCardColor(selectedEvaluado.q4_seguimiento, 10)} 
-                          delayClass="delay-[600ms]"
+                          delayClass="[animation-delay:600ms]"
                         />
 
                         {/* Row 3 */}
@@ -800,24 +800,24 @@ export default function UploadDpmsPage() {
                           score={selectedEvaluado.q9_liderazgo} 
                           max={3} 
                           colorClass={getCardColor(selectedEvaluado.q9_liderazgo, 3)} 
-                          delayClass="delay-[700ms]"
+                          delayClass="[animation-delay:700ms]"
                         />
                         <OrbitalCard 
                           title="Comportamiento y Actitudes" 
                           score={selectedEvaluado.q9_comportamiento} 
                           max={3} 
                           colorClass={getCardColor(selectedEvaluado.q9_comportamiento, 3)} 
-                          delayClass="delay-[800ms]"
+                          delayClass="[animation-delay:800ms]"
                         />
                         <OrbitalCard 
                           title="Asistencia Líderes" 
                           score={selectedEvaluado.q4_asistencia} 
                           max={10} 
                           colorClass={getCardColor(selectedEvaluado.q4_asistencia, 10)} 
-                          delayClass="delay-[900ms]"
+                          delayClass="[animation-delay:900ms]"
                         />
 
-                        <div className={`col-span-2 lg:col-span-3 mt-4 p-5 rounded-[2rem] border flex items-center justify-between gap-6 transition-all hover:scale-[1.01] animate-in slide-in-from-bottom-4 duration-700 delay-[1000ms] fill-mode-both ${getCultureLevel(selectedEvaluado.nivel_cultura).color}`}>
+                        <div className={`col-span-2 lg:col-span-3 mt-4 p-5 rounded-[2rem] border flex items-center justify-between gap-6 transition-all hover:scale-[1.01] animate-in slide-in-from-bottom-4 duration-700 [animation-delay:1000ms] fill-mode-both ${getCultureLevel(selectedEvaluado.nivel_cultura).color}`}>
                           <div className="flex items-center gap-4">
                             <div className="p-3 rounded-2xl bg-white/50 border border-current/10">
                               <ShieldCheck className="w-8 h-8" />
@@ -835,7 +835,7 @@ export default function UploadDpmsPage() {
 
                       {/* Resumen extra (Comentarios IA) */}
                       {selectedEvaluado.comentarios && (
-                         <div className="mt-8 p-6 bg-slate-900 border border-slate-800 rounded-2xl text-center shadow-lg mx-auto max-w-2xl relative animate-in slide-in-from-bottom-6 fade-in duration-700 delay-[1000ms] fill-mode-both">
+                         <div className="mt-8 p-6 bg-slate-900 border border-slate-800 rounded-2xl text-center shadow-lg mx-auto max-w-2xl relative animate-in slide-in-from-bottom-6 fade-in duration-700 [animation-delay:1000ms] fill-mode-both">
                            <div className="absolute top-0 right-0 p-4 opacity-10 blur-[1px]"><Zap className="w-16 h-16 text-white"/></div>
                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-2">Diagnóstico Semántico del IA</p>
                            <p className="text-white text-lg font-medium leading-relaxed italic relative z-10 text-pretty">

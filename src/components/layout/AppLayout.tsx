@@ -8,17 +8,8 @@ import { useState } from "react";
 
 const breadcrumbMap: Record<string, string> = {
   welcome: "Bienvenida",
-  presentation: "Presentación",
-  groups: "Grupos",
-  evaluated: "Evaluados",
-  evaluations: "Evaluaciones",
-  diagram: "Diagrama Individual",
   dashboard: "Dashboard General",
-  participants: "Conteo de Participantes",
   diagnostic: "Seguimiento de Aplicación",
-  improvement: "Mejora Conductual",
-  "action-plan": "Plan de Acción",
-  results: "Resultados",
   "final-dashboard": "Dashboard Final",
   "dpms-raura": "DPMS-Raura",
   "locus-control": "Locus de Control",
