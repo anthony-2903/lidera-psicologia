@@ -32,6 +32,7 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import mammoth from "mammoth";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -269,6 +270,7 @@ INSTRUCCIONES CLAVES:
 export default function UploadDpmsPage() {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [text, setText] = useState("");
+  const [jsonInput, setJsonInput] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [loadingPhase, setLoadingPhase] = useState("");
@@ -285,6 +287,8 @@ export default function UploadDpmsPage() {
 
   const reportRef = useRef<HTMLDivElement>(null);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const [selectedForPdf, setSelectedForPdf] = useState<string[]>([]);
+  const [isBulkExportingPDF, setIsBulkExportingPDF] = useState(false);
 
   useEffect(() => {
     fetchEvaluados();
@@ -579,6 +583,30 @@ export default function UploadDpmsPage() {
     }
   };
 
+  const handleProcessJSON = () => {
+    if (!jsonInput.trim()) {
+      toast({ title: "Error", description: "Pega el código JSON primero.", variant: "destructive" });
+      return;
+    }
+    
+    try {
+      const parsed = JSON.parse(jsonInput);
+      if (!parsed.nombre || !parsed.area) {
+        throw new Error("El JSON no tiene la estructura correcta (faltan campos clave como 'nombre' o 'area').");
+      }
+      
+      setReviewData({
+        ...parsed,
+        _fileName: "Importación GPT",
+        _isEditMode: false,
+      });
+      toast({ title: "JSON Cargado", description: "Datos listos para validación humana." });
+      setJsonInput("");
+    } catch (error: any) {
+      toast({ title: "JSON Inválido", description: error.message, variant: "destructive" });
+    }
+  };
+
   const handleSaveReview = async () => {
     if (!reviewData) return;
     setLoading(true);
@@ -733,7 +761,11 @@ export default function UploadDpmsPage() {
   const handleExportPDF = async () => {
     if (!selectedEvaluado) return;
     setIsExportingPDF(true);
+    await generatePDFDocument(selectedEvaluado, false);
+    setIsExportingPDF(false);
+  };
 
+  const generatePDFDocument = async (evaluado: any, silent = false) => {
     try {
       // PDF generado con jsPDF puro, sin html2canvas.
       // Esto evita que el texto, las tarjetas y el radar salgan deformados o incompletos.
@@ -810,7 +842,7 @@ export default function UploadDpmsPage() {
         width: number,
         height: number,
       ) => {
-        const data = getRadarData(selectedEvaluado);
+        const data = getRadarData(evaluado);
         const cx = x + width / 2;
         const cy = currentY + height / 2 + 4;
         const radius = Math.min(width, height) * 0.32;
@@ -874,13 +906,13 @@ export default function UploadDpmsPage() {
       pdf.setTextColor(15, 23, 42);
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(20);
-      centerText(safeText(selectedEvaluado.nombre), margin, y, contentWidth);
+      centerText(safeText(evaluado.nombre), margin, y, contentWidth);
       y += 10;
 
       const badgeWidth = 72;
-      drawBadge(safeText(selectedEvaluado.puesto), margin + 18, y, badgeWidth);
+      drawBadge(safeText(evaluado.puesto), margin + 18, y, badgeWidth);
       drawBadge(
-        safeText(selectedEvaluado.area),
+        safeText(evaluado.area),
         pageWidth - margin - 18 - badgeWidth,
         y,
         badgeWidth,
@@ -902,7 +934,7 @@ export default function UploadDpmsPage() {
       const cardH = 34;
       drawMetricCard(
         "Responsabilidad",
-        selectedEvaluado.q6_responsabilidad,
+        evaluado.q6_responsabilidad,
         10,
         margin,
         y,
@@ -911,7 +943,7 @@ export default function UploadDpmsPage() {
       );
       drawMetricCard(
         "Involucramiento",
-        selectedEvaluado.q4_involucramiento,
+        evaluado.q4_involucramiento,
         10,
         margin + cardW + gap,
         y,
@@ -921,7 +953,7 @@ export default function UploadDpmsPage() {
       y += cardH + gap;
       drawMetricCard(
         "Calidad Cap.",
-        selectedEvaluado.q4_calidad,
+        evaluado.q4_calidad,
         10,
         margin,
         y,
@@ -930,7 +962,7 @@ export default function UploadDpmsPage() {
       );
       drawMetricCard(
         "Seguimiento",
-        selectedEvaluado.q4_seguimiento,
+        evaluado.q4_seguimiento,
         10,
         margin + cardW + gap,
         y,
@@ -942,7 +974,7 @@ export default function UploadDpmsPage() {
       // Nivel de cultura
       addPageIfNeeded(42);
       const culture = getCultureLevel(
-        Number(selectedEvaluado.nivel_cultura) || 0,
+        Number(evaluado.nivel_cultura) || 0,
       );
       pdf.setDrawColor(167, 243, 208);
       pdf.setFillColor(236, 253, 245);
@@ -959,8 +991,8 @@ export default function UploadDpmsPage() {
       y += 48;
 
       // Comentario IA
-      if (selectedEvaluado.comentarios) {
-        const comment = `"${safeText(selectedEvaluado.comentarios)}"`;
+      if (evaluado.comentarios) {
+        const comment = `"${safeText(evaluado.comentarios)}"`;
         const lines = pdf.splitTextToSize(comment, contentWidth - 18);
         const boxHeight = Math.max(34, lines.length * 5 + 20);
         addPageIfNeeded(boxHeight + 6);
@@ -979,25 +1011,62 @@ export default function UploadDpmsPage() {
         y += boxHeight + 8;
       }
 
-      const safeName = safeText(selectedEvaluado.nombre)
+      const safeName = safeText(evaluado.nombre)
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
         .replace(/[^a-zA-Z0-9_-]+/g, "_");
 
       pdf.save(`Reporte_DPMS_${safeName}.pdf`);
-      toast({
-        title: "PDF Generado",
-        description: "El reporte se generó ordenado y sin deformación.",
-      });
+      
+      if (!silent) {
+        toast({
+          title: "PDF Generado",
+          description: "El reporte se generó ordenado y sin deformación.",
+        });
+      }
     } catch (err) {
       console.error(err);
+      if (!silent) {
+        toast({
+          title: "Error",
+          description: "No se pudo generar el PDF",
+          variant: "destructive",
+        });
+      }
+      throw err;
+    }
+  };
+
+  const handleBulkExportPDF = async () => {
+    if (selectedForPdf.length === 0) return;
+    setIsBulkExportingPDF(true);
+    toast({
+      title: "Descargando PDFs...",
+      description: `Generando ${selectedForPdf.length} archivos. Esto puede tomar unos segundos.`,
+    });
+
+    try {
+      for (const id of selectedForPdf) {
+        const ev = evaluados.find((e) => e.id === id);
+        if (ev) {
+          await generatePDFDocument(ev, true);
+          // Pequeño delay para no colapsar el navegador
+          await new Promise((resolve) => setTimeout(resolve, 300));
+        }
+      }
       toast({
-        title: "Error",
-        description: "No se pudo generar el PDF",
+        title: "¡Descarga completada!",
+        description: `Se han generado ${selectedForPdf.length} reportes exitosamente.`,
+      });
+      setSelectedForPdf([]); // Limpiar selección tras descargar
+    } catch (err) {
+      toast({
+        title: "Error en descarga masiva",
+        description: "Hubo un problema generando algunos reportes.",
         variant: "destructive",
       });
     } finally {
-      setIsExportingPDF(false);
+      setIsBulkExportingPDF(false);
     }
   };
 
@@ -1143,134 +1212,169 @@ export default function UploadDpmsPage() {
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
             {/* LADO IZQUIERDO: CARGA / COLA */}
             <Card className="shadow-lg border-primary/10 bg-card/50 backdrop-blur-sm self-start sticky top-6">
-              <CardHeader>
+              <CardHeader className="pb-4 border-b border-border/50">
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="w-5 h-5 text-primary" />
                   Ingreso de Entrevistas
                 </CardTitle>
                 <CardDescription>
-                  Sube múltiples archivos (.txt, .docx, .vtt) para procesarlos
-                  en cola o pega el texto directamente.
+                  Elige entre procesamiento inteligente con IA o pega directamente el resultado de tu GPT.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <Label htmlFor="file-upload" className="font-bold">
-                      Cola de Archivos ({pendingFiles.length})
-                    </Label>
-                  </div>
-                  <div
-                    className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center transition-all duration-300 cursor-pointer ${isDragging ? "border-primary bg-primary/5 scale-[1.02]" : "border-primary/20 hover:bg-primary/5 hover:border-primary/50"}`}
-                    onClick={() =>
-                      document.getElementById("file-upload")?.click()
-                    }
-                    onDragOver={handleDragOver}
-                    onDragEnter={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                  >
-                    <UploadCloud
-                      className={`w-10 h-10 mb-3 transition-colors ${isDragging ? "text-primary" : "text-primary/50"}`}
-                    />
-                    <p className="font-bold text-sm">
-                      {isDragging
-                        ? "¡SUELTALOS AQUÍ!"
-                        : "Haz clic o arrastra uno o varios archivos"}
-                    </p>
-                    <Input
-                      id="file-upload"
-                      type="file"
-                      multiple
-                      accept=".txt,.docx,.vtt"
-                      className="hidden"
-                      onChange={handleFileChange}
-                    />
-                  </div>
+              
+              <Tabs defaultValue="ai" className="w-full">
+                <div className="px-6 pt-4">
+                  <TabsList className="grid w-full grid-cols-2 bg-muted/50 p-1 rounded-xl border border-border/50 shadow-sm">
+                    <TabsTrigger value="ai" className="rounded-lg font-bold text-xs"><Activity className="w-3 h-3 mr-2"/> Inferencia IA</TabsTrigger>
+                    <TabsTrigger value="json" className="rounded-lg font-bold text-xs"><Zap className="w-3 h-3 mr-2"/> Pegar JSON (GPT)</TabsTrigger>
+                  </TabsList>
+                </div>
 
-                  {pendingFiles.length > 0 && (
-                    <div className="bg-muted/30 border rounded-xl p-3 space-y-2 max-h-[150px] overflow-y-auto custom-scrollbar">
-                      {pendingFiles.map((f, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center justify-between bg-background p-2 rounded-lg border text-sm shadow-sm"
-                        >
-                          <span
-                            className="font-medium truncate mr-2"
-                            title={f.name}
-                          >
-                            {f.name}
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-rose-500 hover:text-rose-700 hover:bg-rose-50"
-                            onClick={() => removePendingFile(i)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                <TabsContent value="ai">
+                  <CardContent className="space-y-6 pt-4">
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <Label htmlFor="file-upload" className="font-bold">
+                          Cola de Archivos ({pendingFiles.length})
+                        </Label>
+                      </div>
+                      <div
+                        className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center transition-all duration-300 cursor-pointer ${isDragging ? "border-primary bg-primary/5 scale-[1.02]" : "border-primary/20 hover:bg-primary/5 hover:border-primary/50"}`}
+                        onClick={() =>
+                          document.getElementById("file-upload")?.click()
+                        }
+                        onDragOver={handleDragOver}
+                        onDragEnter={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                      >
+                        <UploadCloud
+                          className={`w-10 h-10 mb-3 transition-colors ${isDragging ? "text-primary" : "text-primary/50"}`}
+                        />
+                        <p className="font-bold text-sm">
+                          {isDragging
+                            ? "¡SUELTALOS AQUÍ!"
+                            : "Haz clic o arrastra uno o varios archivos"}
+                        </p>
+                        <Input
+                          id="file-upload"
+                          type="file"
+                          multiple
+                          accept=".txt,.docx,.vtt"
+                          className="hidden"
+                          onChange={handleFileChange}
+                        />
+                      </div>
+
+                      {pendingFiles.length > 0 && (
+                        <div className="bg-muted/30 border rounded-xl p-3 space-y-2 max-h-[150px] overflow-y-auto custom-scrollbar">
+                          {pendingFiles.map((f, i) => (
+                            <div
+                              key={i}
+                              className="flex items-center justify-between bg-background p-2 rounded-lg border text-sm shadow-sm"
+                            >
+                              <span
+                                className="font-medium truncate mr-2"
+                                title={f.name}
+                              >
+                                {f.name}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-rose-500 hover:text-rose-700 hover:bg-rose-50"
+                                onClick={() => removePendingFile(i)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  )}
-                </div>
 
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-border/50" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-card px-4 py-1 rounded-full text-muted-foreground font-black tracking-widest border border-border/50">
-                      O Pega Texto Libre
-                    </span>
-                  </div>
-                </div>
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t border-border/50" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-card px-4 py-1 rounded-full text-muted-foreground font-black tracking-widest border border-border/50">
+                          O Pega Texto Libre
+                        </span>
+                      </div>
+                    </div>
 
-                <div className="space-y-3">
-                  <Textarea
-                    placeholder="Copia y pega el texto crudo de la entrevista aquí..."
-                    className="min-h-[120px] resize-y rounded-xl bg-muted/30 focus:bg-background transition-colors"
-                    value={text}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                      setText(e.target.value)
-                    }
-                    disabled={pendingFiles.length > 0}
-                  />
-                  {pendingFiles.length > 0 && (
-                    <p className="text-xs text-primary/70 italic font-medium">
-                      Texto deshabilitado (tienes archivos en cola).
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button
-                  onClick={handleProcessNext}
-                  disabled={
-                    loading ||
-                    reviewData !== null ||
-                    (pendingFiles.length === 0 && !text.trim())
-                  }
-                  className="w-full h-14 font-black tracking-widest uppercase rounded-xl shadow-xl shadow-primary/10 transition-all hover:scale-[1.02]"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-3 h-5 w-5 animate-spin" />
-                      Procesando...
-                    </>
-                  ) : reviewData ? (
-                    "Revisión Pendiente"
-                  ) : pendingFiles.length > 0 ? (
-                    <>
-                      <Play className="mr-2 h-5 w-5" /> Iniciar Escaneo de Cola
-                    </>
-                  ) : (
-                    <>
-                      <Play className="mr-2 h-5 w-5" /> Analizar Texto
-                    </>
-                  )}
-                </Button>
-              </CardFooter>
+                    <div className="space-y-3">
+                      <Textarea
+                        placeholder="Copia y pega el texto crudo de la entrevista aquí..."
+                        className="min-h-[120px] resize-y rounded-xl bg-muted/30 focus:bg-background transition-colors"
+                        value={text}
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                          setText(e.target.value)
+                        }
+                        disabled={pendingFiles.length > 0}
+                      />
+                      {pendingFiles.length > 0 && (
+                        <p className="text-xs text-primary/70 italic font-medium">
+                          Texto deshabilitado (tienes archivos en cola).
+                        </p>
+                      )}
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    <Button
+                      onClick={handleProcessNext}
+                      disabled={
+                        loading ||
+                        reviewData !== null ||
+                        (pendingFiles.length === 0 && !text.trim())
+                      }
+                      className="w-full h-14 font-black tracking-widest uppercase rounded-xl shadow-xl shadow-primary/10 transition-all hover:scale-[1.02]"
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="mr-3 h-5 w-5 animate-spin" />
+                          Procesando...
+                        </>
+                      ) : reviewData ? (
+                        "Revisión Pendiente"
+                      ) : pendingFiles.length > 0 ? (
+                        <>
+                          <Play className="mr-2 h-5 w-5" /> Iniciar Escaneo de Cola
+                        </>
+                      ) : (
+                        <>
+                          <Play className="mr-2 h-5 w-5" /> Analizar Texto
+                        </>
+                      )}
+                    </Button>
+                  </CardFooter>
+                </TabsContent>
+
+                <TabsContent value="json">
+                  <CardContent className="space-y-4 pt-4">
+                     <p className="text-xs text-muted-foreground leading-relaxed font-medium">
+                        Si ya usaste el <b>Custom GPT</b> externo, simplemente pega aquí el código JSON exacto que generó.
+                        Nos saltaremos el procesamiento y pasaremos directamente a la validación.
+                     </p>
+                     <Textarea
+                        placeholder='{\n  "nombre": "Ejemplo",\n  "empresa": "Mina",\n  ...\n}'
+                        className="min-h-[300px] resize-y rounded-xl font-mono text-[10px] bg-slate-900 text-emerald-400 border-slate-800"
+                        value={jsonInput}
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setJsonInput(e.target.value)}
+                     />
+                  </CardContent>
+                  <CardFooter>
+                    <Button
+                      onClick={handleProcessJSON}
+                      disabled={loading || reviewData !== null || !jsonInput.trim()}
+                      className="w-full h-14 font-black tracking-widest uppercase rounded-xl shadow-xl transition-all hover:scale-[1.02] bg-slate-900 hover:bg-slate-800 text-white"
+                    >
+                      <FastForward className="mr-2 h-5 w-5" /> Validar y Cargar JSON
+                    </Button>
+                  </CardFooter>
+                </TabsContent>
+              </Tabs>
             </Card>
 
             {/* LADO DERECHO: RESULTADOS / REVIEW FORM */}
@@ -1502,14 +1606,46 @@ export default function UploadDpmsPage() {
               <div
                 className={`transition-all duration-700 border-r border-border/50 bg-background flex flex-col h-[750px] shrink-0 ${selectedEvaluado ? "w-full lg:w-[350px]" : "w-full"}`}
               >
-                <div className="p-5 border-b border-border/50 bg-muted/30">
-                  <h3 className="font-black text-lg flex items-center gap-2">
-                    <Users className="w-5 h-5 text-primary" /> Historial BD (
-                    {evaluados.length})
-                  </h3>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Selecciona para ver el dashboard radial.
-                  </p>
+                <div className="p-5 border-b border-border/50 bg-muted/30 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-black text-lg flex items-center gap-2">
+                      <Users className="w-5 h-5 text-primary" /> Historial BD (
+                      {evaluados.length})
+                    </h3>
+                  </div>
+                  
+                  {evaluados.length > 0 && (
+                    <div className="flex items-center justify-between bg-background p-2 rounded-lg border shadow-sm">
+                       <div className="flex items-center gap-2">
+                         <Checkbox 
+                           checked={selectedForPdf.length === evaluados.length && evaluados.length > 0}
+                           onCheckedChange={(checked) => {
+                             if (checked) {
+                               setSelectedForPdf(evaluados.map(e => e.id));
+                             } else {
+                               setSelectedForPdf([]);
+                             }
+                           }}
+                         />
+                         <span className="text-xs font-bold text-muted-foreground uppercase">
+                           {selectedForPdf.length > 0 ? `${selectedForPdf.length} seleccionados` : "Seleccionar"}
+                         </span>
+                       </div>
+                       
+                       {selectedForPdf.length > 0 && (
+                         <Button
+                           size="sm"
+                           variant="default"
+                           className="h-7 text-[10px] uppercase font-black tracking-wider"
+                           onClick={handleBulkExportPDF}
+                           disabled={isBulkExportingPDF}
+                         >
+                           {isBulkExportingPDF ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <FileDown className="w-3 h-3 mr-1" />}
+                           Descargar
+                         </Button>
+                       )}
+                    </div>
+                  )}
                 </div>
 
                 <ScrollArea className="flex-1">
@@ -1530,6 +1666,18 @@ export default function UploadDpmsPage() {
                           className={`cursor-pointer transition-colors hover:bg-muted/50 p-4 flex justify-between items-center ${selectedEvaluado?.id === ev.id ? "bg-primary/5 border-l-4 border-l-primary" : "border-l-4 border-l-transparent"}`}
                           onClick={() => setSelectedEvaluado(ev)}
                         >
+                          <div className="mr-3" onClick={(e) => e.stopPropagation()}>
+                             <Checkbox 
+                               checked={selectedForPdf.includes(ev.id)}
+                               onCheckedChange={(checked) => {
+                                 if (checked) {
+                                   setSelectedForPdf([...selectedForPdf, ev.id]);
+                                 } else {
+                                   setSelectedForPdf(selectedForPdf.filter(id => id !== ev.id));
+                                 }
+                               }}
+                             />
+                          </div>
                           <div className="flex-1 min-w-0 pr-3">
                             <div className="font-bold text-sm truncate">
                               {ev.nombre}
