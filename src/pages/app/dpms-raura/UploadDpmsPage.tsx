@@ -66,6 +66,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 const QUESTIONS = [
@@ -284,6 +290,7 @@ export default function UploadDpmsPage() {
   const [loadingEvaluados, setLoadingEvaluados] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [activeTab, setActiveTab] = useState("upload");
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const reportRef = useRef<HTMLDivElement>(null);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
@@ -610,6 +617,7 @@ export default function UploadDpmsPage() {
   const handleSaveReview = async () => {
     if (!reviewData) return;
     setLoading(true);
+    const wasInDialog = isEditDialogOpen;
     setLoadingPhase("Guardando en la Base de Datos...");
 
     try {
@@ -682,6 +690,10 @@ export default function UploadDpmsPage() {
 
       // Clear the current processed file/text
       setReviewData(null);
+      if (wasInDialog) {
+        setIsEditDialogOpen(false);
+      }
+      
       if (!reviewData._isEditMode) {
         if (pendingFiles.length > 0) {
           setPendingFiles((prev) => prev.slice(1));
@@ -701,7 +713,12 @@ export default function UploadDpmsPage() {
   };
 
   const handleDiscardReview = () => {
+    const wasInDialog = isEditDialogOpen;
     setReviewData(null);
+    if (wasInDialog) {
+      setIsEditDialogOpen(false);
+      return;
+    }
     if (!reviewData?._isEditMode) {
       if (pendingFiles.length > 0) {
         setPendingFiles((prev) => prev.slice(1));
@@ -738,7 +755,7 @@ export default function UploadDpmsPage() {
 
   const handleEdit = (ev: any) => {
     setReviewData({ ...ev, _isEditMode: true });
-    setActiveTab("upload");
+    setIsEditDialogOpen(true);
   };
 
   const handleExportCSV = () => {
@@ -903,10 +920,11 @@ export default function UploadDpmsPage() {
       };
 
       // Encabezado
+      const orderNum = evaluados.findIndex(e => e.id === evaluado.id) + 1;
       pdf.setTextColor(15, 23, 42);
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(20);
-      centerText(safeText(evaluado.nombre), margin, y, contentWidth);
+      centerText(safeText(`${evaluado.nombre} (#${orderNum})`), margin, y, contentWidth);
       y += 10;
 
       const badgeWidth = 72;
@@ -1409,191 +1427,15 @@ export default function UploadDpmsPage() {
                 </Card>
               )}
 
-              {reviewData && (
-                <Card className="shadow-2xl border-primary/40 max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-10 bg-gradient-to-b from-card to-muted/20">
-                  <CardHeader className="bg-primary/5 pb-4 border-b border-primary/20 shrink-0">
-                    <div className="flex justify-between items-center mb-2">
-                      <CardTitle className="text-xl font-black text-primary flex items-center gap-2">
-                        <Edit className="w-5 h-5" /> Revisión Previa
-                        (Human-in-the-Loop)
-                      </CardTitle>
-                      <Badge
-                        variant="outline"
-                        className="font-bold text-[10px] tracking-widest"
-                      >
-                        {reviewData._fileName || "Edición"}
-                      </Badge>
-                    </div>
-                    <CardDescription className="font-medium text-xs">
-                      La IA ha extraído estos datos. Revisa o corrige antes de
-                      guardar definitivamente.
-                    </CardDescription>
-                  </CardHeader>
-
-                  <CardContent className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-5">
-                    {/* Formulario Editable Básico */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground">
-                          Nombre
-                        </Label>
-                        <Input
-                          value={reviewData.nombre}
-                          onChange={(e) =>
-                            setReviewData({
-                              ...reviewData,
-                              nombre: e.target.value,
-                            })
-                          }
-                          className="font-bold bg-background h-8"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground">
-                          Puesto
-                        </Label>
-                        <Input
-                          value={reviewData.puesto}
-                          onChange={(e) =>
-                            setReviewData({
-                              ...reviewData,
-                              puesto: e.target.value,
-                            })
-                          }
-                          className="font-bold bg-background h-8"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground">
-                          Área
-                        </Label>
-                        <Input
-                          value={reviewData.area}
-                          onChange={(e) =>
-                            setReviewData({
-                              ...reviewData,
-                              area: e.target.value,
-                            })
-                          }
-                          className="font-bold bg-background h-8"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground">
-                          Nivel Cultura (1-5)
-                        </Label>
-                        <Select
-                          value={String(reviewData.nivel_cultura)}
-                          onValueChange={(v) =>
-                            setReviewData({
-                              ...reviewData,
-                              nivel_cultura: Number(v),
-                            })
-                          }
-                        >
-                          <SelectTrigger className="h-8 font-bold">
-                            <SelectValue placeholder="Nivel" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="1">1 - Reactivo</SelectItem>
-                            <SelectItem value="2">2 - Dependiente</SelectItem>
-                            <SelectItem value="3">3 - Independiente</SelectItem>
-                            <SelectItem value="4">
-                              4 - Interdependiente
-                            </SelectItem>
-                            <SelectItem value="5">5 - Excelente</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label className="text-[10px] font-black uppercase text-muted-foreground flex items-center gap-1">
-                        <Zap className="w-3 h-3" /> Comentario Crítico (IA)
-                      </Label>
-                      <Textarea
-                        value={reviewData.comentarios}
-                        onChange={(e) =>
-                          setReviewData({
-                            ...reviewData,
-                            comentarios: e.target.value,
-                          })
-                        }
-                        className="min-h-[60px] text-sm font-medium bg-slate-900 text-slate-100 border-slate-800"
-                      />
-                    </div>
-
-                    <div className="border-t pt-4 mt-4">
-                      <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground/80 mb-4">
-                        Respuestas Numéricas Clave
-                      </h4>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        {[
-                          "q6_responsabilidad",
-                          "q4_involucramiento",
-                          "q4_calidad",
-                          "q4_seguimiento",
-                        ].map((k) => (
-                          <div
-                            key={k}
-                            className="space-y-1 bg-muted/30 p-2 rounded-lg border"
-                          >
-                            <Label
-                              className="text-[9px] font-bold uppercase truncate block text-muted-foreground"
-                              title={k}
-                            >
-                              {k
-                                .replace("q4_", "")
-                                .replace("q6_", "")
-                                .replace("_", " ")}
-                            </Label>
-                            <Input
-                              type="number"
-                              min={0}
-                              max={10}
-                              value={
-                                reviewData.respuestas?.[k] ?? reviewData[k] ?? 0
-                              }
-                              onChange={(e) => {
-                                const val = Number(e.target.value);
-                                if (reviewData.respuestas) {
-                                  setReviewData({
-                                    ...reviewData,
-                                    respuestas: {
-                                      ...reviewData.respuestas,
-                                      [k]: val,
-                                    },
-                                  });
-                                } else {
-                                  setReviewData({ ...reviewData, [k]: val });
-                                }
-                              }}
-                              className="h-7 text-xs font-black text-center"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="bg-muted/50 border-t p-4 flex gap-3">
-                    <Button
-                      variant="outline"
-                      className="w-1/3 font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50"
-                      onClick={handleDiscardReview}
-                    >
-                      Descartar
-                    </Button>
-                    <Button
-                      className="w-2/3 font-black tracking-widest shadow-lg"
-                      onClick={handleSaveReview}
-                    >
-                      {pendingFiles.length > 1 && !reviewData._isEditMode
-                        ? "Guardar y Continuar Cola"
-                        : "Guardar en BD"}{" "}
-                      <FastForward className="ml-2 w-4 h-4" />
-                    </Button>
-                  </CardFooter>
-                </Card>
+              {reviewData && !isEditDialogOpen && (
+                <ReviewForm 
+                  reviewData={reviewData}
+                  setReviewData={setReviewData}
+                  handleDiscardReview={handleDiscardReview}
+                  handleSaveReview={handleSaveReview}
+                  loading={loading}
+                  pendingFilesCount={pendingFiles.length}
+                />
               )}
             </div>
           </div>
@@ -1660,7 +1502,7 @@ export default function UploadDpmsPage() {
                     </div>
                   ) : (
                     <div className="divide-y divide-border/50">
-                      {evaluados.map((ev) => (
+                      {evaluados.map((ev, idx) => (
                         <div
                           key={ev.id}
                           className={`cursor-pointer transition-colors hover:bg-muted/50 p-4 flex justify-between items-center ${selectedEvaluado?.id === ev.id ? "bg-primary/5 border-l-4 border-l-primary" : "border-l-4 border-l-transparent"}`}
@@ -1679,7 +1521,8 @@ export default function UploadDpmsPage() {
                              />
                           </div>
                           <div className="flex-1 min-w-0 pr-3">
-                            <div className="font-bold text-sm truncate">
+                            <div className="font-bold text-sm truncate flex items-center gap-2">
+                              <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-md font-mono">#{idx + 1}</span>
                               {ev.nombre}
                             </div>
                             <div className="text-xs text-muted-foreground truncate">
@@ -1744,9 +1587,18 @@ export default function UploadDpmsPage() {
                       data-pdf-container="true"
                     >
                       <div
-                        className="flex justify-end mb-2"
+                        className="flex justify-end gap-2 mb-2"
                         data-html2canvas-ignore="true"
                       >
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-2 font-bold shadow-sm rounded-xl border-primary/20 hover:bg-primary/5"
+                          onClick={() => handleEdit(selectedEvaluado)}
+                        >
+                          <Edit className="w-4 h-4 text-primary" />
+                          Editar Datos
+                        </Button>
                         <Button
                           variant="outline"
                           size="sm"
@@ -1767,7 +1619,8 @@ export default function UploadDpmsPage() {
                         className="text-center space-y-2 mb-4 animate-in slide-in-from-top-4 fade-in duration-700 delay-100"
                         id="pdf-block-header"
                       >
-                        <h2 className="text-3xl font-black tracking-tight">
+                        <h2 className="text-3xl font-black tracking-tight flex items-center justify-center gap-3">
+                          <span className="text-lg opacity-30 font-mono">#{evaluados.findIndex(e => e.id === selectedEvaluado.id) + 1}</span>
                           {selectedEvaluado.nombre}
                         </h2>
                         <div className="flex items-center justify-center gap-2 flex-wrap">
@@ -1935,7 +1788,223 @@ export default function UploadDpmsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-4xl p-0 overflow-hidden border-none bg-transparent shadow-none">
+          {reviewData && (
+            <ReviewForm 
+              reviewData={reviewData}
+              setReviewData={setReviewData}
+              handleDiscardReview={handleDiscardReview}
+              handleSaveReview={handleSaveReview}
+              loading={loading}
+              pendingFilesCount={pendingFiles.length}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+}
+
+function ReviewForm({ 
+  reviewData, 
+  setReviewData, 
+  handleDiscardReview, 
+  handleSaveReview, 
+  loading, 
+  pendingFilesCount 
+}: any) {
+  return (
+    <Card className="shadow-2xl border-primary/40 max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-10 bg-gradient-to-b from-card to-muted/20">
+      <CardHeader className="bg-primary/5 pb-4 border-b border-primary/20 shrink-0">
+        <div className="flex justify-between items-center mb-2">
+          <CardTitle className="text-xl font-black text-primary flex items-center gap-2">
+            <Edit className="w-5 h-5" /> Revisión Previa
+            (Human-in-the-Loop)
+          </CardTitle>
+          <Badge
+            variant="outline"
+            className="font-bold text-[10px] tracking-widest"
+          >
+            {reviewData._fileName || "Edición"}
+          </Badge>
+        </div>
+        <CardDescription className="font-medium text-xs">
+          La IA ha extraído estos datos. Revisa o corrige antes de
+          guardar definitivamente.
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-5">
+        {/* Formulario Editable Básico */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-black uppercase text-muted-foreground">
+              Nombre
+            </Label>
+            <Input
+              value={reviewData.nombre}
+              onChange={(e) =>
+                setReviewData({
+                  ...reviewData,
+                  nombre: e.target.value,
+                })
+              }
+              className="font-bold bg-background h-8"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-black uppercase text-muted-foreground">
+              Puesto
+            </Label>
+            <Input
+              value={reviewData.puesto}
+              onChange={(e) =>
+                setReviewData({
+                  ...reviewData,
+                  puesto: e.target.value,
+                })
+              }
+              className="font-bold bg-background h-8"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-black uppercase text-muted-foreground">
+              Área
+            </Label>
+            <Input
+              value={reviewData.area}
+              onChange={(e) =>
+                setReviewData({
+                  ...reviewData,
+                  area: e.target.value,
+                })
+              }
+              className="font-bold bg-background h-8"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-black uppercase text-muted-foreground">
+              Nivel Cultura (1-5)
+            </Label>
+            <Select
+              value={String(reviewData.nivel_cultura)}
+              onValueChange={(v) =>
+                setReviewData({
+                  ...reviewData,
+                  nivel_cultura: Number(v),
+                })
+              }
+            >
+              <SelectTrigger className="h-8 font-bold">
+                <SelectValue placeholder="Nivel" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1 - Reactivo</SelectItem>
+                <SelectItem value="2">2 - Dependiente</SelectItem>
+                <SelectItem value="3">3 - Independiente</SelectItem>
+                <SelectItem value="4">
+                  4 - Interdependiente
+                </SelectItem>
+                <SelectItem value="5">5 - Excelente</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-[10px] font-black uppercase text-muted-foreground flex items-center gap-1">
+            <Zap className="w-3 h-3" /> Comentario Crítico (IA)
+          </Label>
+          <Textarea
+            value={reviewData.comentarios}
+            onChange={(e) =>
+              setReviewData({
+                ...reviewData,
+                comentarios: e.target.value,
+              })
+            }
+            className="min-h-[60px] text-sm font-medium bg-slate-900 text-slate-100 border-slate-800"
+          />
+        </div>
+
+        <div className="border-t pt-4 mt-4">
+          <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground/80 mb-4">
+            Respuestas Numéricas Clave
+          </h4>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              "q6_responsabilidad",
+              "q4_involucramiento",
+              "q4_calidad",
+              "q4_seguimiento",
+            ].map((k) => (
+              <div
+                key={k}
+                className="space-y-1 bg-muted/30 p-2 rounded-lg border"
+              >
+                <Label
+                  className="text-[9px] font-bold uppercase truncate block text-muted-foreground"
+                  title={k}
+                >
+                  {k
+                    .replace("q4_", "")
+                    .replace("q6_", "")
+                    .replace("_", " ")}
+                </Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={10}
+                  value={
+                    reviewData.respuestas?.[k] ?? reviewData[k] ?? 0
+                  }
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    if (reviewData.respuestas) {
+                      setReviewData({
+                        ...reviewData,
+                        respuestas: {
+                          ...reviewData.respuestas,
+                          [k]: val,
+                        },
+                      });
+                    } else {
+                      setReviewData({ ...reviewData, [k]: val });
+                    }
+                  }}
+                  className="h-7 text-xs font-black text-center"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+      <CardFooter className="bg-muted/50 border-t p-4 flex gap-3">
+        <Button
+          variant="outline"
+          className="w-1/3 font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+          onClick={handleDiscardReview}
+        >
+          Descartar
+        </Button>
+        <Button
+          className="w-2/3 font-black tracking-widest shadow-lg"
+          onClick={handleSaveReview}
+          disabled={loading}
+        >
+          {loading ? (
+             <Loader2 className="w-4 h-4 animate-spin mr-2" />
+          ) : (
+            pendingFilesCount > 1 && !reviewData._isEditMode
+              ? "Guardar y Continuar"
+              : "Guardar en BD"
+          )}
+          {!loading && <FastForward className="ml-2 w-4 h-4" />}
+        </Button>
+      </CardFooter>
+    </Card>
   );
 }
 
