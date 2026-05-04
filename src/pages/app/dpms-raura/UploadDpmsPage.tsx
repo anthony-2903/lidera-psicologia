@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -27,6 +27,12 @@ import {
   Play,
   Settings,
   FileDown,
+  LayoutDashboard,
+  BarChart3,
+  Target,
+  Star,
+  TrendingUp,
+  MessageSquare,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
@@ -51,6 +57,13 @@ import {
   PolarRadiusAxis,
   ResponsiveContainer,
   Tooltip as RechartsTooltip,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Cell,
+  Tooltip,
 } from "recharts";
 import Papa from "papaparse";
 import {
@@ -74,6 +87,15 @@ import {
 } from "@/components/ui/dialog";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { KpiCard } from "@/components/dashboard/DashboardCards";
+import { ChartTooltip } from "@/components/dashboard/ChartElements";
+import { DASHBOARD_PALETTES } from "@/lib/dashboard-configs";
+import { cn } from "@/lib/utils";
+import { fetchRauraData } from "@/lib/sheets-adapter";
+
+const RAURA_SHEET_ID = "1-yiLe8BFRiw8XbUyn9vdl2e2M3y7ENYQXgKajhEBwUA";
+
 const QUESTIONS = [
   {
     id: "q1",
@@ -296,10 +318,73 @@ export default function UploadDpmsPage() {
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [selectedForPdf, setSelectedForPdf] = useState<string[]>([]);
   const [isBulkExportingPDF, setIsBulkExportingPDF] = useState(false);
+  const [isExportingConsolidated, setIsExportingConsolidated] = useState(false);
 
   useEffect(() => {
     fetchEvaluados();
   }, []);
+
+  const statsMetrix = useMemo(() => {
+    if (!evaluados.length) return { 
+      avg: 0, 
+      categories: [], 
+      areas: [], 
+      voice: 0 
+    };
+    
+    const avg = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+    
+    // Dimensiones
+    // 1. Liderazgo Visible: q4a, q4d, q6a
+    // 2. Gestión Operativa: q4c, q9a (invertido)
+    // 3. Cultura Preventiva: nivel_cultura (1-5)
+    // 4. Comportamiento: q9b (invertido)
+
+    const categories = [
+      { 
+        name: 'Liderazgo Visible', 
+        value: avg(evaluados.map(e => (Number(e.q4_involucramiento || 0) + Number(e.q4_asistencia || 0) + Number(e.q6_responsabilidad || 0)) / 30 * 100)) 
+      },
+      { 
+        name: 'Gestión Operativa', 
+        value: avg(evaluados.map(e => {
+          const q4c = Number(e.q4_seguimiento || 0) * 10;
+          const q9a = (4 - Number(e.q9_gestion || 3)) * 33.3; // rank 1 is best
+          return (q4c + q9a) / 2;
+        })) 
+      },
+      { 
+        name: 'Cultura Preventiva', 
+        value: avg(evaluados.map(e => Number(e.nivel_cultura || 0) * 20)) 
+      },
+      { 
+        name: 'Comportamiento', 
+        value: avg(evaluados.map(e => (4 - Number(e.q9_comportamiento || 3)) * 33.3)) 
+      }
+    ];
+
+    // Áreas
+    const areaGroups: Record<string, number[]> = {};
+    evaluados.forEach(e => {
+      const area = e.area || "No especificada";
+      if (!areaGroups[area]) areaGroups[area] = [];
+      // Puntaje total simplificado para el ranking de áreas
+      const score = (Number(e.nivel_cultura) * 20 + Number(e.q4_involucramiento) * 10 + Number(e.q6_responsabilidad) * 10) / 3;
+      areaGroups[area].push(score);
+    });
+
+    const areas = Object.keys(areaGroups).map(name => ({
+      name,
+      score: Math.round(avg(areaGroups[name]))
+    })).sort((a, b) => b.score - a.score);
+
+    return {
+      avg: avg(evaluados.map(e => Number(e.nivel_cultura) * 20)),
+      categories,
+      areas,
+      voice: evaluados.filter(e => e.comentarios && e.comentarios !== "No especificado").length
+    };
+  }, [evaluados]);
 
   const fetchEvaluados = async () => {
     setLoadingEvaluados(true);
@@ -1088,6 +1173,355 @@ export default function UploadDpmsPage() {
     }
   };
 
+  const handleExportConsolidatedPDF = async () => {
+    setIsExportingConsolidated(true);
+    toast({
+      title: "Generando Informe Consolidado",
+      description: "Recopilando datos de encuestas y entrevistas...",
+    });
+
+    try {
+      const rauraData = await fetchRauraData(RAURA_SHEET_ID);
+      await generateConsolidatedPDFDocument(rauraData, evaluados);
+      
+      toast({
+        title: "Informe Generado",
+        description: "El reporte consolidado se ha descargado correctamente.",
+      });
+    } catch (err: any) {
+      console.error(err);
+      toast({
+        title: "Error",
+        description: "No se pudo generar el informe consolidado: " + err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsExportingConsolidated(false);
+    }
+  };
+
+  const generateConsolidatedPDFDocument = async (raura: any, interviews: any[]) => {
+    const pdf = new jsPDF("portrait", "mm", "a4");
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 20;
+    const contentWidth = pageWidth - margin * 2;
+    let y = 25;
+
+    // --- Helpers ---
+    const centerText = (text: string, currentY: number, fontSize = 12, style = "normal", color = [15, 23, 42]) => {
+      pdf.setFont("helvetica", style);
+      pdf.setFontSize(fontSize);
+      pdf.setTextColor(color[0], color[1], color[2]);
+      const textWidth = pdf.getTextWidth(text);
+      pdf.text(text, (pageWidth - textWidth) / 2, currentY);
+    };
+
+    const addHorizontalLine = (currentY: number) => {
+      pdf.setDrawColor(226, 232, 240);
+      pdf.setLineWidth(0.5);
+      pdf.line(margin, currentY, pageWidth - margin, currentY);
+    };
+
+    const drawHeaderFooter = () => {
+      const totalPages = (pdf as any).internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        // Header
+        pdf.setFillColor(15, 23, 42);
+        pdf.rect(0, 0, pageWidth, 15, "F");
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(8);
+        pdf.setFont("helvetica", "bold");
+        pdf.text("DPMS NETWORK | INFORME CONSOLIDADO DE CULTURA", margin, 10);
+        
+        // Footer
+        pdf.setDrawColor(226, 232, 240);
+        pdf.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
+        pdf.setTextColor(148, 163, 184);
+        pdf.setFontSize(8);
+        pdf.text(`Generado el ${new Date().toLocaleDateString()} | Lidera Psicología`, margin, pageHeight - 10);
+        pdf.text(`Página ${i} de ${totalPages}`, pageWidth - margin - 20, pageHeight - 10);
+      }
+    };
+
+    const drawComparisonRadar = (x: number, currentY: number, w: number, h: number, seriesA: any[], seriesB: any[]) => {
+      const cx = x + w / 2;
+      const cy = currentY + h / 2 + 5;
+      const radius = Math.min(w, h) * 0.35;
+      const n = seriesA.length;
+
+      // Draw Grid
+      pdf.setDrawColor(226, 232, 240);
+      pdf.setLineWidth(0.1);
+      for (let j = 1; j <= 5; j++) {
+        const r = (radius * j) / 5;
+        for (let i = 0; i < n; i++) {
+          const a1 = -Math.PI / 2 + (2 * Math.PI * i) / n;
+          const a2 = -Math.PI / 2 + (2 * Math.PI * (i + 1)) / n;
+          pdf.line(cx + Math.cos(a1) * r, cy + Math.sin(a1) * r, cx + Math.cos(a2) * r, cy + Math.sin(a2) * r);
+        }
+      }
+
+      // Draw Labels
+      pdf.setFontSize(7);
+      pdf.setTextColor(100, 116, 139);
+      seriesA.forEach((s, i) => {
+        const a = -Math.PI / 2 + (2 * Math.PI * i) / n;
+        const lx = cx + Math.cos(a) * (radius + 12);
+        const ly = cy + Math.sin(a) * (radius + 12);
+        pdf.text(s.name.toUpperCase(), lx, ly, { align: "center" });
+      });
+
+      // Series A (Raura) - Blue
+      const ptsA = seriesA.map((s, i) => {
+        const r = (radius * s.value) / 100;
+        const a = -Math.PI / 2 + (2 * Math.PI * i) / n;
+        return [cx + Math.cos(a) * r, cy + Math.sin(a) * r];
+      });
+      pdf.setDrawColor(3, 105, 161);
+      pdf.setLineWidth(0.8);
+      ptsA.forEach((p, i) => {
+        const next = ptsA[(i + 1) % n];
+        pdf.line(p[0], p[1], next[0], next[1]);
+      });
+
+      // Series B (Interviews) - Amber/Gold
+      const ptsB = seriesB.map((s, i) => {
+        const r = (radius * s.value) / 100;
+        const a = -Math.PI / 2 + (2 * Math.PI * i) / n;
+        return [cx + Math.cos(a) * r, cy + Math.sin(a) * r];
+      });
+      pdf.setDrawColor(217, 119, 6);
+      pdf.setLineWidth(0.8);
+      ptsB.forEach((p, i) => {
+        const next = ptsB[(i + 1) % n];
+        pdf.line(p[0], p[1], next[0], next[1]);
+      });
+
+      // Legend
+      pdf.setFontSize(8);
+      pdf.setFillColor(3, 105, 161);
+      pdf.rect(x + 5, currentY + 5, 3, 3, "F");
+      pdf.setTextColor(3, 105, 161);
+      pdf.text("Encuestas (Percepción)", x + 10, currentY + 8);
+      
+      pdf.setFillColor(217, 119, 6);
+      pdf.rect(x + 50, currentY + 5, 3, 3, "F");
+      pdf.setTextColor(217, 119, 6);
+      pdf.text("Entrevistas (Convicción)", x + 55, currentY + 8);
+    };
+
+    // --- PAGE 1: PORTADA ---
+    pdf.setFillColor(15, 23, 42); 
+    pdf.rect(0, 0, pageWidth, 120, "F");
+    
+    centerText("INFORME ESTRATÉGICO DE CULTURA", 50, 24, "bold", [255, 255, 255]);
+    centerText("DIAGNÓSTICO CONSOLIDADO DPMS + RAURA", 65, 14, "normal", [148, 163, 184]);
+    
+    pdf.setDrawColor(3, 105, 161);
+    pdf.setLineWidth(2);
+    pdf.line(pageWidth / 4, 85, (pageWidth * 3) / 4, 85);
+
+    y = 150;
+    centerText("RESUMEN EJECUTIVO", y, 16, "bold");
+    y += 15;
+    
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(11);
+    const summaryText = "Este reporte técnico integra la percepción masiva (Survey Raura) con la narrativa profunda de los líderes (Intervenciones DPMS). La convergencia de ambas fuentes permite validar la madurez cultural de la organización bajo un modelo de 'Doble Check': lo que el personal reporta frente a lo que los líderes ejecutan y transmiten.";
+    const summaryLines = pdf.splitTextToSize(summaryText, contentWidth);
+    pdf.text(summaryLines, margin, y);
+    y += (summaryLines.length * 6) + 20;
+
+    // Métricas de Alcance en cajas
+    const boxW = (contentWidth - 10) / 2;
+    pdf.setDrawColor(226, 232, 240);
+    pdf.setFillColor(248, 250, 252);
+    pdf.roundedRect(margin, y, boxW, 30, 4, 4, "FD");
+    pdf.roundedRect(margin + boxW + 10, y, boxW, 30, 4, 4, "FD");
+    
+    pdf.setFontSize(9);
+    pdf.setTextColor(100, 116, 139);
+    pdf.text("MUESTRA ENCUESTAS", margin + 5, y + 8);
+    pdf.text("MUESTRA ENTREVISTAS", margin + boxW + 15, y + 8);
+    
+    pdf.setFontSize(18);
+    pdf.setTextColor(15, 23, 42);
+    pdf.text(`${raura.totalRespondents} Pers.`, margin + 5, y + 22);
+    pdf.text(`${interviews.length} Líderes`, margin + boxW + 15, y + 22);
+    y += 50;
+
+    // --- PAGE 2: CURVA DE BRADLEY & MADUREZ ---
+    pdf.addPage();
+    y = 35;
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(18);
+    pdf.text("1. POSICIONAMIENTO EN LA CURVA DE BRADLEY", margin, y);
+    y += 15;
+    
+    // Dibujar curva Bradley simplificada
+    pdf.setDrawColor(200, 200, 200);
+    pdf.setLineWidth(1);
+    pdf.line(margin, y + 40, pageWidth - margin, y + 40); // Base
+    
+    const levels = ["Reactivo", "Dependiente", "Independiente", "Interdependiente"];
+    const levelColors = [[239, 68, 68], [245, 158, 11], [59, 130, 246], [16, 185, 129]];
+    const step = contentWidth / 4;
+    
+    levels.forEach((l, i) => {
+      const lx = margin + (step * i);
+      pdf.setFillColor(levelColors[i][0], levelColors[i][1], levelColors[i][2]);
+      pdf.circle(lx + step/2, y + 40, 3, "F");
+      pdf.setFontSize(8);
+      pdf.setTextColor(levelColors[i][0], levelColors[i][1], levelColors[i][2]);
+      pdf.text(l.toUpperCase(), lx + step/2, y + 48, { align: "center" });
+    });
+
+    // Ubicar el punto de la empresa
+    const currentScore = (raura.globalAverage + statsMetrix.avg) / 2;
+    const markerX = margin + (contentWidth * (currentScore / 100));
+    pdf.setDrawColor(15, 23, 42);
+    pdf.setLineWidth(1.5);
+    pdf.line(markerX, y + 10, markerX, y + 40);
+    pdf.setFillColor(15, 23, 42);
+    pdf.circle(markerX, y + 10, 4, "F");
+    
+    pdf.setTextColor(15, 23, 42);
+    pdf.setFontSize(10);
+    pdf.text("ESTADO ACTUAL", markerX, y + 5, { align: "center" });
+    y += 70;
+
+    pdf.setFontSize(11);
+    pdf.setFont("helvetica", "normal");
+    const bradleyDesc = `Con un puntaje consolidado de ${Math.round(currentScore)}%, la organización se encuentra en la etapa de transición hacia la madurez ${currentScore > 75 ? "Interdependiente" : currentScore > 50 ? "Independiente" : "Dependiente"}. Esto indica que ${currentScore > 50 ? "el personal ha internalizado el valor de la seguridad" : "aún existe una fuerte dependencia de la supervisión externa"}.`;
+    const bradleyLines = pdf.splitTextToSize(bradleyDesc, contentWidth);
+    pdf.text(bradleyLines, margin, y);
+    y += (bradleyLines.length * 6) + 15;
+
+    // --- PAGE 3: RADAR COMPARATIVO ---
+    pdf.addPage();
+    y = 35;
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(18);
+    pdf.text("2. PERCEPCIÓN VS. CONVICCIÓN (RADAR)", margin, y);
+    y += 10;
+    addHorizontalLine(y);
+    y += 15;
+
+    const seriesA = raura.categories; // [Liderazgo, Gestión, Participación, Cultura]
+    const seriesB = statsMetrix.categories; // [Liderazgo, Gestión, Cultura, Comportamiento]
+    
+    // Normalize names to match for radar if possible, or just use first 4
+    const radarW = contentWidth;
+    const radarH = 90;
+    drawComparisonRadar(margin, y, radarW, radarH, seriesA, seriesB);
+    y += radarH + 20;
+
+    pdf.setFontSize(11);
+    pdf.setFont("helvetica", "bold");
+    pdf.text("Análisis de Brechas:", margin, y);
+    y += 8;
+    pdf.setFont("helvetica", "normal");
+    
+    const leadershipGap = Math.abs(seriesA[0].value - seriesB[0].value);
+    const gapAnalysis = leadershipGap > 10 
+      ? `Se observa una brecha de ${Math.round(leadershipGap)}% en LIDERAZGO. El personal percibe un nivel de compromiso distinto al que los líderes expresan en sus entrevistas. Es crítico alinear el discurso con la acción en campo.` 
+      : "Existe una alineación saludable entre la percepción del personal y el discurso de los líderes en materia de Liderazgo y Gestión.";
+    
+    const gapLines = pdf.splitTextToSize(gapAnalysis, contentWidth);
+    pdf.text(gapLines, margin, y);
+    y += (gapLines.length * 6) + 15;
+
+    // --- PAGE 4: DISTRIBUCIÓN Y AREAS ---
+    pdf.addPage();
+    y = 35;
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(18);
+    pdf.text("3. DISTRIBUCIÓN POR NIVELES Y ÁREAS", margin, y);
+    y += 15;
+
+    // Maturity Distribution Pie (Simulated with text/bars for now to be safe)
+    pdf.setFontSize(12);
+    pdf.text("Distribución de Madurez (Muestra Consolidada):", margin, y);
+    y += 10;
+
+    const distribution = [
+      { name: "EXCELENTE (80-100%)", count: interviews.filter(i => i.nivel_cultura >= 4.5).length + raura.entries.filter(e => e.totalScore >= 80).length },
+      { name: "BUENO (60-80%)", count: interviews.filter(i => i.nivel_cultura >= 3.5 && i.nivel_cultura < 4.5).length + raura.entries.filter(e => e.totalScore >= 60 && e.totalScore < 80).length },
+      { name: "REGULAR (40-60%)", count: interviews.filter(i => i.nivel_cultura >= 2.5 && i.nivel_cultura < 3.5).length + raura.entries.filter(e => e.totalScore >= 40 && e.totalScore < 60).length },
+      { name: "RIESGO (<40%)", count: interviews.filter(i => i.nivel_cultura < 2.5).length + raura.entries.filter(e => e.totalScore < 40).length }
+    ];
+
+    distribution.forEach((d, i) => {
+      const pct = (d.count / (raura.totalRespondents + interviews.length)) * 100;
+      pdf.setFontSize(9);
+      pdf.setTextColor(71, 85, 105);
+      pdf.text(d.name, margin, y);
+      
+      pdf.setFillColor(241, 245, 249);
+      pdf.rect(margin + 45, y - 4, 100, 5, "F");
+      pdf.setFillColor(levelColors[3 - i] ? levelColors[3-i][0] : 100, levelColors[3-i] ? levelColors[3-i][1] : 100, levelColors[3-i] ? levelColors[3-i][2] : 100);
+      pdf.rect(margin + 45, y - 4, pct, 5, "F");
+      
+      pdf.text(`${Math.round(pct)}%`, margin + 150, y);
+      y += 10;
+    });
+
+    y += 15;
+    pdf.setFontSize(12);
+    pdf.setTextColor(15, 23, 42);
+    pdf.text("Top 5 Áreas por Desempeño:", margin, y);
+    y += 10;
+
+    raura.areas.sort((a: any, b: any) => b.score - a.score).slice(0, 5).forEach((a: any, i: number) => {
+      pdf.setFontSize(9);
+      pdf.text(`${i+1}. ${a.name}`, margin + 5, y);
+      pdf.text(`${Math.round(a.score)}%`, margin + contentWidth - 15, y);
+      y += 7;
+    });
+
+    // --- PAGE 5: PLAN DE ACCIÓN ---
+    pdf.addPage();
+    y = 35;
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(18);
+    pdf.text("4. HOJA DE RUTA ESTRATÉGICA", margin, y);
+    y += 12;
+    addHorizontalLine(y);
+    y += 15;
+
+    const roadmap = [
+      { t: "CORTO PLAZO (0-3 meses)", c: "Estandarización de las herramientas de gestión preventiva y refuerzo del 'Feedback' inmediato en campo." },
+      { t: "MEDIANO PLAZO (3-9 meses)", c: "Programa de Coaching para Mandos Medios enfocado en Liderazgo Transformacional y Seguridad Psicológica." },
+      { t: "LARGO PLAZO (+12 meses)", c: "Integración de la seguridad en el ADN del negocio (Seguridad Productiva) y autonomía total del equipo." }
+    ];
+
+    roadmap.forEach(item => {
+      pdf.setFillColor(248, 250, 252);
+      pdf.setDrawColor(3, 105, 161);
+      pdf.roundedRect(margin, y, contentWidth, 35, 2, 2, "FD");
+      
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "bold");
+      pdf.setTextColor(3, 105, 161);
+      pdf.text(item.t, margin + 5, y + 10);
+      
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      pdf.setTextColor(15, 23, 42);
+      const lines = pdf.splitTextToSize(item.c, contentWidth - 15);
+      pdf.text(lines, margin + 5, y + 18);
+      
+      y += 45;
+    });
+
+    // Final Touch: Header/Footer
+    drawHeaderFooter();
+
+    pdf.save(`Informe_Estrategico_Consolidado_${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
   const getCardColor = (score: number, max: number) => {
     if (max === 10) {
       if (score >= 8)
@@ -1207,22 +1641,42 @@ export default function UploadDpmsPage() {
             </p>
           </div>
         </div>
-        <Button
-          onClick={handleExportCSV}
-          variant="outline"
-          className="shrink-0 gap-2 font-bold shadow-sm rounded-xl"
-        >
-          <Download className="w-4 h-4" /> Exportar CSV
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={handleExportConsolidatedPDF}
+            disabled={isExportingConsolidated || evaluados.length === 0}
+            className="shrink-0 gap-2 font-bold shadow-md rounded-xl bg-slate-900 hover:bg-slate-800 text-white"
+          >
+            {isExportingConsolidated ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <FileDown className="w-4 h-4" />
+            )}
+            Informe Consolidado
+          </Button>
+          <Button
+            onClick={handleExportCSV}
+            variant="outline"
+            className="shrink-0 gap-2 font-bold shadow-sm rounded-xl"
+          >
+            <Download className="w-4 h-4" /> Exportar CSV
+          </Button>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-md bg-muted/50 p-1 rounded-xl mb-8 border border-border/50 shadow-sm">
+        <TabsList className="grid w-full grid-cols-3 max-w-2xl bg-muted/50 p-1 rounded-xl mb-8 border border-border/50 shadow-sm">
           <TabsTrigger value="upload" className="rounded-lg font-bold">
+            <Activity className="w-4 h-4 mr-2" />
             Carga Activa
           </TabsTrigger>
+          <TabsTrigger value="general" className="rounded-lg font-bold">
+            <LayoutDashboard className="w-4 h-4 mr-2" />
+            Dashboard General
+          </TabsTrigger>
           <TabsTrigger value="dashboard" className="rounded-lg font-bold">
-            Resumen Orbital
+            <Users className="w-4 h-4 mr-2" />
+            Historial Individual
           </TabsTrigger>
         </TabsList>
 
@@ -1438,6 +1892,150 @@ export default function UploadDpmsPage() {
                 />
               )}
             </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="general" className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          {/* KPI GRID */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <KpiCard
+              label="Maturity Score"
+              value={`${Math.round(statsMetrix.avg)}%`}
+              icon={Target}
+              color="text-primary"
+              bg="bg-primary/10"
+              border="border-primary/20"
+              glowColor="primary/20"
+              description="Nivel cultural promedio"
+            />
+            <KpiCard
+              label="Liderazgo"
+              value={`${Math.round(statsMetrix.categories[0]?.value || 0)}%`}
+              icon={Star}
+              color="text-purple-500"
+              bg="bg-purple-500/10"
+              border="border-purple-500/20"
+              glowColor="purple-500/20"
+              description="Visibilidad y compromiso"
+            />
+            <KpiCard
+              label="Gestión"
+              value={`${Math.round(statsMetrix.categories[1]?.value || 0)}%`}
+              icon={ShieldCheck}
+              color="text-blue-500"
+              bg="bg-blue-500/10"
+              border="border-blue-500/20"
+              glowColor="blue-500/20"
+              description="Control y seguimiento"
+            />
+            <KpiCard
+              label="Voz del Equipo"
+              value={statsMetrix.voice}
+              icon={MessageSquare}
+              color="text-orange-500"
+              bg="bg-orange-500/10"
+              border="border-orange-500/20"
+              glowColor="orange-500/20"
+              description="Insights recolectados"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* RADAR DIMENSIONS */}
+            <Card className="rounded-[2.5rem] border-2 border-border/40 bg-card/50 backdrop-blur-xl shadow-xl overflow-hidden group/card relative">
+              <CardHeader className="p-8 pb-0 flex flex-col items-center gap-2 text-center">
+                <Badge variant="outline" className="text-primary border-primary/20 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-2">
+                  Análisis de Dimensiones
+                </Badge>
+                <CardTitle className="text-3xl font-black tracking-tighter uppercase italic">
+                  Huella de Cultura
+                </CardTitle>
+                <CardDescription className="text-[10px] font-bold uppercase tracking-widest opacity-60">
+                  Desempeño por Pilares Críticos
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-8 h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart cx="50%" cy="50%" outerRadius="80%" data={statsMetrix.categories}>
+                    <PolarGrid stroke="rgba(0,0,0,0.08)" strokeDasharray="5 5" />
+                    <PolarAngleAxis
+                      dataKey="name"
+                      tick={{
+                        fontSize: 10,
+                        fontWeight: 900,
+                        fill: "rgba(0,0,0,0.5)",
+                        letterSpacing: "0.05em",
+                      }}
+                    />
+                    <PolarRadiusAxis domain={[0, 100]} hide />
+                    <Tooltip content={<ChartTooltip />} />
+                    <Radar
+                      name="Puntaje"
+                      dataKey="value"
+                      stroke="hsl(var(--primary))"
+                      fill="hsl(var(--primary))"
+                      fillOpacity={0.2}
+                      dot={{
+                        r: 5,
+                        fill: "hsl(var(--primary))",
+                        stroke: "#fff",
+                        strokeWidth: 2,
+                      }}
+                    />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* AREA PERFORMANCE */}
+            <Card className="rounded-[2.5rem] border-2 border-border/40 bg-card/50 backdrop-blur-xl shadow-xl overflow-hidden group/card relative">
+              <CardHeader className="p-8 pb-0 text-center">
+                <div className="flex justify-center mb-4">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 shadow-lg">
+                    <BarChart3 className="w-6 h-6" />
+                  </div>
+                </div>
+                <CardTitle className="text-3xl font-black tracking-tighter uppercase italic">
+                  Ranking por Área
+                </CardTitle>
+                <CardDescription className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/60">
+                  Comparativa de Desempeño Operativo
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-8 h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={statsMetrix.areas}
+                    layout="vertical"
+                    margin={{ left: 40, right: 20 }}
+                  >
+                    <CartesianGrid strokeDasharray="10 10" horizontal={false} stroke="rgba(0,0,0,0.05)" />
+                    <XAxis type="number" domain={[0, 100]} hide />
+                    <YAxis
+                      dataKey="name"
+                      type="category"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 10, fontWeight: 800, fill: "rgba(0,0,0,0.6)" }}
+                      width={100}
+                    />
+                    <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgba(16, 185, 129, 0.05)" }} />
+                    <Bar
+                      dataKey="score"
+                      radius={[0, 10, 10, 0]}
+                      barSize={30}
+                    >
+                      {statsMetrix.areas.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={entry.score > 70 ? "#10b981" : entry.score > 40 ? "#3b82f6" : "#ef4444"} 
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
 
