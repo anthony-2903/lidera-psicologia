@@ -228,7 +228,7 @@ METADATOS A EXTRAER:
 - empresa: Nombre de la empresa o contrata a la que pertenece.
 - puesto: Cargo o puesto que ocupa.
 - area: Área de trabajo.
-- nivel_cultura: Determina el nivel de madurez de cultura de seguridad del entrevistado del 1 al 5 (1: Reactivo, 2: Dependiente, 3: Independiente, 4: Interdependiente, 5: Excelente/Liderazgo).
+- nivel_cultura: Determina el nivel de madurez de cultura de seguridad del entrevistado del 1 al 4 (1: Reactivo, 2: Dependiente, 3: Independiente, 4: Interdependiente). No uses 5.
 - comentarios: Redacta un pequeño resumen o frase crítica (insight conductual) extraído de su participación. Algo que resalte su percepción de riesgo o liderazgo. Corto (max 2 lineas).
 
 PREGUNTAS DE EVALUACIÓN:
@@ -260,6 +260,11 @@ INSTRUCCIONES CLAVES:
 - Si un valor numérico no se menciona ni se puede inferir, usa 0.
 - Si un texto no se menciona o no hay respuesta relevante, usa "No especificado".
 - Asegúrate de usar estas claves exactas en el JSON de salida:
+- Evalua de forma critica y conservadora: el mejor escenario permitido sin evidencias concretas, ejemplos verificables, asistencia sostenida y seguimiento documentado es Dependiente.
+- Si el entrevistado no asistio, no participo, muestra desinteres, responde de forma evasiva o la entrevista es insuficiente, clasifica como Reactivo.
+- Para clasificar como Independiente exige evidencia clara de autogestion, seguimiento, aprendizaje de incidentes y responsabilidad asumida sin depender de la supervision.
+- Para clasificar como Interdependiente exige evidencia explicita de cuidado mutuo, intervencion entre pares, aprendizaje colectivo y liderazgo preventivo sostenido. Si falta cualquiera de estos elementos, baja al menos a Dependiente.
+- La asistencia a capacitaciones de lideres es un dato critico. Si es 0, no mencionada o baja, no puede superar Dependiente.
 {
   "nombre": "string",
   "empresa": "string",
@@ -294,6 +299,135 @@ INSTRUCCIONES CLAVES:
     "q14_responsabilidad": "string"
   }
 }`;
+
+const CRITICAL_TEXT_FIELDS = [
+  "q1",
+  "q2",
+  "q5",
+  "q7",
+  "q8",
+  "q10",
+  "q11",
+  "q12",
+];
+
+const clampNumber = (value: unknown, min: number, max: number) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return min;
+  return Math.min(max, Math.max(min, parsed));
+};
+
+const getResponseValue = (source: any, key: string) =>
+  source?.respuestas?.[key] ?? source?.[key];
+
+const isMissingText = (value: unknown) => {
+  const normalized = String(value || "").trim().toLowerCase();
+  return (
+    !normalized ||
+    normalized === "no especificado" ||
+    normalized === "n/a" ||
+    normalized === "na" ||
+    normalized === "-"
+  );
+};
+
+const hasNoShowSignal = (source: any) => {
+  const corpus = [
+    source?.comentarios,
+    source?._fileName,
+    ...CRITICAL_TEXT_FIELDS.map((key) => getResponseValue(source, key)),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return [
+    "no asist",
+    "no particip",
+    "no se present",
+    "inasist",
+    "ausente",
+    "desinteres",
+    "no le interesa",
+    "sin entrevista",
+    "entrevista insuficiente",
+  ].some((signal) => corpus.includes(signal));
+};
+
+const buildCriticalCultureAssessment = (source: any) => {
+  const rawLevel = clampNumber(source?.nivel_cultura, 1, 4);
+  const attendance = clampNumber(getResponseValue(source, "q4_asistencia"), 0, 10);
+  const followUp = clampNumber(getResponseValue(source, "q4_seguimiento"), 0, 10);
+  const responsibility = clampNumber(getResponseValue(source, "q6_responsabilidad"), 0, 10);
+  const answeredCriticalFields = CRITICAL_TEXT_FIELDS.filter(
+    (key) => !isMissingText(getResponseValue(source, key)),
+  ).length;
+
+  let cap = 4;
+  const flags: string[] = [];
+
+  if (hasNoShowSignal(source)) {
+    cap = Math.min(cap, 1);
+    flags.push("inasistencia, ausencia o desinteres detectado");
+  }
+
+  if (answeredCriticalFields < 4) {
+    cap = Math.min(cap, 1);
+    flags.push("entrevista insuficiente para sostener madurez cultural");
+  } else if (answeredCriticalFields < 6) {
+    cap = Math.min(cap, 2);
+    flags.push("evidencia parcial; no sostiene independencia");
+  }
+
+  if (attendance <= 0) {
+    cap = Math.min(cap, 2);
+    flags.push("asistencia no evidenciada");
+  } else if (attendance < 6) {
+    cap = Math.min(cap, 2);
+    flags.push("asistencia baja a capacitaciones de lideres");
+  }
+
+  if (followUp < 6 || responsibility < 6) {
+    cap = Math.min(cap, 2);
+    flags.push("seguimiento o responsabilidad por debajo del umbral critico");
+  }
+
+  if (rawLevel >= 4 && (attendance < 8 || followUp < 8 || responsibility < 8)) {
+    cap = Math.min(cap, 2);
+    flags.push("no cumple evidencias minimas para interdependencia");
+  }
+
+  return {
+    level: Math.min(rawLevel, cap),
+    rawLevel,
+    flags: Array.from(new Set(flags)),
+  };
+};
+
+const appendCriticalComment = (comment: string, flags: string[]) => {
+  const base = comment?.trim() || "Evaluacion critica sin comentario de origen.";
+  if (!flags.length) return base;
+  if (base.includes("Ajuste critico:")) return base;
+  return `${base} Ajuste critico: ${flags.join("; ")}.`;
+};
+
+const normalizeCriticalReview = (source: any) => {
+  const criticalAssessment = buildCriticalCultureAssessment(source);
+  return {
+    ...source,
+    nivel_cultura: criticalAssessment.level,
+    comentarios: appendCriticalComment(source?.comentarios || "", criticalAssessment.flags),
+    _rawNivelCultura: criticalAssessment.rawLevel,
+    _criticalFlags: criticalAssessment.flags,
+  };
+};
+
+const getStrictBradleyLevel = (score: number, interviewCoverage = 1) => {
+  if (interviewCoverage < 0.15 || score <= 25) return "REACTIVO";
+  if (interviewCoverage < 0.35 || score <= 50) return "DEPENDIENTE";
+  if (score <= 75) return "INDEPENDIENTE";
+  return "INTERDEPENDIENTE";
+};
 
 export default function UploadDpmsPage() {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
@@ -346,20 +480,20 @@ export default function UploadDpmsPage() {
         value: avg(evaluados.map(e => (Number(e.q4_involucramiento || 0) + Number(e.q4_asistencia || 0) + Number(e.q6_responsabilidad || 0)) / 30 * 100)) 
       },
       { 
-        name: 'Gestión Operativa', 
+        name: 'Gestión y Cumplimiento', 
         value: avg(evaluados.map(e => {
           const q4c = Number(e.q4_seguimiento || 0) * 10;
-          const q9a = (4 - Number(e.q9_gestion || 3)) * 33.3; // rank 1 is best
+          const q9a = (4 - Number(e.q9_gestion || 3)) * 33.3; 
           return (q4c + q9a) / 2;
         })) 
       },
       { 
-        name: 'Cultura Preventiva', 
-        value: avg(evaluados.map(e => Number(e.nivel_cultura || 0) * 20)) 
+        name: 'Participación', 
+        value: avg(evaluados.map(e => (4 - Number(e.q9_comportamiento || 3)) * 33.3)) 
       },
       { 
-        name: 'Comportamiento', 
-        value: avg(evaluados.map(e => (4 - Number(e.q9_comportamiento || 3)) * 33.3)) 
+        name: 'Cultura y Comunicación', 
+        value: avg(evaluados.map(e => Number(e.nivel_cultura || 0) * 20)) 
       }
     ];
 
@@ -658,11 +792,11 @@ export default function UploadDpmsPage() {
       setLoadingPhase("Preparando pre-visualización...");
 
       // Pasar data extraida a la vista de validacion humana
-      setReviewData({
+      setReviewData(normalizeCriticalReview({
         ...aiResult,
         _fileName: currentFile ? currentFile.name : "Texto Pegado",
         _isEditMode: false,
-      });
+      }));
     } catch (error: any) {
       toast({
         title: "Error al procesar",
@@ -687,11 +821,11 @@ export default function UploadDpmsPage() {
         throw new Error("El JSON no tiene la estructura correcta (faltan campos clave como 'nombre' o 'area').");
       }
       
-      setReviewData({
+      setReviewData(normalizeCriticalReview({
         ...parsed,
         _fileName: "Importación GPT",
         _isEditMode: false,
-      });
+      }));
       toast({ title: "JSON Cargado", description: "Datos listos para validación humana." });
       setJsonInput("");
     } catch (error: any) {
@@ -708,14 +842,18 @@ export default function UploadDpmsPage() {
     try {
       const getVal = (key: string) =>
         reviewData.respuestas?.[key] ?? reviewData[key];
+      const criticalAssessment = buildCriticalCultureAssessment(reviewData);
 
       const payload: any = {
         nombre: reviewData.nombre || "Anónimo",
         empresa: reviewData.empresa || "No especificada",
         puesto: reviewData.puesto || "No especificado",
         area: reviewData.area || "No especificada",
-        nivel_cultura: Number(reviewData.nivel_cultura) || 0,
-        comentarios: reviewData.comentarios || "",
+        nivel_cultura: criticalAssessment.level,
+        comentarios: appendCriticalComment(
+          reviewData.comentarios || "",
+          criticalAssessment.flags,
+        ),
         q1: String(getVal("q1") || "No especificado"),
         q2: String(getVal("q2") || "No especificado"),
         q3: String(getVal("q3") || "No especificado"),
@@ -1227,20 +1365,18 @@ export default function UploadDpmsPage() {
       const totalPages = (pdf as any).internal.getNumberOfPages();
       for (let i = 1; i <= totalPages; i++) {
         pdf.setPage(i);
-        // Header
         pdf.setFillColor(15, 23, 42);
         pdf.rect(0, 0, pageWidth, 15, "F");
         pdf.setTextColor(255, 255, 255);
         pdf.setFontSize(8);
         pdf.setFont("helvetica", "bold");
-        pdf.text("DPMS NETWORK | INFORME CONSOLIDADO DE CULTURA", margin, 10);
+        pdf.text("AUDITORÍA DE CULTURA DPMS | REPORTE TÉCNICO DE ALTA PRECISIÓN", margin, 10);
         
-        // Footer
         pdf.setDrawColor(226, 232, 240);
         pdf.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
         pdf.setTextColor(148, 163, 184);
         pdf.setFontSize(8);
-        pdf.text(`Generado el ${new Date().toLocaleDateString()} | Lidera Psicología`, margin, pageHeight - 10);
+        pdf.text(`Fecha de Emisión: ${new Date().toLocaleString()} | Análisis de Datos Estricto`, margin, pageHeight - 10);
         pdf.text(`Página ${i} de ${totalPages}`, pageWidth - margin - 20, pageHeight - 10);
       }
     };
@@ -1251,7 +1387,6 @@ export default function UploadDpmsPage() {
       const radius = Math.min(w, h) * 0.35;
       const n = seriesA.length;
 
-      // Draw Grid
       pdf.setDrawColor(226, 232, 240);
       pdf.setLineWidth(0.1);
       for (let j = 1; j <= 5; j++) {
@@ -1263,7 +1398,6 @@ export default function UploadDpmsPage() {
         }
       }
 
-      // Draw Labels
       pdf.setFontSize(7);
       pdf.setTextColor(100, 116, 139);
       seriesA.forEach((s, i) => {
@@ -1273,7 +1407,6 @@ export default function UploadDpmsPage() {
         pdf.text(s.name.toUpperCase(), lx, ly, { align: "center" });
       });
 
-      // Series A (Raura) - Blue
       const ptsA = seriesA.map((s, i) => {
         const r = (radius * s.value) / 100;
         const a = -Math.PI / 2 + (2 * Math.PI * i) / n;
@@ -1286,7 +1419,6 @@ export default function UploadDpmsPage() {
         pdf.line(p[0], p[1], next[0], next[1]);
       });
 
-      // Series B (Interviews) - Amber/Gold
       const ptsB = seriesB.map((s, i) => {
         const r = (radius * s.value) / 100;
         const a = -Math.PI / 2 + (2 * Math.PI * i) / n;
@@ -1299,7 +1431,6 @@ export default function UploadDpmsPage() {
         pdf.line(p[0], p[1], next[0], next[1]);
       });
 
-      // Legend
       pdf.setFontSize(8);
       pdf.setFillColor(3, 105, 161);
       pdf.rect(x + 5, currentY + 5, 3, 3, "F");
@@ -1312,29 +1443,28 @@ export default function UploadDpmsPage() {
       pdf.text("Entrevistas (Convicción)", x + 55, currentY + 8);
     };
 
-    // --- PAGE 1: PORTADA ---
+    // --- PORTADA ---
     pdf.setFillColor(15, 23, 42); 
     pdf.rect(0, 0, pageWidth, 120, "F");
     
-    centerText("INFORME ESTRATÉGICO DE CULTURA", 50, 24, "bold", [255, 255, 255]);
-    centerText("DIAGNÓSTICO CONSOLIDADO DPMS + RAURA", 65, 14, "normal", [148, 163, 184]);
+    centerText("INFORME TÉCNICO DE ALTA PRECISIÓN", 50, 24, "bold", [255, 255, 255]);
+    centerText("ANÁLISIS ESTADÍSTICO DE CULTURA DPMS + RAURA", 65, 14, "normal", [148, 163, 184]);
     
     pdf.setDrawColor(3, 105, 161);
     pdf.setLineWidth(2);
     pdf.line(pageWidth / 4, 85, (pageWidth * 3) / 4, 85);
 
     y = 150;
-    centerText("RESUMEN EJECUTIVO", y, 16, "bold");
+    centerText("RESUMEN DE METODOLOGÍA Y ALCANCE", y, 16, "bold");
     y += 15;
     
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(11);
-    const summaryText = "Este reporte técnico integra la percepción masiva (Survey Raura) con la narrativa profunda de los líderes (Intervenciones DPMS). La convergencia de ambas fuentes permite validar la madurez cultural de la organización bajo un modelo de 'Doble Check': lo que el personal reporta frente a lo que los líderes ejecutan y transmiten.";
+    const summaryText = "Este reporte descarta cualquier redondeo de datos para proporcionar una métrica exacta de la madurez cultural. Se basa en una auditoría cruzada entre la percepción masiva (Encuestas) y la convicción ejecutiva (Entrevistas), utilizando el modelo DPMS para mapear desviaciones críticas en la gestión de seguridad.";
     const summaryLines = pdf.splitTextToSize(summaryText, contentWidth);
     pdf.text(summaryLines, margin, y);
     y += (summaryLines.length * 6) + 20;
 
-    // Métricas de Alcance en cajas
     const boxW = (contentWidth - 10) / 2;
     pdf.setDrawColor(226, 232, 240);
     pdf.setFillColor(248, 250, 252);
@@ -1343,27 +1473,28 @@ export default function UploadDpmsPage() {
     
     pdf.setFontSize(9);
     pdf.setTextColor(100, 116, 139);
-    pdf.text("MUESTRA ENCUESTAS", margin + 5, y + 8);
-    pdf.text("MUESTRA ENTREVISTAS", margin + boxW + 15, y + 8);
+    pdf.text("AUDITORÍA DE MUESTRA (RAURA)", margin + 5, y + 8);
+    pdf.text("AUDITORÍA DE MUESTRA (DPMS)", margin + boxW + 15, y + 8);
     
     pdf.setFontSize(18);
     pdf.setTextColor(15, 23, 42);
-    pdf.text(`${raura.totalRespondents} Pers.`, margin + 5, y + 22);
-    pdf.text(`${interviews.length} Líderes`, margin + boxW + 15, y + 22);
+    pdf.text(`${raura.totalRespondents.toFixed(0)} Sujetos`, margin + 5, y + 22);
+    pdf.text(`${interviews.length.toFixed(0)} Entrevistas`, margin + boxW + 15, y + 22);
     y += 50;
 
-    // --- PAGE 2: CURVA DE BRADLEY & MADUREZ ---
+    // --- PAGE 2: CURVA DE BRADLEY (STRICT) ---
     pdf.addPage();
     y = 35;
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(18);
-    pdf.text("1. POSICIONAMIENTO EN LA CURVA DE BRADLEY", margin, y);
+    pdf.text("1. POSICIONAMIENTO ESTRICTO: CURVA DE BRADLEY", margin, y);
+    y += 10;
+    addHorizontalLine(y);
     y += 15;
     
-    // Dibujar curva Bradley simplificada
     pdf.setDrawColor(200, 200, 200);
     pdf.setLineWidth(1);
-    pdf.line(margin, y + 40, pageWidth - margin, y + 40); // Base
+    pdf.line(margin, y + 40, pageWidth - margin, y + 40); 
     
     const levels = ["Reactivo", "Dependiente", "Independiente", "Interdependiente"];
     const levelColors = [[239, 68, 68], [245, 158, 11], [59, 130, 246], [16, 185, 129]];
@@ -1378,9 +1509,17 @@ export default function UploadDpmsPage() {
       pdf.text(l.toUpperCase(), lx + step/2, y + 48, { align: "center" });
     });
 
-    // Ubicar el punto de la empresa
-    const currentScore = (raura.globalAverage + statsMetrix.avg) / 2;
-    const markerX = margin + (contentWidth * (currentScore / 100));
+    const exactRauraScore = raura.globalAverage;
+    const exactInterviewScore = statsMetrix.avg;
+    const interviewCoverage = raura.totalRespondents > 0 ? interviews.length / raura.totalRespondents : 0;
+    const coveragePenalty = interviewCoverage < 0.15 ? 25 : interviewCoverage < 0.35 ? 50 : 100;
+    const consolidatedScore = Math.min(
+      (exactRauraScore + exactInterviewScore) / 2,
+      exactInterviewScore || 0,
+      coveragePenalty,
+    );
+    const markerX = margin + (contentWidth * (consolidatedScore / 100));
+
     pdf.setDrawColor(15, 23, 42);
     pdf.setLineWidth(1.5);
     pdf.line(markerX, y + 10, markerX, y + 40);
@@ -1388,31 +1527,31 @@ export default function UploadDpmsPage() {
     pdf.circle(markerX, y + 10, 4, "F");
     
     pdf.setTextColor(15, 23, 42);
-    pdf.setFontSize(10);
-    pdf.text("ESTADO ACTUAL", markerX, y + 5, { align: "center" });
+    pdf.setFontSize(12);
+    pdf.setFont("helvetica", "bold");
+    pdf.text(`${consolidatedScore.toFixed(2)}%`, markerX, y + 5, { align: "center" });
     y += 70;
 
     pdf.setFontSize(11);
     pdf.setFont("helvetica", "normal");
-    const bradleyDesc = `Con un puntaje consolidado de ${Math.round(currentScore)}%, la organización se encuentra en la etapa de transición hacia la madurez ${currentScore > 75 ? "Interdependiente" : currentScore > 50 ? "Independiente" : "Dependiente"}. Esto indica que ${currentScore > 50 ? "el personal ha internalizado el valor de la seguridad" : "aún existe una fuerte dependencia de la supervisión externa"}.`;
+    const bradleyDesc = `El indice de madurez consolidado se situa exactamente en ${consolidatedScore.toFixed(4)}%. Bajo una evaluacion critica, la organizacion se clasifica en el cuadrante ${getStrictBradleyLevel(consolidatedScore, interviewCoverage)}. La cobertura de entrevistas es ${(interviewCoverage * 100).toFixed(2)}%; cuando la muestra ejecutiva es baja o hay inasistencias, el modelo limita el resultado al escenario Reactivo o Dependiente hasta contar con evidencia directa. La brecha tecnica frente a la excelencia preventiva es de ${(100 - consolidatedScore).toFixed(2)}%.`;
     const bradleyLines = pdf.splitTextToSize(bradleyDesc, contentWidth);
     pdf.text(bradleyLines, margin, y);
     y += (bradleyLines.length * 6) + 15;
 
-    // --- PAGE 3: RADAR COMPARATIVO ---
+    // --- PAGE 3: RADAR DE PRECISIÓN Y VARIANZA ---
     pdf.addPage();
     y = 35;
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(18);
-    pdf.text("2. PERCEPCIÓN VS. CONVICCIÓN (RADAR)", margin, y);
+    pdf.text("2. COMPARATIVA DE PRECISIÓN Y VARIANZA", margin, y);
     y += 10;
     addHorizontalLine(y);
     y += 15;
 
-    const seriesA = raura.categories; // [Liderazgo, Gestión, Participación, Cultura]
-    const seriesB = statsMetrix.categories; // [Liderazgo, Gestión, Cultura, Comportamiento]
+    const seriesA = raura.categories; 
+    const seriesB = statsMetrix.categories; 
     
-    // Normalize names to match for radar if possible, or just use first 4
     const radarW = contentWidth;
     const radarH = 90;
     drawComparisonRadar(margin, y, radarW, radarH, seriesA, seriesB);
@@ -1420,106 +1559,118 @@ export default function UploadDpmsPage() {
 
     pdf.setFontSize(11);
     pdf.setFont("helvetica", "bold");
-    pdf.text("Análisis de Brechas:", margin, y);
+    pdf.text("Auditoría de Desviaciones:", margin, y);
     y += 8;
+    
+    const variance = Math.abs(exactRauraScore - exactInterviewScore);
+    const technicalAudit = `La varianza entre encuestas y entrevistas es de ${variance.toFixed(4)} puntos. Una desviación superior a 10.00 puntos se considera una inconsistencia crítica de gobernanza. En este caso, la discrepancia en ${seriesA[0].name} es de ${(Math.abs(seriesA[0].value - seriesB[0].value)).toFixed(2)}%, lo que requiere una intervención inmediata sobre el liderazgo operativo.`;
+    
+    pdf.setFontSize(10);
     pdf.setFont("helvetica", "normal");
-    
-    const leadershipGap = Math.abs(seriesA[0].value - seriesB[0].value);
-    const gapAnalysis = leadershipGap > 10 
-      ? `Se observa una brecha de ${Math.round(leadershipGap)}% en LIDERAZGO. El personal percibe un nivel de compromiso distinto al que los líderes expresan en sus entrevistas. Es crítico alinear el discurso con la acción en campo.` 
-      : "Existe una alineación saludable entre la percepción del personal y el discurso de los líderes en materia de Liderazgo y Gestión.";
-    
-    const gapLines = pdf.splitTextToSize(gapAnalysis, contentWidth);
-    pdf.text(gapLines, margin, y);
-    y += (gapLines.length * 6) + 15;
+    const auditLines = pdf.splitTextToSize(technicalAudit, contentWidth);
+    pdf.text(auditLines, margin, y);
+    y += (auditLines.length * 6) + 15;
 
-    // --- PAGE 4: DISTRIBUCIÓN Y AREAS ---
+    // --- PAGE 4: ÁREAS CRÍTICAS Y DISTRIBUCIÓN ---
     pdf.addPage();
     y = 35;
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(18);
-    pdf.text("3. DISTRIBUCIÓN POR NIVELES Y ÁREAS", margin, y);
+    pdf.text("3. INVENTARIO DE ÁREAS CRÍTICAS", margin, y);
     y += 15;
 
-    // Maturity Distribution Pie (Simulated with text/bars for now to be safe)
-    pdf.setFontSize(12);
-    pdf.text("Distribución de Madurez (Muestra Consolidada):", margin, y);
+    pdf.setFontSize(10);
+    pdf.text("Áreas con puntaje por debajo del umbral de seguridad (50.00%):", margin, y);
     y += 10;
 
+    const criticalAreas = raura.areas.filter((a: any) => a.score < 50).sort((a: any, b: any) => a.score - b.score);
+    
+    if (criticalAreas.length > 0) {
+      pdf.setFillColor(254, 242, 242);
+      pdf.setDrawColor(239, 68, 68);
+      pdf.roundedRect(margin, y, contentWidth, criticalAreas.length * 8 + 15, 2, 2, "FD");
+      
+      let tableY = y + 10;
+      criticalAreas.forEach((a: any) => {
+        pdf.setTextColor(185, 28, 28);
+        pdf.setFontSize(9);
+        pdf.text(`${a.name.toUpperCase()}`, margin + 5, tableY);
+        pdf.text(`${a.score.toFixed(4)}%`, margin + contentWidth - 25, tableY);
+        tableY += 8;
+      });
+      y = tableY + 15;
+    } else {
+      pdf.setFontSize(9);
+      pdf.setTextColor(16, 185, 129);
+      pdf.text("No se detectaron áreas individuales por debajo del umbral del 50.00%.", margin, y);
+      y += 15;
+    }
+
+    pdf.setTextColor(15, 23, 42);
+    pdf.setFontSize(12);
+    pdf.setFont("helvetica", "bold");
+    pdf.text("Distribución de Madurez (Datos Crudos):", margin, y);
+    y += 10;
+
+    const totalSamples = raura.totalRespondents + interviews.length;
     const distribution = [
-      { name: "EXCELENTE (80-100%)", count: interviews.filter(i => i.nivel_cultura >= 4.5).length + raura.entries.filter(e => e.totalScore >= 80).length },
-      { name: "BUENO (60-80%)", count: interviews.filter(i => i.nivel_cultura >= 3.5 && i.nivel_cultura < 4.5).length + raura.entries.filter(e => e.totalScore >= 60 && e.totalScore < 80).length },
-      { name: "REGULAR (40-60%)", count: interviews.filter(i => i.nivel_cultura >= 2.5 && i.nivel_cultura < 3.5).length + raura.entries.filter(e => e.totalScore >= 40 && e.totalScore < 60).length },
-      { name: "RIESGO (<40%)", count: interviews.filter(i => i.nivel_cultura < 2.5).length + raura.entries.filter(e => e.totalScore < 40).length }
+      { name: "EXCELENTE (80-100%)", count: interviews.filter(i => (i.nivel_cultura * 20) >= 80).length + raura.entries.filter(e => e.totalScore >= 80).length },
+      { name: "BUENO (60-80%)", count: interviews.filter(i => (i.nivel_cultura * 20) >= 60 && (i.nivel_cultura * 20) < 80).length + raura.entries.filter(e => e.totalScore >= 60 && e.totalScore < 80).length },
+      { name: "REGULAR (40-60%)", count: interviews.filter(i => (i.nivel_cultura * 20) >= 40 && (i.nivel_cultura * 20) < 60).length + raura.entries.filter(e => e.totalScore >= 40 && e.totalScore < 60).length },
+      { name: "RIESGO (<40%)", count: interviews.filter(i => (i.nivel_cultura * 20) < 40).length + raura.entries.filter(e => e.totalScore < 40).length }
     ];
 
     distribution.forEach((d, i) => {
-      const pct = (d.count / (raura.totalRespondents + interviews.length)) * 100;
+      const pct = (d.count / totalSamples) * 100;
       pdf.setFontSize(9);
       pdf.setTextColor(71, 85, 105);
-      pdf.text(d.name, margin, y);
+      pdf.text(`${d.name}`, margin, y);
       
       pdf.setFillColor(241, 245, 249);
-      pdf.rect(margin + 45, y - 4, 100, 5, "F");
+      pdf.rect(margin + 50, y - 4, 100, 5, "F");
       pdf.setFillColor(levelColors[3 - i] ? levelColors[3-i][0] : 100, levelColors[3-i] ? levelColors[3-i][1] : 100, levelColors[3-i] ? levelColors[3-i][2] : 100);
-      pdf.rect(margin + 45, y - 4, pct, 5, "F");
+      pdf.rect(margin + 50, y - 4, pct, 5, "F");
       
-      pdf.text(`${Math.round(pct)}%`, margin + 150, y);
+      pdf.text(`${pct.toFixed(4)}%`, margin + 155, y);
       y += 10;
     });
 
-    y += 15;
-    pdf.setFontSize(12);
-    pdf.setTextColor(15, 23, 42);
-    pdf.text("Top 5 Áreas por Desempeño:", margin, y);
-    y += 10;
-
-    raura.areas.sort((a: any, b: any) => b.score - a.score).slice(0, 5).forEach((a: any, i: number) => {
-      pdf.setFontSize(9);
-      pdf.text(`${i+1}. ${a.name}`, margin + 5, y);
-      pdf.text(`${Math.round(a.score)}%`, margin + contentWidth - 15, y);
-      y += 7;
-    });
-
-    // --- PAGE 5: PLAN DE ACCIÓN ---
+    // --- PAGE 5: ACCIONES CORRECTIVAS ---
     pdf.addPage();
     y = 35;
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(18);
-    pdf.text("4. HOJA DE RUTA ESTRATÉGICA", margin, y);
+    pdf.text("4. PLAN DE ACCIÓN Y MITIGACIÓN", margin, y);
     y += 12;
     addHorizontalLine(y);
     y += 15;
 
     const roadmap = [
-      { t: "CORTO PLAZO (0-3 meses)", c: "Estandarización de las herramientas de gestión preventiva y refuerzo del 'Feedback' inmediato en campo." },
-      { t: "MEDIANO PLAZO (3-9 meses)", c: "Programa de Coaching para Mandos Medios enfocado en Liderazgo Transformacional y Seguridad Psicológica." },
-      { t: "LARGO PLAZO (+12 meses)", c: "Integración de la seguridad en el ADN del negocio (Seguridad Productiva) y autonomía total del equipo." }
+      { t: "ACCIÓN INMEDIATA (CRÍTICA)", c: `Cierre de brechas en las áreas detectadas con puntaje inferior al 50.00%. Intervención directa sobre la supervisión de primera línea.` },
+      { t: "ESTANDARIZACIÓN TÉCNICA", c: "Eliminar la varianza de interpretación en los procesos de gestión. Auditoría de campo estricta para validar la consistencia del discurso." },
+      { t: "CONVERGENCIA CULTURAL", c: "Alinear los KPI de seguridad con la retribución operativa para asegurar que la seguridad sea un valor innegociable y medible." }
     ];
 
     roadmap.forEach(item => {
-      pdf.setFillColor(248, 250, 252);
-      pdf.setDrawColor(3, 105, 161);
-      pdf.roundedRect(margin, y, contentWidth, 35, 2, 2, "FD");
+      pdf.setFillColor(250, 250, 250);
+      pdf.setDrawColor(15, 23, 42);
+      pdf.roundedRect(margin, y, contentWidth, 30, 1, 1, "FD");
       
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "bold");
-      pdf.setTextColor(3, 105, 161);
+      pdf.setTextColor(15, 23, 42);
       pdf.text(item.t, margin + 5, y + 10);
       
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "normal");
-      pdf.setTextColor(15, 23, 42);
       const lines = pdf.splitTextToSize(item.c, contentWidth - 15);
       pdf.text(lines, margin + 5, y + 18);
       
-      y += 45;
+      y += 38;
     });
 
-    // Final Touch: Header/Footer
     drawHeaderFooter();
-
-    pdf.save(`Informe_Estrategico_Consolidado_${new Date().toISOString().slice(0, 10)}.pdf`);
+    pdf.save(`Auditoria_Cultura_DPMS_Precision_${new Date().toISOString().slice(0, 10)}.pdf`);
   };
 
   const getCardColor = (score: number, max: number) => {
@@ -2505,7 +2656,6 @@ function ReviewForm({
                 <SelectItem value="4">
                   4 - Interdependiente
                 </SelectItem>
-                <SelectItem value="5">5 - Excelente</SelectItem>
               </SelectContent>
             </Select>
           </div>
