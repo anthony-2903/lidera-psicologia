@@ -136,12 +136,18 @@ const LocusIndividualPanel = ({ entry, distribution, onClose }: {
                 <tr>
                   <td style="padding: 10px 0; color: #64748b; font-weight: 700;">EMPRESA:</td>
                   <td style="font-weight: 900;">${entry.company}</td>
-                  <td style="padding: 10px 0; color: #64748b; font-weight: 700;">ID EVALUACIÓN:</td>
-                  <td style="font-weight: 900;">LOC-${entry.id}</td>
+                  <td style="padding: 10px 0; color: #64748b; font-weight: 700;">FECHA EVALUACIÓN:</td>
+                  <td style="font-weight: 900;">${entry.date}</td>
                 </tr>
                 <tr>
                   <td style="padding: 10px 0; color: #64748b; font-weight: 700;">PUESTO:</td>
                   <td style="font-weight: 900;">${entry.position}</td>
+                  <td style="padding: 10px 0; color: #64748b; font-weight: 700;">ESTADO:</td>
+                  <td style="font-weight: 900;">${entry.status}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0; color: #64748b; font-weight: 700;">ID EVALUACIÓN:</td>
+                  <td style="font-weight: 900;">LOC-${entry.id}</td>
                   <td style="padding: 10px 0; color: #64748b; font-weight: 700;">RESULTADO FINAL:</td>
                   <td style="font-weight: 900; color: ${resultColor}">${entry.result}</td>
                 </tr>
