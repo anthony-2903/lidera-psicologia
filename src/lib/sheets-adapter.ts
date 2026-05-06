@@ -689,9 +689,10 @@ export const fetchLocusControlData = async (sheetId: string): Promise<LocusContr
           if (!r[1] || r[1] === 'APELLIDOS Y NOMBRES') continue;
 
           let internalScore = 0;
-          // Questions P1 to P23 are now in columns E to AA (indices 4 to 26)
+          // Questions P1 to P23 are now in columns G to AC (indices 6 to 28)
+          // Shifted due to new 'Fecha' and 'Estado' columns
           for (let q = 1; q <= 23; q++) {
-            const responseValue = (r[q + 3] || '').trim().toLowerCase();
+            const responseValue = (r[q + 5] || '').trim().toLowerCase();
             if (responseValue === internalKey[q]) {
               internalScore++;
             }
@@ -699,10 +700,6 @@ export const fetchLocusControlData = async (sheetId: string): Promise<LocusContr
 
           const externalScore = 23 - internalScore;
           
-          // User Classification:
-          // 19 to 23 points: Apto
-          // 13 to 18 points: Riesgo medio
-          // 12 points or less: Riesgo alto
           let result: string;
           if (internalScore >= 19) {
             result = 'APTO';
@@ -716,15 +713,24 @@ export const fetchLocusControlData = async (sheetId: string): Promise<LocusContr
             riskCounts[result as keyof typeof riskCounts]++;
           }
 
+          // Date detection: Check index 3 (Fecha) and 4 (Estado/Fecha fallback)
+          let evalDate = (r[3] || '').trim();
+          if (!evalDate || !/\d/.test(evalDate)) {
+             const fallbackDate = (r[4] || '').trim();
+             if (/\d{2}\/\d{2}\/\d{4}/.test(fallbackDate)) {
+               evalDate = fallbackDate;
+             }
+          }
+
           entries.push({
             id: parseInt(r[0]) || i,
             name: r[1],
             company: r[2],
-            position: r[3],
+            date: evalDate || 'Sin fecha',
+            position: r[5] || 'No especificado',
             internalScore,
             externalScore,
             result,
-            date: '2024-04-17' // Placeholder or extracting from somewhere if available
           });
         }
 

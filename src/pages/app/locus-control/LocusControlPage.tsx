@@ -87,7 +87,7 @@ const LocusIndividualPanel = ({ entry, distribution, onClose }: {
     if (!printWindow) return;
 
     const analysis = getAnalysis(entry.internalScore);
-    const date = new Date().toLocaleDateString();
+    const date = entry.date;
     const isApto = entry.result === 'APTO';
     const isMedio = entry.result === 'RIESGO MEDIO';
     const resultColor = isApto ? "#10b981" : (isMedio ? "#f59e0b" : "#ef4444");
@@ -249,6 +249,10 @@ const LocusIndividualPanel = ({ entry, distribution, onClose }: {
               <p className="text-sm font-black italic">{entry.company}</p>
            </Card>
            <Card className="rounded-3xl border-border/20 bg-background/50 p-4">
+              <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Fecha de Evaluación</p>
+              <p className="text-sm font-black italic">{entry.date}</p>
+           </Card>
+           <Card className="rounded-3xl border-border/20 bg-background/50 p-4 col-span-2">
               <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Dictamen Individual</p>
               <p className={cn(
                 "text-sm font-black italic uppercase",
@@ -427,6 +431,20 @@ const LocusIndividualPanel = ({ entry, distribution, onClose }: {
                   worksheet.getCell('A2').value = ${JSON.stringify(entry.name)};
                   worksheet.getCell('A2').font = { bold: true };
                   worksheet.getCell('A2').border = cellStyle.border;
+
+                  // EMPRESA / PUESTO
+                  worksheet.getCell('A3').value = 'EMPRESA / PUESTO';
+                  worksheet.getCell('A3').style = headerStyle;
+                  worksheet.getCell('A4').value = ${JSON.stringify(entry.company + ' / ' + entry.position)};
+                  worksheet.getCell('A4').font = { bold: true };
+                  worksheet.getCell('A4').border = cellStyle.border;
+
+                  // FECHA DE EVALUACIÓN
+                  worksheet.getCell('A5').value = 'FECHA DE EVALUACIÓN';
+                  worksheet.getCell('A5').style = headerStyle;
+                  worksheet.getCell('A6').value = ${JSON.stringify(entry.date)};
+                  worksheet.getCell('A6').font = { bold: true };
+                  worksheet.getCell('A6').border = cellStyle.border;
 
                   // TABLA RESULTADOS
                   worksheet.mergeCells('C1:D1');
@@ -609,6 +627,7 @@ const LocusControlPage = () => {
       ID: `LOC-${entry.id}`,
       Nombre: entry.name,
       Empresa: entry.company,
+      Fecha: entry.date,
       Puesto: entry.position,
       'Puntaje Interno': entry.internalScore,
       'Puntaje Externo': entry.externalScore,
@@ -658,7 +677,7 @@ const LocusControlPage = () => {
             currentY += 18;
 
             // Tabla de Datos
-            const headers = ['ID', 'Nombre', 'Empresa', 'Puesto', 'Interno', 'Externo', 'Balance', 'Resultado', 'Diagnóstico'];
+            const headers = ['ID', 'Nombre', 'Empresa', 'Fecha', 'Puesto', 'Interno', 'Externo', 'Balance', 'Resultado', 'Diagnóstico'];
             const headerRow = worksheet.getRow(currentY);
             headers.forEach((h, i) => {
               const cell = headerRow.getCell(i + 1);
@@ -673,16 +692,17 @@ const LocusControlPage = () => {
               row.getCell(1).value = item.ID;
               row.getCell(2).value = item.Nombre;
               row.getCell(3).value = item.Empresa;
-              row.getCell(4).value = item.Puesto;
-              row.getCell(5).value = item['Puntaje Interno'];
-              row.getCell(6).value = item['Puntaje Externo'];
-              row.getCell(7).value = item.Balance;
-              row.getCell(8).value = item.Resultado;
-              row.getCell(9).value = item.Diagnóstico;
-              row.getCell(9).alignment = { wrapText: true, vertical: 'middle' };
+              row.getCell(4).value = item.Fecha;
+              row.getCell(5).value = item.Puesto;
+              row.getCell(6).value = item['Puntaje Interno'];
+              row.getCell(7).value = item['Puntaje Externo'];
+              row.getCell(8).value = item.Balance;
+              row.getCell(9).value = item.Resultado;
+              row.getCell(10).value = item.Diagnóstico;
+              row.getCell(10).alignment = { wrapText: true, vertical: 'middle' };
 
               // Formato condicional colores
-              const resCell = row.getCell(8);
+              const resCell = row.getCell(9);
               if (item.Resultado === 'APTO') {
                 resCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD1FAE5' } };
                 resCell.font = { color: { argb: 'FF059669' }, bold: true };
@@ -809,24 +829,53 @@ const LocusControlPage = () => {
                 if (!window.ExcelJS) throw new Error("ExcelJS focus timeout");
 
                 const workbook = new ExcelJS.Workbook();
-              const entries = ${JSON.stringify(filteredEntries)};
-              const RECS = ${JSON.stringify(RECOMMENDATIONS)};
-              
-              const headerStyle = {
-                font: { bold: true, color: { argb: 'FFFFFFFF' } },
-                fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } },
-                alignment: { horizontal: 'center' },
-                border: { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'}}
-              };
+                const entries = ${JSON.stringify(filteredEntries)};
+                const RECS = ${JSON.stringify(RECOMMENDATIONS)};
+                
+                const headerStyle = {
+                  font: { bold: true, color: { argb: 'FFFFFFFF' } },
+                  fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } },
+                  alignment: { horizontal: 'center' },
+                  border: { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'}}
+                };
 
-              const cellStyle = {
-                border: { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'}},
-                alignment: { horizontal: 'center' }
-              };
+                const cellStyle = {
+                  border: { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'}},
+                  alignment: { horizontal: 'center' }
+                };
 
-              for (const entry of entries) {
-                const safeName = entry.name.substring(0, 31).replace(/[\\\\\\/\\?\\*\\:\\[\\]]/g, '') || 'Participante';
-                const worksheet = workbook.addWorksheet(safeName);
+                // --- NEW: CONSOLIDATED BASE SHEET ---
+                const baseSheet = workbook.addWorksheet('BASE CONSOLIDADA');
+                const baseHeaders = ['ID', 'APELLIDOS Y NOMBRES', 'EMPRESA', 'PUESTO', 'FECHA', 'INTERNO', 'EXTERNO', 'DICTAMEN'];
+                
+                baseHeaders.forEach((h, i) => {
+                  const cell = baseSheet.getCell(1, i + 1);
+                  cell.value = h;
+                  cell.style = headerStyle;
+                  baseSheet.getColumn(i + 1).width = 25;
+                });
+                baseSheet.getColumn(2).width = 45; // Name
+                
+                entries.forEach((e, idx) => {
+                  const rowNum = idx + 2;
+                  baseSheet.getCell(rowNum, 1).value = e.id;
+                  baseSheet.getCell(rowNum, 2).value = e.name;
+                  baseSheet.getCell(rowNum, 3).value = e.company;
+                  baseSheet.getCell(rowNum, 4).value = e.position;
+                  baseSheet.getCell(rowNum, 5).value = e.date;
+                  baseSheet.getCell(rowNum, 6).value = e.internalScore;
+                  baseSheet.getCell(rowNum, 7).value = e.externalScore;
+                  baseSheet.getCell(rowNum, 8).value = e.result;
+                  
+                  for(let i=1; i<=8; i++) {
+                    baseSheet.getCell(rowNum, i).style = cellStyle;
+                  }
+                });
+                // --- END CONSOLIDATED SHEET ---
+
+                for (const entry of entries) {
+                  const safeName = entry.name.substring(0, 31).replace(/[\\\\\\/\\?\\*\\:\\[\\]]/g, '') || 'Participante';
+                  const worksheet = workbook.addWorksheet(safeName);
                 
                 worksheet.getColumn(1).width = 30;
                 worksheet.getColumn(2).width = 90;
@@ -839,6 +888,18 @@ const LocusControlPage = () => {
                 worksheet.getCell('A2').value = entry.name;
                 worksheet.getCell('A2').font = { bold: true };
                 worksheet.getCell('A2').border = cellStyle.border;
+
+                worksheet.getCell('A3').value = 'EMPRESA / PUESTO';
+                worksheet.getCell('A3').style = headerStyle;
+                worksheet.getCell('A4').value = entry.company + ' / ' + entry.position;
+                worksheet.getCell('A4').font = { size: 9, italic: true };
+                worksheet.getCell('A4').border = cellStyle.border;
+
+                worksheet.getCell('A5').value = 'FECHA DE EVALUACIÓN';
+                worksheet.getCell('A5').style = headerStyle;
+                worksheet.getCell('A6').value = entry.date;
+                worksheet.getCell('A6').font = { size: 9 };
+                worksheet.getCell('A6').border = cellStyle.border;
 
                 worksheet.mergeCells('C1:D1');
                 worksheet.getCell('C1').value = 'RESULTADOS';
@@ -1378,6 +1439,7 @@ const LocusControlPage = () => {
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 px-8 sticky top-0 bg-slate-100/90 z-40 shadow-sm">ID</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Evaluado</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Puesto / Empresa</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Fecha</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Interno</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Externo</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Condición</TableHead>
@@ -1408,6 +1470,7 @@ const LocusControlPage = () => {
                           <p className="text-[9px] font-bold text-muted-foreground/60">{entry.company}</p>
                         </div>
                       </TableCell>
+                      <TableCell className="text-[10px] font-black uppercase text-muted-foreground italic">{entry.date}</TableCell>
                       <TableCell className="font-black tabular-nums text-indigo-600">{entry.internalScore}</TableCell>
                       <TableCell className="font-black tabular-nums text-emerald-600">{entry.externalScore}</TableCell>
                       <TableCell>
