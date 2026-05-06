@@ -105,11 +105,12 @@ export interface LocusControlEntry {
   id: number;
   name: string;
   company: string;
+  date: string;
+  status: string;
   position: string;
   internalScore: number;
   externalScore: number;
   result: string;
-  date: string;
 }
 
 export interface LocusControlData {
@@ -727,6 +728,7 @@ export const fetchLocusControlData = async (sheetId: string): Promise<LocusContr
             name: r[1],
             company: r[2],
             date: evalDate || 'Sin fecha',
+            status: (r[4] || '').trim() || 'No especificado',
             position: r[5] || 'No especificado',
             internalScore,
             externalScore,

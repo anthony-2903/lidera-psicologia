@@ -252,15 +252,20 @@ const LocusIndividualPanel = ({ entry, distribution, onClose }: {
               <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Fecha de Evaluación</p>
               <p className="text-sm font-black italic">{entry.date}</p>
            </Card>
-           <Card className="rounded-3xl border-border/20 bg-background/50 p-4 col-span-2">
-              <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Dictamen Individual</p>
-              <p className={cn(
-                "text-sm font-black italic uppercase",
-                indResult === 'APTO' ? "text-emerald-500" : (indResult === 'RIESGO MEDIO' ? "text-amber-500" : "text-red-500")
-              )}>
-                {indResult}
-              </p>
-            </Card>
+            <Card className="rounded-3xl border-border/20 bg-background/50 p-4 col-span-2">
+               <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Estado / Dictamen</p>
+               <div className="flex items-center gap-2">
+                 <Badge variant="outline" className="text-[10px] border-primary/20 bg-primary/5 text-primary">
+                   {entry.status}
+                 </Badge>
+                 <span className={cn(
+                   "text-sm font-black italic uppercase",
+                   indResult === 'APTO' ? "text-emerald-500" : (indResult === 'RIESGO MEDIO' ? "text-amber-500" : "text-red-500")
+                 )}>
+                   {indResult}
+                 </span>
+               </div>
+             </Card>
         </div>
 
         {/* Aptitude Ruler Scale (Regla de Balance Binario) */}
@@ -445,6 +450,12 @@ const LocusIndividualPanel = ({ entry, distribution, onClose }: {
                   worksheet.getCell('A6').value = ${JSON.stringify(entry.date)};
                   worksheet.getCell('A6').font = { bold: true };
                   worksheet.getCell('A6').border = cellStyle.border;
+
+                  worksheet.getCell('A7').value = 'ESTADO';
+                  worksheet.getCell('A7').style = headerStyle;
+                  worksheet.getCell('A8').value = ${JSON.stringify(entry.status)};
+                  worksheet.getCell('A8').font = { bold: true };
+                  worksheet.getCell('A8').border = cellStyle.border;
 
                   // TABLA RESULTADOS
                   worksheet.mergeCells('C1:D1');
@@ -846,7 +857,7 @@ const LocusControlPage = () => {
 
                 // --- NEW: CONSOLIDATED BASE SHEET ---
                 const baseSheet = workbook.addWorksheet('BASE CONSOLIDADA');
-                const baseHeaders = ['ID', 'APELLIDOS Y NOMBRES', 'EMPRESA', 'PUESTO', 'FECHA', 'INTERNO', 'EXTERNO', 'DICTAMEN'];
+                const baseHeaders = ['ID', 'APELLIDOS Y NOMBRES', 'EMPRESA', 'ESTADO', 'PUESTO', 'FECHA', 'INTERNO', 'EXTERNO', 'DICTAMEN'];
                 
                 baseHeaders.forEach((h, i) => {
                   const cell = baseSheet.getCell(1, i + 1);
@@ -861,13 +872,14 @@ const LocusControlPage = () => {
                   baseSheet.getCell(rowNum, 1).value = e.id;
                   baseSheet.getCell(rowNum, 2).value = e.name;
                   baseSheet.getCell(rowNum, 3).value = e.company;
-                  baseSheet.getCell(rowNum, 4).value = e.position;
-                  baseSheet.getCell(rowNum, 5).value = e.date;
-                  baseSheet.getCell(rowNum, 6).value = e.internalScore;
-                  baseSheet.getCell(rowNum, 7).value = e.externalScore;
-                  baseSheet.getCell(rowNum, 8).value = e.result;
+                  baseSheet.getCell(rowNum, 4).value = e.status;
+                  baseSheet.getCell(rowNum, 5).value = e.position;
+                  baseSheet.getCell(rowNum, 6).value = e.date;
+                  baseSheet.getCell(rowNum, 7).value = e.internalScore;
+                  baseSheet.getCell(rowNum, 8).value = e.externalScore;
+                  baseSheet.getCell(rowNum, 9).value = e.result;
                   
-                  for(let i=1; i<=8; i++) {
+                  for(let i=1; i<=9; i++) {
                     baseSheet.getCell(rowNum, i).style = cellStyle;
                   }
                 });
@@ -900,6 +912,12 @@ const LocusControlPage = () => {
                 worksheet.getCell('A6').value = entry.date;
                 worksheet.getCell('A6').font = { size: 9 };
                 worksheet.getCell('A6').border = cellStyle.border;
+
+                worksheet.getCell('A7').value = 'ESTADO';
+                worksheet.getCell('A7').style = headerStyle;
+                worksheet.getCell('A8').value = entry.status;
+                worksheet.getCell('A8').font = { size: 9, bold: true };
+                worksheet.getCell('A8').border = cellStyle.border;
 
                 worksheet.mergeCells('C1:D1');
                 worksheet.getCell('C1').value = 'RESULTADOS';
@@ -1427,7 +1445,7 @@ const LocusControlPage = () => {
               </div>
               <div className="flex items-center gap-3 bg-muted/30 px-6 py-3 rounded-2xl border border-border/50">
                   <Filter className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">{filteredEntries.length} Casos Encontrados</span>
+                                <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">{filteredEntries.length} Casos Encontrados</span>
               </div>
             </div>
 
@@ -1439,10 +1457,11 @@ const LocusControlPage = () => {
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 px-8 sticky top-0 bg-slate-100/90 z-40 shadow-sm">ID</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Evaluado</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Puesto / Empresa</TableHead>
-                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Fecha</TableHead>
-                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Interno</TableHead>
-                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Externo</TableHead>
-                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Condición</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm text-center">Fecha</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm text-center">Estado</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm text-center">Interno</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm text-center">Externo</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm text-center">Condición</TableHead>
                     </TableRow>
                   </TableHeader>
                 <TableBody>
@@ -1470,15 +1489,22 @@ const LocusControlPage = () => {
                           <p className="text-[9px] font-bold text-muted-foreground/60">{entry.company}</p>
                         </div>
                       </TableCell>
-                      <TableCell className="text-[10px] font-black uppercase text-muted-foreground italic">{entry.date}</TableCell>
-                      <TableCell className="font-black tabular-nums text-indigo-600">{entry.internalScore}</TableCell>
-                      <TableCell className="font-black tabular-nums text-emerald-600">{entry.externalScore}</TableCell>
-                      <TableCell>
-                        <Badge className={cn("border-none px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest", 
-                          entry.result === 'APTO' ? "bg-emerald-500/10 text-emerald-600" :
-                          entry.result === 'RIESGO MEDIO' ? "bg-amber-500/10 text-amber-600" :
-                          "bg-red-500/10 text-red-600"
-                        )}>
+                      <TableCell className="text-[10px] font-black uppercase text-muted-foreground italic text-center whitespace-nowrap">{entry.date}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="outline" className="text-[9px] border-primary/20 bg-primary/5 text-primary whitespace-nowrap">
+                          {entry.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center font-black tabular-nums text-indigo-600">{entry.internalScore}</TableCell>
+                      <TableCell className="text-center font-black tabular-nums text-emerald-600">{entry.externalScore}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge 
+                          variant="secondary" 
+                          className={cn(
+                            "text-[10px] font-black italic border-0 shadow-lg shadow-black/5",
+                            entry.result === 'APTO' ? "bg-emerald-500 text-white shadow-emerald-500/20" : (entry.result === 'RIESGO MEDIO' ? "bg-amber-500 text-white shadow-amber-500/20" : "bg-red-500 text-white shadow-red-500/20")
+                          )}
+                        >
                           {entry.result}
                         </Badge>
                       </TableCell>
