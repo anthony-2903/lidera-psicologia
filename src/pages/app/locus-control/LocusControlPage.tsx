@@ -142,14 +142,19 @@ const LocusIndividualPanel = ({ entry, distribution, onClose }: {
                 <tr>
                   <td style="padding: 10px 0; color: #64748b; font-weight: 700;">PUESTO:</td>
                   <td style="font-weight: 900;">${entry.position}</td>
+                  <td style="padding: 10px 0; color: #64748b; font-weight: 700;">NIVEL DE TRABAJO:</td>
+                  <td style="font-weight: 900;">${entry.level}</td>
+                </tr>
+                <tr>
                   <td style="padding: 10px 0; color: #64748b; font-weight: 700;">ESTADO:</td>
                   <td style="font-weight: 900;">${entry.status}</td>
+                  <td style="padding: 10px 0; color: #64748b; font-weight: 700;">RESULTADO FINAL:</td>
+                  <td style="font-weight: 900; color: ${resultColor}">${entry.result}</td>
                 </tr>
                 <tr>
                   <td style="padding: 10px 0; color: #64748b; font-weight: 700;">ID EVALUACIÓN:</td>
                   <td style="font-weight: 900;">LOC-${entry.id}</td>
-                  <td style="padding: 10px 0; color: #64748b; font-weight: 700;">RESULTADO FINAL:</td>
-                  <td style="font-weight: 900; color: ${resultColor}">${entry.result}</td>
+                  <td colspan="2"></td>
                 </tr>
               </table>
             </div>
@@ -177,16 +182,24 @@ const LocusIndividualPanel = ({ entry, distribution, onClose }: {
             <div class="section" id="individual-diagnosis">
               <div class="section-title">III. Diagnóstico y Recomendaciones</div>
               <div class="analysis-box" style="background: #0f172a; color: #e2e8f0; padding: 30px; border-radius: 20px; font-style: italic; line-height: 1.6;">
-                <p style="margin-bottom: 20px;">"${analysis}"</p>
+                ${entry.result === 'RIESGO ALTO' ? '' : `<p style="margin-bottom: 20px;">"${analysis}"</p>`}
                 <div style="background: rgba(255,255,255,0.05); padding: 25px; border-radius: 15px; border-left: 6px solid ${resultColor}; font-style: normal;">
-                  <h4 style="color: ${resultColor}; margin-top: 0; font-size: 16px; text-transform: uppercase; font-weight: 900;">${currentRecs.title}</h4>
-                  <p style="font-size: 13px; margin-bottom: 12px; font-weight: 700;">${currentRecs.desc}</p>
-                  <ul style="font-size: 12px; padding-left: 20px; margin-bottom: 20px; column-count: 1;">
-                    ${currentRecs.rec.map(r => `<li style="margin-bottom: 8px;">${r}</li>`).join('')}
-                  </ul>
-                  <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; font-size: 11px;">
-                    <span style="font-weight: 900; color: ${resultColor}; text-transform: uppercase;">PLAN DE SEGUIMIENTO:</span> ${currentRecs.followUp}
-                  </div>
+                  <h4 style="color: ${resultColor}; margin-top: 0; font-size: 16px; text-transform: uppercase; font-weight: 900;">${entry.result === 'RIESGO ALTO' ? 'INSTRUCCIÓN GERENCIAL OBLIGATORIA' : currentRecs.title}</h4>
+                  ${entry.result === 'RIESGO ALTO' ? `
+                    <p style="font-size: 15px; font-weight: 700; color: #f87171; line-height: 1.6; margin: 20px 0;">
+                      Estimado(a) <span style="text-transform: uppercase; border-bottom: 2px solid #ef4444;">${entry.name}</span>, se le solicita formalmente apersonarse al área de <strong>Gerencia</strong> de la empresa <strong>${entry.company}</strong> para recibir las instrucciones y directrices correspondientes a su perfil de riesgo.
+                    </p>
+                  ` : `
+                    <p style="font-size: 13px; margin-bottom: 12px; font-weight: 700;">${currentRecs.desc}</p>
+                    <ul style="font-size: 12px; padding-left: 20px; margin-bottom: 20px; column-count: 1;">
+                      ${currentRecs.rec.map(r => `<li style="margin-bottom: 8px;">${r}</li>`).join('')}
+                    </ul>
+                  `}
+                  ${entry.result === 'RIESGO ALTO' ? '' : `
+                    <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; font-size: 11px;">
+                      <span style="font-weight: 900; color: ${resultColor}; text-transform: uppercase;">PLAN DE SEGUIMIENTO:</span> ${currentRecs.followUp}
+                    </div>
+                  `}
                 </div>
               </div>
             </div>
@@ -258,20 +271,24 @@ const LocusIndividualPanel = ({ entry, distribution, onClose }: {
               <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Fecha de Evaluación</p>
               <p className="text-sm font-black italic">{entry.date}</p>
            </Card>
-            <Card className="rounded-3xl border-border/20 bg-background/50 p-4 col-span-2">
-               <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Estado / Dictamen</p>
-               <div className="flex items-center gap-2">
-                 <Badge variant="outline" className="text-[10px] border-primary/20 bg-primary/5 text-primary">
-                   {entry.status}
-                 </Badge>
-                 <span className={cn(
-                   "text-sm font-black italic uppercase",
-                   indResult === 'APTO' ? "text-emerald-500" : (indResult === 'RIESGO MEDIO' ? "text-amber-500" : "text-red-500")
-                 )}>
-                   {indResult}
-                 </span>
-               </div>
+             <Card className="rounded-3xl border-border/20 bg-background/50 p-4">
+                <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Nivel de Trabajo</p>
+                <p className="text-sm font-black italic">{entry.level}</p>
              </Card>
+             <Card className="rounded-3xl border-border/20 bg-background/50 p-4">
+                <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Estado / Dictamen</p>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-[10px] border-primary/20 bg-primary/5 text-primary">
+                    {entry.status}
+                  </Badge>
+                  <span className={cn(
+                    "text-sm font-black italic uppercase",
+                    indResult === 'APTO' ? "text-emerald-500" : (indResult === 'RIESGO MEDIO' ? "text-amber-500" : "text-red-500")
+                  )}>
+                    {indResult}
+                  </span>
+                </div>
+              </Card>
         </div>
 
         {/* Aptitude Ruler Scale (Regla de Balance Binario) */}
@@ -345,7 +362,9 @@ const LocusIndividualPanel = ({ entry, distribution, onClose }: {
           </h4>
           
           <div className="space-y-6 relative z-10">
-            <p className="text-sm font-medium text-slate-300 leading-relaxed italic border-b border-white/5 pb-6">"{getAnalysis(entry.internalScore)}"</p>
+            {entry.result !== 'RIESGO ALTO' && (
+               <p className="text-sm font-medium text-slate-300 leading-relaxed italic border-b border-white/5 pb-6">"{getAnalysis(entry.internalScore)}"</p>
+            )}
             
             <div className="space-y-4">
                <div className={cn(
@@ -354,24 +373,34 @@ const LocusIndividualPanel = ({ entry, distribution, onClose }: {
                )}>
                   <p className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2" style={{ color: RISK_COLORS[entry.result as keyof typeof RISK_COLORS] }}>
                     <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: RISK_COLORS[entry.result as keyof typeof RISK_COLORS] }} />
-                    Recomendaciones Críticas
+                    {entry.result === 'RIESGO ALTO' ? 'Instrucción Gerencial Obligatoria' : 'Recomendaciones Críticas'}
                   </p>
-                  <ul className="space-y-3">
-                     {RECOMMENDATIONS[entry.result as keyof typeof RECOMMENDATIONS].rec.map((r, i) => (
-                       <li key={i} className="text-[11px] text-slate-400 leading-snug flex gap-2">
-                         <span className="text-primary font-bold">»</span>
-                         {r}
-                       </li>
-                     ))}
-                  </ul>
+                  {entry.result === 'RIESGO ALTO' ? (
+                    <div className="p-4 bg-red-950/20 rounded-xl border border-red-500/20 space-y-3">
+                      <p className="text-xs font-bold text-red-400 leading-relaxed italic">
+                        Estimado(a) <span className="font-black uppercase not-italic text-red-200 underline decoration-red-500/50 decoration-2 underline-offset-4">{entry.name}</span>, se le solicita formalmente apersonarse al área de <span className="text-white font-black uppercase">Gerencia</span> de la empresa <span className="text-white font-black uppercase">{entry.company}</span> para recibir las instrucciones y directrices correspondientes a su perfil de riesgo.
+                      </p>
+                    </div>
+                  ) : (
+                    <ul className="space-y-3">
+                       {RECOMMENDATIONS[entry.result as keyof typeof RECOMMENDATIONS].rec.map((r, i) => (
+                         <li key={i} className="text-[11px] text-slate-400 leading-snug flex gap-2">
+                           <span className="text-primary font-bold">»</span>
+                           {r}
+                         </li>
+                       ))}
+                    </ul>
+                  )}
                </div>
 
-               <div className="p-5 rounded-2xl bg-white/5 border border-white/5 space-y-2">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Plan de Seguimiento</p>
-                  <p className="text-[11px] font-bold text-slate-300 leading-snug italic">
-                     {RECOMMENDATIONS[entry.result as keyof typeof RECOMMENDATIONS].followUp}
-                  </p>
-               </div>
+               {entry.result !== 'RIESGO ALTO' && (
+                 <div className="p-5 rounded-2xl bg-white/5 border border-white/5 space-y-2">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Plan de Seguimiento</p>
+                    <p className="text-[11px] font-bold text-slate-300 leading-snug italic">
+                       {RECOMMENDATIONS[entry.result as keyof typeof RECOMMENDATIONS].followUp}
+                    </p>
+                 </div>
+               )}
             </div>
           </div>
         </div>
@@ -457,11 +486,17 @@ const LocusIndividualPanel = ({ entry, distribution, onClose }: {
                   worksheet.getCell('A6').font = { bold: true };
                   worksheet.getCell('A6').border = cellStyle.border;
 
-                  worksheet.getCell('A7').value = 'ESTADO';
+                  worksheet.getCell('A7').value = 'NIVEL DE TRABAJO';
                   worksheet.getCell('A7').style = headerStyle;
-                  worksheet.getCell('A8').value = ${JSON.stringify(entry.status)};
+                  worksheet.getCell('A8').value = ${JSON.stringify(entry.level)};
                   worksheet.getCell('A8').font = { bold: true };
                   worksheet.getCell('A8').border = cellStyle.border;
+
+                  worksheet.getCell('A9').value = 'ESTADO';
+                  worksheet.getCell('A9').style = headerStyle;
+                  worksheet.getCell('A10').value = ${JSON.stringify(entry.status)};
+                  worksheet.getCell('A10').font = { bold: true };
+                  worksheet.getCell('A10').border = cellStyle.border;
 
                   // TABLA RESULTADOS
                   worksheet.mergeCells('C1:D1');
@@ -493,7 +528,7 @@ const LocusIndividualPanel = ({ entry, distribution, onClose }: {
                     ['13 a 18', 'RIESGO MEDIO'],
                     ['19 a 23', 'APTO']
                   ];
-                  let ruleRow = 6;
+                  let ruleRow = 8;
                   worksheet.mergeCells('C' + ruleRow + ':D' + ruleRow);
                   worksheet.getCell('C' + ruleRow).value = 'ESCALA DE CALIFICACION';
                   worksheet.getCell('C' + ruleRow).style = headerStyle;
@@ -506,7 +541,7 @@ const LocusIndividualPanel = ({ entry, distribution, onClose }: {
                   });
 
                   // RECOMENDACIONES EN EXCEL (A la izquierda debajo del nombre)
-                  let recRow = 4;
+                  let recRow = 12;
                   worksheet.mergeCells('A' + recRow + ':B' + recRow);
                   worksheet.getCell('A' + recRow).value = 'DIAGNÓSTICO Y RECOMENDACIONES';
                   worksheet.getCell('A' + recRow).style = headerStyle;
@@ -514,32 +549,43 @@ const LocusIndividualPanel = ({ entry, distribution, onClose }: {
                   
                   const recs = ${JSON.stringify(RECOMMENDATIONS)}[${JSON.stringify(resultText)}];
                   
-                  worksheet.getCell('A' + recRow).value = 'Situación:';
-                  worksheet.getCell('B' + recRow).value = ${JSON.stringify(analysis)};
-                  worksheet.getCell('A' + recRow).font = { bold: true };
-                  worksheet.getCell('B' + recRow).alignment = { wrapText: true, vertical: 'middle' };
-                  recRow += 2;
+                  if (entry.result !== 'RIESGO ALTO') {
+                    worksheet.getCell('A' + recRow).value = 'Situación:';
+                    worksheet.getCell('B' + recRow).value = ${JSON.stringify(analysis)};
+                    worksheet.getCell('A' + recRow).font = { bold: true };
+                    worksheet.getCell('B' + recRow).alignment = { wrapText: true, vertical: 'middle' };
+                    recRow += 2;
+                  }
 
-                  worksheet.getCell('A' + recRow).value = 'Acciones Correctivas:';
+                  worksheet.getCell('A' + recRow).value = entry.result === 'RIESGO ALTO' ? 'Instrucción Gerencial:' : 'Acciones Correctivas:';
                   worksheet.getCell('A' + recRow).font = { bold: true };
                   recRow++;
-                  recs.rec.forEach(r => {
-                    worksheet.getCell('A' + recRow).value = '• ' + r;
+                  if (entry.result === 'RIESGO ALTO') {
+                    worksheet.getCell('A' + recRow).value = 'Estimado(a) ' + entry.name.toUpperCase() + ', se le solicita formalmente apersonarse al área de Gerencia de la empresa ' + entry.company.toUpperCase() + ' para recibir las instrucciones y directrices correspondientes.';
                     worksheet.mergeCells('A' + recRow + ':B' + recRow);
+                    worksheet.getCell('A' + recRow).font = { bold: true, color: { argb: 'FFFF0000' } };
                     worksheet.getCell('A' + recRow).alignment = { wrapText: true, vertical: 'middle', horizontal: 'left' };
                     recRow++;
-                  });
-                  recRow++;
-                  
-                  worksheet.getCell('A' + recRow).value = 'Plan de Seguimiento:';
-                  worksheet.getCell('B' + recRow).value = recs.followUp;
-                  worksheet.getCell('A' + recRow).font = { bold: true };
-                  worksheet.getCell('B' + recRow).alignment = { wrapText: true, vertical: 'middle' };
-                  worksheet.getCell('B' + recRow).font = { bold: true, color: { argb: ${JSON.stringify(resultTextCol.replace('#', ''))} } };
+                  } else {
+                    recs.rec.forEach(r => {
+                      worksheet.getCell('A' + recRow).value = '• ' + r;
+                      worksheet.mergeCells('A' + recRow + ':B' + recRow);
+                      worksheet.getCell('A' + recRow).alignment = { wrapText: true, vertical: 'middle', horizontal: 'left' };
+                      recRow++;
+                    });
+                  }
+                  if (entry.result !== 'RIESGO ALTO') {
+                    recRow++;
+                    worksheet.getCell('A' + recRow).value = 'Plan de Seguimiento:';
+                    worksheet.getCell('B' + recRow).value = recs.followUp;
+                    worksheet.getCell('A' + recRow).font = { bold: true };
+                    worksheet.getCell('B' + recRow).alignment = { wrapText: true, vertical: 'middle' };
+                    worksheet.getCell('B' + recRow).font = { bold: true, color: { argb: ${JSON.stringify(resultTextCol.replace('#', ''))} } };
+                  }
 
 
                   // TABLA DISTRIBUCIÓN
-                  let distRow = 11;
+                  let distRow = 13;
                   worksheet.mergeCells('C' + distRow + ':D' + distRow);
                   worksheet.getCell('C' + distRow).value = 'RESUMEN GRUPAL';
                   worksheet.getCell('C' + distRow).style = headerStyle;
@@ -646,6 +692,7 @@ const LocusControlPage = () => {
       Empresa: entry.company,
       Fecha: entry.date,
       Puesto: entry.position,
+      Nivel: entry.level,
       'Puntaje Interno': entry.internalScore,
       'Puntaje Externo': entry.externalScore,
       Balance: entry.internalScore - entry.externalScore,
@@ -694,7 +741,7 @@ const LocusControlPage = () => {
             currentY += 18;
 
             // Tabla de Datos
-            const headers = ['ID', 'Nombre', 'Empresa', 'Fecha', 'Puesto', 'Interno', 'Externo', 'Balance', 'Resultado', 'Diagnóstico'];
+            const headers = ['ID', 'Nombre', 'Empresa', 'Fecha', 'Puesto', 'Nivel', 'Interno', 'Externo', 'Balance', 'Resultado', 'Diagnóstico'];
             const headerRow = worksheet.getRow(currentY);
             headers.forEach((h, i) => {
               const cell = headerRow.getCell(i + 1);
@@ -711,15 +758,16 @@ const LocusControlPage = () => {
               row.getCell(3).value = item.Empresa;
               row.getCell(4).value = item.Fecha;
               row.getCell(5).value = item.Puesto;
-              row.getCell(6).value = item['Puntaje Interno'];
-              row.getCell(7).value = item['Puntaje Externo'];
-              row.getCell(8).value = item.Balance;
-              row.getCell(9).value = item.Resultado;
-              row.getCell(10).value = item.Diagnóstico;
-              row.getCell(10).alignment = { wrapText: true, vertical: 'middle' };
+              row.getCell(6).value = item.Nivel;
+              row.getCell(7).value = item['Puntaje Interno'];
+              row.getCell(8).value = item['Puntaje Externo'];
+              row.getCell(9).value = item.Balance;
+              row.getCell(10).value = item.Resultado;
+              row.getCell(11).value = item.Diagnóstico;
+              row.getCell(11).alignment = { wrapText: true, vertical: 'middle' };
 
               // Formato condicional colores
-              const resCell = row.getCell(9);
+              const resCell = row.getCell(10);
               if (item.Resultado === 'APTO') {
                 resCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD1FAE5' } };
                 resCell.font = { color: { argb: 'FF059669' }, bold: true };
@@ -737,8 +785,8 @@ const LocusControlPage = () => {
             worksheet.getColumn(2).width = 30;
             worksheet.getColumn(3).width = 20;
             worksheet.getColumn(4).width = 25;
-            worksheet.getColumn(8).width = 15;
-            worksheet.getColumn(9).width = 50;
+            worksheet.getColumn(9).width = 15;
+            worksheet.getColumn(10).width = 50;
 
             const buffer = await workbook.xlsx.writeBuffer();
             saveAs(new Blob([buffer]), "Reporte_General_Locus.xlsx");
@@ -863,7 +911,7 @@ const LocusControlPage = () => {
 
                 // --- NEW: CONSOLIDATED BASE SHEET ---
                 const baseSheet = workbook.addWorksheet('BASE CONSOLIDADA');
-                const baseHeaders = ['ID', 'APELLIDOS Y NOMBRES', 'EMPRESA', 'ESTADO', 'PUESTO', 'FECHA', 'INTERNO', 'EXTERNO', 'DICTAMEN'];
+                const baseHeaders = ['ID', 'APELLIDOS Y NOMBRES', 'EMPRESA', 'ESTADO', 'NIVEL', 'PUESTO', 'FECHA', 'INTERNO', 'EXTERNO', 'DICTAMEN'];
                 
                 baseHeaders.forEach((h, i) => {
                   const cell = baseSheet.getCell(1, i + 1);
@@ -879,13 +927,14 @@ const LocusControlPage = () => {
                   baseSheet.getCell(rowNum, 2).value = e.name;
                   baseSheet.getCell(rowNum, 3).value = e.company;
                   baseSheet.getCell(rowNum, 4).value = e.status;
-                  baseSheet.getCell(rowNum, 5).value = e.position;
-                  baseSheet.getCell(rowNum, 6).value = e.date;
-                  baseSheet.getCell(rowNum, 7).value = e.internalScore;
-                  baseSheet.getCell(rowNum, 8).value = e.externalScore;
-                  baseSheet.getCell(rowNum, 9).value = e.result;
+                  baseSheet.getCell(rowNum, 5).value = e.level;
+                  baseSheet.getCell(rowNum, 6).value = e.position;
+                  baseSheet.getCell(rowNum, 7).value = e.date;
+                  baseSheet.getCell(rowNum, 8).value = e.internalScore;
+                  baseSheet.getCell(rowNum, 9).value = e.externalScore;
+                  baseSheet.getCell(rowNum, 10).value = e.result;
                   
-                  for(let i=1; i<=9; i++) {
+                  for(let i=1; i<=10; i++) {
                     baseSheet.getCell(rowNum, i).style = cellStyle;
                   }
                 });
@@ -919,11 +968,17 @@ const LocusControlPage = () => {
                 worksheet.getCell('A6').font = { size: 9 };
                 worksheet.getCell('A6').border = cellStyle.border;
 
-                worksheet.getCell('A7').value = 'ESTADO';
+                worksheet.getCell('A7').value = 'NIVEL DE TRABAJO';
                 worksheet.getCell('A7').style = headerStyle;
-                worksheet.getCell('A8').value = entry.status;
+                worksheet.getCell('A8').value = entry.level;
                 worksheet.getCell('A8').font = { size: 9, bold: true };
                 worksheet.getCell('A8').border = cellStyle.border;
+
+                worksheet.getCell('A9').value = 'ESTADO';
+                worksheet.getCell('A9').style = headerStyle;
+                worksheet.getCell('A10').value = entry.status;
+                worksheet.getCell('A10').font = { size: 9, bold: true };
+                worksheet.getCell('A10').border = cellStyle.border;
 
                 worksheet.mergeCells('C1:D1');
                 worksheet.getCell('C1').value = 'RESULTADOS';
@@ -999,7 +1054,7 @@ const LocusControlPage = () => {
                   ext: { width: 600, height: 120 }
                 });
 
-                let rR = 5;
+                let rR = 7;
                 worksheet.mergeCells('A' + rR + ':B' + rR);
                 worksheet.getCell('A' + rR).value = 'DIAGNÓSTICO Y RECOMENDACIONES';
                 worksheet.getCell('A' + rR).style = headerStyle;
@@ -1011,29 +1066,41 @@ const LocusControlPage = () => {
                   return "Perfil con dominancia externa (Riesgo Alto). Existe una marcada tendencia a atribuir los resultados a factores ajenos a su voluntad, lo que aumenta la probabilidad de conductas inseguras por falta de responsabilidad personal.";
                 };
 
-                worksheet.getCell('A' + rR).value = 'Situación:';
-                worksheet.getCell('B' + rR).value = getAnalysisText(entry.internalScore);
-                worksheet.getCell('A' + rR).font = { bold: true };
-                worksheet.getCell('B' + rR).alignment = { wrapText: true, vertical: 'middle' };
-                rR += 2;
+                if (entry.result !== 'RIESGO ALTO') {
+                  worksheet.getCell('A' + rR).value = 'Situación:';
+                  worksheet.getCell('B' + rR).value = getAnalysisText(entry.internalScore);
+                  worksheet.getCell('A' + rR).font = { bold: true };
+                  worksheet.getCell('B' + rR).alignment = { wrapText: true, vertical: 'middle' };
+                  rR += 2;
+                }
 
                 const pRecs = RECS[entry.result];
-                worksheet.getCell('A' + rR).value = 'Acciones Correctivas:';
+                worksheet.getCell('A' + rR).value = entry.result === 'RIESGO ALTO' ? 'Instrucción Gerencial:' : 'Acciones Correctivas:';
                 worksheet.getCell('A' + rR).font = { bold: true };
                 rR++;
-                pRecs.rec.forEach(r => {
-                  worksheet.getCell('A' + rR).value = '• ' + r;
+                if (entry.result === 'RIESGO ALTO') {
+                  worksheet.getCell('A' + rR).value = 'Estimado(a) ' + entry.name.toUpperCase() + ', se le solicita formalmente apersonarse al área de Gerencia de la empresa ' + entry.company.toUpperCase() + ' para recibir las instrucciones y directrices correspondientes.';
                   worksheet.mergeCells('A' + rR + ':B' + rR);
+                  worksheet.getCell('A' + rR).font = { bold: true, color: { argb: 'FFFF0000' } };
                   worksheet.getCell('A' + rR).alignment = { wrapText: true, vertical: 'middle', horizontal: 'left' };
                   rR++;
-                });
+                } else {
+                  pRecs.rec.forEach(r => {
+                    worksheet.getCell('A' + rR).value = '• ' + r;
+                    worksheet.mergeCells('A' + rR + ':B' + rR);
+                    worksheet.getCell('A' + rR).alignment = { wrapText: true, vertical: 'middle', horizontal: 'left' };
+                    rR++;
+                  });
+                }
                 rR++;
 
-                worksheet.getCell('A' + rR).value = 'Plan de Seguimiento:';
-                worksheet.getCell('B' + rR).value = pRecs.followUp;
-                worksheet.getCell('A' + rR).font = { bold: true };
-                worksheet.getCell('B' + rR).alignment = { wrapText: true, vertical: 'middle' };
-                worksheet.getCell('B' + rR).font = { bold: true, color: { argb: resultTextCol.replace('#', '') } };
+                if (entry.result !== 'RIESGO ALTO') {
+                  worksheet.getCell('A' + rR).value = 'Plan de Seguimiento:';
+                  worksheet.getCell('B' + rR).value = pRecs.followUp;
+                  worksheet.getCell('A' + rR).font = { bold: true };
+                  worksheet.getCell('B' + rR).alignment = { wrapText: true, vertical: 'middle' };
+                  worksheet.getCell('B' + rR).font = { bold: true, color: { argb: resultTextCol.replace('#', '') } };
+                }
               }
 
               const buff = await workbook.xlsx.writeBuffer();
@@ -1462,7 +1529,7 @@ const LocusControlPage = () => {
                     <TableRow className="hover:bg-transparent border-b-2">
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 px-8 sticky top-0 bg-slate-100/90 z-40 shadow-sm">ID</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Evaluado</TableHead>
-                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Puesto / Empresa</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Puesto / Nivel / Empresa</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm text-center">Fecha</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm text-center">Estado</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm text-center">Interno</TableHead>
@@ -1492,6 +1559,7 @@ const LocusControlPage = () => {
                       <TableCell>
                         <div className="space-y-0.5">
                           <p className="text-[11px] font-bold uppercase">{entry.position}</p>
+                          <p className="text-[9px] font-bold text-primary italic uppercase">{entry.level}</p>
                           <p className="text-[9px] font-bold text-muted-foreground/60">{entry.company}</p>
                         </div>
                       </TableCell>

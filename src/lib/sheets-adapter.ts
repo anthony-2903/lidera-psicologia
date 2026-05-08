@@ -107,6 +107,7 @@ export interface LocusControlEntry {
   company: string;
   date: string;
   status: string;
+  level: string;
   position: string;
   internalScore: number;
   externalScore: number;
@@ -690,10 +691,10 @@ export const fetchLocusControlData = async (sheetId: string): Promise<LocusContr
           if (!r[1] || r[1] === 'APELLIDOS Y NOMBRES') continue;
 
           let internalScore = 0;
-          // Questions P1 to P23 are now in columns G to AC (indices 6 to 28)
-          // Shifted due to new 'Fecha' and 'Estado' columns
+          // Questions P1 to P23 are now in columns H to AD (indices 7 to 29)
+          // Shifted due to new 'Fecha', 'Estado' and 'Trabajo Nivel' columns
           for (let q = 1; q <= 23; q++) {
-            const responseValue = (r[q + 5] || '').trim().toLowerCase();
+            const responseValue = (r[q + 6] || '').trim().toLowerCase();
             if (responseValue === internalKey[q]) {
               internalScore++;
             }
@@ -729,7 +730,8 @@ export const fetchLocusControlData = async (sheetId: string): Promise<LocusContr
             company: r[2],
             date: evalDate || 'Sin fecha',
             status: (r[4] || '').trim() || 'No especificado',
-            position: r[5] || 'No especificado',
+            level: (r[5] || '').trim() || 'No especificado',
+            position: r[6] || 'No especificado',
             internalScore,
             externalScore,
             result,
