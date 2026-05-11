@@ -15,6 +15,7 @@ import {
   Activity,
   Brain,
   Layers,
+  ChevronDown,
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -22,13 +23,13 @@ import { cn } from "@/lib/utils";
 import logo from "@/assets/logo.png";
 
 export const navItems = [
-  { label: "Dashboard General", icon: LayoutDashboard, path: "/app/dashboard" },
-  { label: "Seguimiento de Aplicación", icon: BarChart3, path: "/app/diagnostic" },
-  { label: "Dashboard Final", icon: LayoutDashboard, path: "/app/final-dashboard" },
-  { label: "DPMS-Raura", icon: Activity, path: "/app/dpms-raura" },
-  { label: "Carga de Entrevistas DPMS", icon: FileText, path: "/app/dpms-raura/upload-interview" },
-  { label: "Driver Safety", icon: Brain, path: "/app/driver-safety" },
-  { label: "Dimensiones", icon: Layers, path: "/app/dimensiones" },
+  { group: "Catalina Huanca", label: "Dashboard General", icon: LayoutDashboard, path: "/app/dashboard" },
+  { group: "Catalina Huanca", label: "Seguimiento de Aplicación", icon: BarChart3, path: "/app/diagnostic" },
+  { group: "Catalina Huanca", label: "Dashboard Final", icon: LayoutDashboard, path: "/app/final-dashboard" },
+  { group: "Catalina Huanca", label: "Dimensiones", icon: Layers, path: "/app/dimensiones" },
+  { group: "Raura", label: "DPMS-Raura", icon: Activity, path: "/app/dpms-raura" },
+  { group: "Raura", label: "Carga de Entrevistas DPMS", icon: FileText, path: "/app/dpms-raura/upload-interview" },
+  { group: "Raura", label: "Driver Safety", icon: Brain, path: "/app/driver-safety" },
 ];
 
 import { useEffect } from "react";
@@ -39,6 +40,19 @@ export const SidebarContent = ({ collapsed = false, onItemClick }: { collapsed?:
   const { user, profile, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  
+  // State for collapsible groups
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
+    "Catalina Huanca": true,
+    "Raura": true
+  });
+
+  const toggleGroup = (group: string) => {
+    setExpandedGroups(prev => ({
+      ...prev,
+      [group]: !prev[group]
+    }));
+  };
 
   const allowedViews = profile?.allowed_views || [];
   const isAdmin = profile?.is_admin || false;
@@ -87,40 +101,101 @@ export const SidebarContent = ({ collapsed = false, onItemClick }: { collapsed?:
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-1">
-        {visibleNavItems.map((item) => {
-          const isActive = location.pathname === item.path;
+      <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-6 custom-scrollbar">
+        {["Catalina Huanca", "Raura"].map((groupName) => {
+          const itemsInGroup = visibleNavItems.filter(item => item.group === groupName);
+          if (itemsInGroup.length === 0) return null;
+          
+          const isExpanded = expandedGroups[groupName];
+
           return (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              onClick={onItemClick}
-              className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-300",
-                isActive
-                  ? "bg-sidebar-foreground/20 text-sidebar-foreground shadow-lg shadow-black/10 ring-1 ring-white/10"
-                  : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-foreground/5"
+            <div key={groupName} className="space-y-1">
+              {!collapsed && (
+                <button 
+                  onClick={() => toggleGroup(groupName)}
+                  className={cn(
+                    "w-full px-3 py-2 mb-2 flex items-center justify-between gap-2 rounded-lg transition-all duration-300 group/header",
+                    isExpanded 
+                      ? "bg-white/10 border border-white/10 shadow-sm" 
+                      : "bg-white/5 border border-transparent hover:bg-white/10"
+                  )}
+                >
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60 italic whitespace-nowrap">
+                    {groupName}
+                  </span>
+                  <div className="flex-1 h-px bg-white/10 mx-2" />
+                  <div className={cn(
+                    "w-5 h-5 rounded-md flex items-center justify-center transition-all duration-500",
+                    isExpanded ? "bg-accent/20 text-accent" : "bg-white/5 text-white/40"
+                  )}>
+                    <ChevronDown className={cn(
+                      "w-3.5 h-3.5 transition-transform duration-500",
+                      isExpanded ? "rotate-0" : "-rotate-90"
+                    )} />
+                  </div>
+                </button>
               )}
-              title={collapsed ? item.label : undefined}
-            >
-              <item.icon className={cn("shrink-0 transition-transform duration-300", isActive ? "w-5 h-5 scale-110" : "w-5 h-5")} />
-              {!collapsed && <span className="truncate">{item.label}</span>}
-            </NavLink>
+              
+              <div className={cn(
+                "space-y-1 transition-all duration-500 overflow-hidden",
+                isExpanded || collapsed ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+              )}>
+                {itemsInGroup.map((item) => {
+                  const isActive = location.pathname === item.path;
+                  return (
+                    <NavLink
+                      key={item.path}
+                      to={item.path}
+                      onClick={onItemClick}
+                      className={cn(
+                        "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-300 relative group/item",
+                        isActive
+                          ? "bg-white/10 text-white shadow-xl ring-1 ring-white/20"
+                          : "text-sidebar-foreground/50 hover:text-white hover:bg-white/5"
+                      )}
+                      title={collapsed ? item.label : undefined}
+                    >
+                      <div className={cn(
+                        "absolute inset-y-2 left-0 w-1 bg-accent rounded-full transition-all duration-500",
+                        isActive ? "opacity-100" : "opacity-0 group-hover/item:opacity-40"
+                      )} />
+                      <item.icon className={cn(
+                        "shrink-0 transition-all duration-500", 
+                        isActive ? "w-5 h-5 scale-110 text-accent" : "w-5 h-5"
+                      )} />
+                      {!collapsed && <span className="truncate">{item.label}</span>}
+                    </NavLink>
+                  );
+                })}
+              </div>
+            </div>
           );
         })}
+
         {isAdmin && (
-          <NavLink
-            to="/app/admin"
-            onClick={onItemClick}
-            className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-300 mt-4 border border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10",
-              location.pathname === "/app/admin" && "bg-emerald-500/20 shadow-lg ring-1 ring-emerald-500/50"
-            )}
-            title={collapsed ? "Admin Panel" : undefined}
-          >
-            <UsersRound className={cn("shrink-0 transition-transform duration-300")} />
-            {!collapsed && <span className="truncate">Panel de Accesos</span>}
-          </NavLink>
+          <div className="space-y-2 pt-4">
+             {!collapsed && (
+                <div className="px-4 mb-2 flex items-center gap-2">
+                  <div className="h-px flex-1 bg-emerald-500/10" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.25em] text-emerald-500/40 italic">
+                    Administración
+                  </span>
+                  <div className="h-px w-4 bg-emerald-500/10" />
+                </div>
+              )}
+            <NavLink
+              to="/app/admin"
+              onClick={onItemClick}
+              className={cn(
+                "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-300 border border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10",
+                location.pathname === "/app/admin" && "bg-emerald-500/20 shadow-lg ring-1 ring-emerald-500/50"
+              )}
+              title={collapsed ? "Admin Panel" : undefined}
+            >
+              <UsersRound className={cn("shrink-0 transition-transform duration-300")} />
+              {!collapsed && <span className="truncate">Panel de Accesos</span>}
+            </NavLink>
+          </div>
         )}
       </nav>
 

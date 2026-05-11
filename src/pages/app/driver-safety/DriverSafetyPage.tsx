@@ -15,6 +15,13 @@ import {
 } from "recharts";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { KpiCard } from "@/components/dashboard/DashboardCards";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 const SHEET_ID = "1nrHMcI8fWlBKIWIv9aprjElPhY-ccmXX";
@@ -655,6 +662,9 @@ const DriverSafetyIndividualPanel = ({ entry, distribution, onClose }: {
 const DriverSafetyPage = () => {
   const [view, setView] = useState<'dashboard' | 'list'>('dashboard');
   const [search, setSearch] = useState("");
+  const [conditionFilter, setConditionFilter] = useState<string>("ALL");
+  const [companyFilter, setCompanyFilter] = useState<string>("ALL");
+  const [levelFilter, setLevelFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [selectedEntry, setSelectedEntry] = useState<DriverSafetyEntry | null>(null);
 
@@ -662,6 +672,17 @@ const DriverSafetyPage = () => {
     queryKey: ['driverSafety', SHEET_ID],
     queryFn: () => fetchDriverSafetyData(SHEET_ID),
   });
+
+  // Extract unique values for filters
+  const filterOptions = useMemo(() => {
+    if (!data?.entries) return { companies: [], levels: [], statuses: [] };
+    
+    const companies = Array.from(new Set(data.entries.map(e => e.company))).sort();
+    const levels = Array.from(new Set(data.entries.map(e => e.level))).sort();
+    const statuses = Array.from(new Set(data.entries.map(e => e.status))).sort();
+    
+    return { companies, levels, statuses };
+  }, [data]);
 
   const handleDownloadExcelDashboard = async () => {
     const excelWindow = window.open('', '_blank');
@@ -856,10 +877,15 @@ const DriverSafetyPage = () => {
     return data.entries.filter(entry => {
       const matchesSearch = entry.name.toLowerCase().includes(search.toLowerCase()) ||
                            entry.company.toLowerCase().includes(search.toLowerCase());
-      const matchesStatus = statusFilter === "ALL" || entry.result === statusFilter;
-      return matchesSearch && matchesStatus;
+      
+      const matchesCondition = conditionFilter === "ALL" || entry.result === conditionFilter;
+      const matchesCompany = companyFilter === "ALL" || entry.company === companyFilter;
+      const matchesLevel = levelFilter === "ALL" || entry.level === levelFilter;
+      const matchesStatus = statusFilter === "ALL" || entry.status === statusFilter;
+      
+      return matchesSearch && matchesCondition && matchesCompany && matchesLevel && matchesStatus;
     });
-  }, [data, search, statusFilter]);
+  }, [data, search, conditionFilter, companyFilter, levelFilter, statusFilter]);
 
   const handleExportBulkExcel = async () => {
     const excelWindow = window.open('', '_blank');
@@ -1255,6 +1281,7 @@ const DriverSafetyPage = () => {
                 color="text-blue-500" 
                 bg="bg-blue-500/10" 
                 border="border-blue-500/20" 
+                info="Cantidad total de personas que han completado la evaluación de Driver Safety hasta la fecha."
               />
               <KpiCard 
                 label="Promedio Interno" 
@@ -1263,6 +1290,7 @@ const DriverSafetyPage = () => {
                 color="text-indigo-500" 
                 bg="bg-indigo-500/10" 
                 border="border-indigo-500/20" 
+                info="Puntaje promedio de Locus de Control Interno. Un mayor puntaje indica que el personal asume responsabilidad directa sobre sus acciones y seguridad."
               />
               <KpiCard 
                 label="Promedio Externo" 
@@ -1271,6 +1299,7 @@ const DriverSafetyPage = () => {
                 color="text-emerald-500" 
                 bg="bg-emerald-500/10" 
                 border="border-emerald-500/20" 
+                info="Puntaje promedio de Locus de Control Externo. Indica la tendencia a atribuir la seguridad a factores externos como la suerte o el entorno."
               />
               <KpiCard 
                 label="Índice de Aptitud" 
@@ -1279,6 +1308,7 @@ const DriverSafetyPage = () => {
                 color="text-amber-500" 
                 bg="bg-amber-500/10" 
                 border="border-amber-500/20" 
+                info="Porcentaje de la población evaluada que ha calificado como 'APTO', mostrando un nivel óptimo de responsabilidad personal y seguridad."
               />
             </div>
 
@@ -1459,68 +1489,119 @@ const DriverSafetyPage = () => {
         ) : (
           /* List View */
           <div className="space-y-6 animate-in slide-in-from-bottom-5 duration-700">
-            <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-              <div className="flex flex-col md:flex-row gap-4 w-full max-w-2xl">
-                <div className="relative flex-1 group">
+            <Card className="border-none bg-white/40 backdrop-blur-xl shadow-2xl rounded-[2rem] p-6 mb-8 border border-white/20">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+                {/* Search */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Búsqueda Directa</label>
+                  <div className="relative group">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                     <Input 
-                      placeholder="Buscar por nombre o empresa..." 
-                      className="pl-12 h-14 bg-card shadow-xl border-border/50 rounded-2xl focus:ring-2 focus:ring-primary/20"
+                      placeholder="Nombre o Empresa..." 
+                      className="pl-12 h-12 bg-white/50 border-border/40 rounded-xl focus:ring-2 focus:ring-primary/20 shadow-sm"
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                     />
+                  </div>
                 </div>
-                <div className="flex bg-muted/30 p-1 rounded-2xl border border-border/50 backdrop-blur-md">
-                    <Button 
-                      variant={statusFilter === 'ALL' ? 'default' : 'ghost'} 
-                      size="sm" 
-                      onClick={() => setStatusFilter('ALL')}
-                      className={cn("rounded-xl px-4 text-[10px] font-black uppercase tracking-widest", statusFilter === 'ALL' && "shadow-lg shadow-primary/20")}
-                    >
-                      Todos
-                    </Button>
-                    <Button 
-                      variant={statusFilter === 'APTO' ? 'default' : 'ghost'} 
-                      size="sm" 
-                      onClick={() => setStatusFilter('APTO')}
-                      className={cn("rounded-xl px-4 text-[10px] font-black uppercase tracking-widest", statusFilter === 'APTO' && "bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20")}
-                    >
-                      Apto
-                    </Button>
-                    <Button 
-                      variant={statusFilter === 'RIESGO MEDIO' ? 'default' : 'ghost'} 
-                      size="sm" 
-                      onClick={() => setStatusFilter('RIESGO MEDIO')}
-                      className={cn("rounded-xl px-4 text-[10px] font-black uppercase tracking-widest", statusFilter === 'RIESGO MEDIO' && "bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20")}
-                    >
-                      Medio
-                    </Button>
-                    <Button 
-                      variant={statusFilter === 'RIESGO ALTO' ? 'default' : 'ghost'} 
-                      size="sm" 
-                      onClick={() => setStatusFilter('RIESGO ALTO')}
-                      className={cn("rounded-xl px-4 text-[10px] font-black uppercase tracking-widest", statusFilter === 'RIESGO ALTO' && "bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/20")}
-                    >
-                      Alto
-                    </Button>
+
+                {/* Empresa */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Empresa</label>
+                  <Select value={companyFilter} onValueChange={setCompanyFilter}>
+                    <SelectTrigger className="h-12 bg-white/50 border-border/40 rounded-xl shadow-sm">
+                      <SelectValue placeholder="Todas las Empresas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">Todas las Empresas</SelectItem>
+                      {filterOptions.companies.map(c => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                
+
+                {/* Nivel */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Trabajo Nivel</label>
+                  <Select value={levelFilter} onValueChange={setLevelFilter}>
+                    <SelectTrigger className="h-12 bg-white/50 border-border/40 rounded-xl shadow-sm">
+                      <SelectValue placeholder="Todos los Niveles" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">Todos los Niveles</SelectItem>
+                      {filterOptions.levels.map(l => (
+                        <SelectItem key={l} value={l}>{l}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Condición */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Condición</label>
+                  <Select value={conditionFilter} onValueChange={setConditionFilter}>
+                    <SelectTrigger className="h-12 bg-white/50 border-border/40 rounded-xl shadow-sm">
+                      <SelectValue placeholder="Todas las Condic." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">Todas las Condic.</SelectItem>
+                      <SelectItem value="APTO">Apto</SelectItem>
+                      <SelectItem value="RIESGO MEDIO">Riesgo Medio</SelectItem>
+                      <SelectItem value="RIESGO ALTO">Riesgo Alto</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Estado */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Estado</label>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="h-12 bg-white/50 border-border/40 rounded-xl shadow-sm">
+                      <SelectValue placeholder="Todos los Estados" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">Todos los Estados</SelectItem>
+                      {filterOptions.statuses.map(s => (
+                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="flex flex-col md:flex-row justify-between items-center mt-6 pt-6 border-t border-border/10 gap-4">
+                <div className="flex items-center gap-4">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      setSearch("");
+                      setCompanyFilter("ALL");
+                      setLevelFilter("ALL");
+                      setConditionFilter("ALL");
+                      setStatusFilter("ALL");
+                    }}
+                    className="rounded-xl gap-2 text-[10px] font-bold uppercase tracking-widest h-10 border-border/40 hover:bg-muted"
+                  >
+                    <RefreshCw className="w-3 h-3" /> Limpiar Filtros
+                  </Button>
+                  <div className="h-4 w-px bg-border/40" />
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Filter className="w-3.5 h-3.5" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">{filteredEntries.length} Casos Encontrados</span>
+                  </div>
+                </div>
+
                 <Button 
                   onClick={handleExportBulkExcel}
-                  className="h-14 px-8 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xl shadow-emerald-500/20 gap-3 group transition-all active:scale-95 border-0"
+                  className="h-12 px-8 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xl shadow-emerald-500/20 gap-3 group transition-all active:scale-95 border-0"
                 >
                   <FileSpreadsheet className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-                  <div className="text-left leading-none">
-                    <p className="text-[8px] font-black uppercase tracking-widest opacity-70 mb-0.5">Descargar Base</p>
-                    <p className="text-sm font-black tracking-tighter uppercase italic">Excel Grupal</p>
-                  </div>
+                  <span className="text-sm font-black tracking-tighter uppercase italic">Exportar Base Grupal</span>
                 </Button>
               </div>
-              <div className="flex items-center gap-3 bg-muted/30 px-6 py-3 rounded-2xl border border-border/50">
-                  <Filter className="w-4 h-4 text-muted-foreground" />
-                                <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">{filteredEntries.length} Casos Encontrados</span>
-              </div>
-            </div>
+            </Card>
 
             <Card className="border-2 shadow-2xl rounded-[2.5rem] overflow-hidden">
               <div className="max-h-[750px] overflow-y-auto overflow-x-auto custom-scrollbar relative">
@@ -1529,7 +1610,9 @@ const DriverSafetyPage = () => {
                     <TableRow className="hover:bg-transparent border-b-2">
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 px-8 sticky top-0 bg-slate-100/90 z-40 shadow-sm">ID</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Evaluado</TableHead>
-                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Puesto / Nivel / Empresa</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Empresa</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Trabajo Nivel</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Puesto</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm text-center">Fecha</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm text-center">Estado</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm text-center">Interno</TableHead>
@@ -1557,11 +1640,15 @@ const DriverSafetyPage = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="space-y-0.5">
-                          <p className="text-[11px] font-bold uppercase">{entry.position}</p>
-                          <p className="text-[9px] font-bold text-primary italic uppercase">{entry.level}</p>
-                          <p className="text-[9px] font-bold text-muted-foreground/60">{entry.company}</p>
-                        </div>
+                        <p className="text-[11px] font-bold text-muted-foreground uppercase">{entry.company}</p>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="text-[9px] font-black bg-primary/5 text-primary border-primary/10 uppercase italic">
+                          {entry.level}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <p className="text-[10px] font-black uppercase tracking-tight">{entry.position}</p>
                       </TableCell>
                       <TableCell className="text-[10px] font-black uppercase text-muted-foreground italic text-center whitespace-nowrap">{entry.date}</TableCell>
                       <TableCell className="text-center">

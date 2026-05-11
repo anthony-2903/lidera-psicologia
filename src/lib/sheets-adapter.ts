@@ -658,7 +658,7 @@ export const fetchRauraData = async (sheetId: string): Promise<RauraDashboardDat
 // ============================================
 export const fetchDriverSafetyData = async (sheetId: string): Promise<DriverSafetyData> => {
   // Use the specific GID for "BASE DE CONTROL"
-  const gid = "246660500";
+  const gid = "1601952485";
   const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
 
   const response = await fetch(url);
