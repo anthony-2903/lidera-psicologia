@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchLocusControlData, LocusControlEntry } from "@/lib/sheets-adapter";
+import { fetchDriverSafetyData, DriverSafetyEntry } from "@/lib/sheets-adapter";
 import { 
   Target, Brain, Zap, ShieldCheck, Users, Search, RefreshCw, AlertCircle,
   TrendingUp, ArrowRight, User, Filter, Globe, ChevronRight, LayoutDashboard, List,
@@ -74,8 +74,8 @@ const getAnalysis = (internal: number) => {
 };
 
 // Panel Lateral de Detalle Individual
-const LocusIndividualPanel = ({ entry, distribution, onClose }: { 
-  entry: LocusControlEntry, 
+const DriverSafetyIndividualPanel = ({ entry, distribution, onClose }: { 
+  entry: DriverSafetyEntry, 
   distribution: { name: string, value: number }[],
   onClose: () => void 
 }) => {
@@ -97,7 +97,7 @@ const LocusIndividualPanel = ({ entry, distribution, onClose }: {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Informe Locus - ${entry.name}</title>
+          <title>Informe Driver Safety - ${entry.name}</title>
           <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
           <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
           <style>
@@ -125,7 +125,7 @@ const LocusIndividualPanel = ({ entry, distribution, onClose }: {
                 <h1>${entry.name}</h1>
               </div>
               <div style="text-align: right">
-                <div class="brand">Locus<i>Control</i></div>
+                <div class="brand">Driver<i>Safety</i></div>
                 <p style="font-size: 10px; font-weight: 700; color: #94a3b8;">${date}</p>
               </div>
             </div>
@@ -214,7 +214,7 @@ const LocusIndividualPanel = ({ entry, distribution, onClose }: {
               const element = document.getElementById('report-content');
               html2pdf().from(element).set({
                 margin: 0,
-                filename: 'Resultado_Locus_${entry.name.replace(/\s+/g, '_')}.pdf',
+                filename: 'Resultado_Driver_Safety_${entry.name.replace(/\s+/g, '_')}.pdf',
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -506,7 +506,7 @@ const LocusIndividualPanel = ({ entry, distribution, onClose }: {
                   const resultsData = [
                     ['INTERNO', ${entry.internalScore}],
                     ['EXTERNO', ${entry.externalScore}],
-                    ['LOCUS DE CONTR', ${JSON.stringify(resultText)}]
+                    ['DRIVER SAFETY', ${JSON.stringify(resultText)}]
                   ];
 
                   resultsData.forEach((row, i) => {
@@ -516,7 +516,7 @@ const LocusIndividualPanel = ({ entry, distribution, onClose }: {
                     worksheet.getCell('C' + rowNum).style = {...cellStyle, font: {bold: true}};
                     worksheet.getCell('D' + rowNum).style = cellStyle;
                     
-                    if (row[0] === 'LOCUS DE CONTR') {
+                    if (row[0] === 'DRIVER SAFETY') {
                        worksheet.getCell('D' + rowNum).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ${JSON.stringify(resultColor.replace('#', ''))} } };
                        worksheet.getCell('D' + rowNum).font = { bold: true, color: { argb: ${JSON.stringify(resultTextCol.replace('#', ''))} } };
                     }
@@ -634,7 +634,7 @@ const LocusIndividualPanel = ({ entry, distribution, onClose }: {
                   worksheet.getColumn(6).width = 80; // Chart column
 
                   const buffer = await workbook.xlsx.writeBuffer();
-                  saveAs(new Blob([buffer]), "Informe_Locus_${entry.name.replace(/\s+/g, '_')}.xlsx");
+                  saveAs(new Blob([buffer]), "Informe_Driver_Safety_${entry.name.replace(/\s+/g, '_')}.xlsx");
                   setTimeout(() => window.close(), 1000);
                 };
               </script>
@@ -652,15 +652,15 @@ const LocusIndividualPanel = ({ entry, distribution, onClose }: {
   );
 };
 
-const LocusControlPage = () => {
+const DriverSafetyPage = () => {
   const [view, setView] = useState<'dashboard' | 'list'>('dashboard');
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
-  const [selectedEntry, setSelectedEntry] = useState<LocusControlEntry | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<DriverSafetyEntry | null>(null);
 
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
-    queryKey: ['locusControl', SHEET_ID],
-    queryFn: () => fetchLocusControlData(SHEET_ID),
+    queryKey: ['driverSafety', SHEET_ID],
+    queryFn: () => fetchDriverSafetyData(SHEET_ID),
   });
 
   const handleDownloadExcelDashboard = async () => {
@@ -713,7 +713,7 @@ const LocusControlPage = () => {
             // Título
             worksheet.mergeCells('A1:I1');
             const titleCell = worksheet.getCell('A1');
-            titleCell.value = 'REPORTE EJECUTIVO - LOCUS DE CONTROL';
+            titleCell.value = 'REPORTE EJECUTIVO - DRIVER SAFETY';
             titleCell.font = { size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
             titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E1B4B' } };
             titleCell.alignment = { horizontal: 'center' };
@@ -789,7 +789,7 @@ const LocusControlPage = () => {
             worksheet.getColumn(10).width = 50;
 
             const buffer = await workbook.xlsx.writeBuffer();
-            saveAs(new Blob([buffer]), "Reporte_General_Locus.xlsx");
+            saveAs(new Blob([buffer]), "Reporte_General_Driver_Safety.xlsx");
             setTimeout(() => window.close(), 1000);
           };
         </script>
@@ -812,7 +812,7 @@ const LocusControlPage = () => {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Dashboard Locus de Control</title>
+          <title>Dashboard Driver Safety</title>
           <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
           <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
           <script src="https://cdn.tailwindcss.com"></script>
@@ -834,7 +834,7 @@ const LocusControlPage = () => {
               const element = document.getElementById('print-area');
               html2pdf().from(element).set({
                 margin: 10,
-                filename: 'Dashboard_Locus_Control.pdf',
+                filename: 'Dashboard_Driver_Safety.pdf',
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 1.5, useCORS: true, logging: false },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
@@ -990,7 +990,7 @@ const LocusControlPage = () => {
                 const resultsData = [
                   ['INTERNO', entry.internalScore],
                   ['EXTERNO', entry.externalScore],
-                  ['LOCUS DE CONTR', entry.result]
+                  ['DRIVER SAFETY', entry.result]
                 ];
 
                 resultsData.forEach((row, i) => {
@@ -999,7 +999,7 @@ const LocusControlPage = () => {
                   worksheet.getCell('D' + rNum).value = row[1];
                   worksheet.getCell('C' + rNum).style = {...cellStyle, font: {bold: true}};
                   worksheet.getCell('D' + rNum).style = cellStyle;
-                  if (row[0] === 'LOCUS DE CONTR') {
+                  if (row[0] === 'DRIVER SAFETY') {
                     worksheet.getCell('D' + rNum).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: resultColor.replace('#', '') } };
                     worksheet.getCell('D' + rNum).font = { bold: true, color: { argb: resultTextCol.replace('#', '') } };
                   }
@@ -1104,7 +1104,7 @@ const LocusControlPage = () => {
               }
 
               const buff = await workbook.xlsx.writeBuffer();
-              saveAs(new Blob([buff]), "Base_Locus_Control_Global.xlsx");
+              saveAs(new Blob([buff]), "Base_Driver_Safety_Global.xlsx");
               setTimeout(() => window.close(), 1500);
               } catch (err) {
                 document.getElementById('status').innerHTML = "ERROR: " + err.message;
@@ -1134,7 +1134,7 @@ const LocusControlPage = () => {
         </div>
         <div className="space-y-2">
           <h2 className="text-2xl font-black">Error de Conexión</h2>
-          <p className="text-muted-foreground max-w-sm">No pudimos obtener los datos de Locus de Control desde el repositorio.</p>
+          <p className="text-muted-foreground max-w-sm">No pudimos obtener los datos de Driver Safety desde el repositorio.</p>
         </div>
         <Button onClick={() => refetch()} className="gap-2">
           <RefreshCw className={cn("w-4 h-4", isFetching && "animate-spin")} /> Reintentar
@@ -1157,7 +1157,7 @@ const LocusControlPage = () => {
                 <Globe className="w-5 h-5" />
               </div>
               <h1 className="text-3xl md:text-5xl font-black tracking-tighter text-foreground italic flex items-center gap-3">
-                Locus <span className="text-primary not-italic">Control</span>
+                Driver <span className="text-primary not-italic">Safety</span>
               </h1>
             </div>
             <p className="text-muted-foreground text-sm md:text-lg font-medium max-w-2xl px-1">
@@ -1205,7 +1205,7 @@ const LocusControlPage = () => {
                   <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30">
                     <ActivityIcon className="w-5 h-5 text-white" />
                   </div>
-                  <h2 className="text-xl font-black uppercase tracking-tighter italic">¿Qué es el Locus de Control?</h2>
+                  <h2 className="text-xl font-black uppercase tracking-tighter italic">¿Qué es el Driver Safety?</h2>
                 </div>
                 <p className="text-indigo-100 text-sm leading-relaxed max-w-2xl font-medium">
                   Define cómo una persona interpreta las causas de los eventos que le suceden. En el <span className="font-bold text-white uppercase italic">contexto minero</span>, identificamos si los trabajadores asumen la responsabilidad de lo que ocurre en su trabajo o si tienden a atribuirlo a factores externos (suerte, entorno o terceros), influyendo directamente en la <span className="font-bold text-white uppercase italic">seguridad operativa</span>.
@@ -1340,7 +1340,7 @@ const LocusControlPage = () => {
               <Card id="dashboard-comparison-chart" className="lg:col-span-8 border-2 shadow-2xl rounded-[2.5rem] overflow-hidden group relative">
                 <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
                 <CardHeader className="bg-muted/5 border-b border-border/20 p-8">
-                  <CardTitle className="text-xl font-black italic tracking-tighter">Comparativa Locus Interno vs Externo</CardTitle>
+                  <CardTitle className="text-xl font-black italic tracking-tighter">Comparativa Driver Safety Interno vs Externo</CardTitle>
                   <CardDescription className="text-[10px] font-bold uppercase tracking-widest text-primary/60">Balance promedio del grupo evaluado</CardDescription>
                 </CardHeader>
                 <CardContent className="p-8 lg:p-12 space-y-16">
@@ -1348,11 +1348,11 @@ const LocusControlPage = () => {
                   <div className="space-y-10 relative">
                     <div className="flex justify-between items-end mb-4">
                       <div className="space-y-1">
-                        <p className="text-sm font-black text-indigo-500 uppercase tracking-tighter">Locus Interno</p>
+                        <p className="text-sm font-black text-indigo-500 uppercase tracking-tighter">Control Interno</p>
                         <p className="text-4xl font-black tabular-nums italic text-indigo-600">{(data.avgInternal / 23 * 100).toFixed(1)}%</p>
                       </div>
                       <div className="text-right space-y-1">
-                        <p className="text-sm font-black text-emerald-500 uppercase tracking-tighter">Locus Externo</p>
+                        <p className="text-sm font-black text-emerald-500 uppercase tracking-tighter">Control Externo</p>
                         <p className="text-4xl font-black tabular-nums italic text-emerald-600">{(data.avgExternal / 23 * 100).toFixed(1)}%</p>
                       </div>
                     </div>
@@ -1600,7 +1600,7 @@ const LocusControlPage = () => {
           : "w-0 translate-x-full pointer-events-none"
       )}>
         {selectedEntry && (
-          <LocusIndividualPanel 
+          <DriverSafetyIndividualPanel 
             entry={selectedEntry} 
             distribution={data.riskDistribution}
             onClose={() => setSelectedEntry(null)} 
@@ -1619,4 +1619,4 @@ const LocusControlPage = () => {
   );
 };
 
-export default LocusControlPage;
+export default DriverSafetyPage;

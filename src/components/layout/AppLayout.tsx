@@ -12,7 +12,7 @@ const breadcrumbMap: Record<string, string> = {
   diagnostic: "Seguimiento de Aplicación",
   "final-dashboard": "Dashboard Final",
   "dpms-raura": "DPMS-Raura",
-  "locus-control": "Locus de Control",
+  "driver-safety": "Driver Safety",
 };
 
 const AppLayout = () => {

@@ -13,7 +13,7 @@ const DashboardPage = lazy(() => import("./pages/app/DashboardPage"));
 const DiagnosticPage = lazy(() => import("./pages/app/DiagnosticPage"));
 const FinalDashboardPage = lazy(() => import("./pages/app/FinalDashboardPage"));
 const DpmsRauraPage = lazy(() => import("./pages/app/dpms-raura/DpmsRauraPage"));
-const LocusControlPage = lazy(() => import("./pages/app/locus-control/LocusControlPage"));
+const DriverSafetyPage = lazy(() => import("./pages/app/driver-safety/DriverSafetyPage"));
 const AdminUsersPage = lazy(() => import("./pages/app/AdminUsersPage"));
 const DimensionesPage = lazy(() => import("./pages/app/DimensionesPage"));
 const UploadDpmsPage = lazy(() => import("./pages/app/dpms-raura/UploadDpmsPage"));
@@ -59,7 +59,7 @@ const App = () => (
                   <Route path="final-dashboard" element={<FinalDashboardPage />} />
                   <Route path="dpms-raura" element={<DpmsRauraPage />} />
                   <Route path="dpms-raura/upload-interview" element={<UploadDpmsPage />} />
-                  <Route path="locus-control" element={<LocusControlPage />} />
+                  <Route path="driver-safety" element={<DriverSafetyPage />} />
                    <Route path="dimensiones" element={<DimensionesPage />} />
                    <Route path="admin" element={<AdminUsersPage />} />
                    <Route path="welcome" element={<WelcomePage />} />

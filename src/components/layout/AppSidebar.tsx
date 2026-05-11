@@ -27,7 +27,7 @@ export const navItems = [
   { label: "Dashboard Final", icon: LayoutDashboard, path: "/app/final-dashboard" },
   { label: "DPMS-Raura", icon: Activity, path: "/app/dpms-raura" },
   { label: "Carga de Entrevistas DPMS", icon: FileText, path: "/app/dpms-raura/upload-interview" },
-  { label: "Locus de Control", icon: Brain, path: "/app/locus-control" },
+  { label: "Driver Safety", icon: Brain, path: "/app/driver-safety" },
   { label: "Dimensiones", icon: Layers, path: "/app/dimensiones" },
 ];
 

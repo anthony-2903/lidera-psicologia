@@ -101,7 +101,7 @@ export interface RauraDashboardData {
   entries: RauraEntry[];
 }
 
-export interface LocusControlEntry {
+export interface DriverSafetyEntry {
   id: number;
   name: string;
   company: string;
@@ -114,12 +114,12 @@ export interface LocusControlEntry {
   result: string;
 }
 
-export interface LocusControlData {
+export interface DriverSafetyData {
   totalEvaluated: number;
   avgInternal: number;
   avgExternal: number;
   riskDistribution: { name: string; value: number }[];
-  entries: LocusControlEntry[];
+  entries: DriverSafetyEntry[];
 }
 
 export interface DimensionReport {
@@ -654,15 +654,15 @@ export const fetchRauraData = async (sheetId: string): Promise<RauraDashboardDat
 };
 
 // ============================================
-// FUNCION PARSER LOCUS DE CONTROL
+// FUNCION PARSER DRIVER SAFETY
 // ============================================
-export const fetchLocusControlData = async (sheetId: string): Promise<LocusControlData> => {
+export const fetchDriverSafetyData = async (sheetId: string): Promise<DriverSafetyData> => {
   // Use the specific GID for "BASE DE CONTROL"
   const gid = "246660500";
   const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
 
   const response = await fetch(url);
-  if (!response.ok) throw new Error('Failed to fetch Locus de Control data');
+  if (!response.ok) throw new Error('Failed to fetch Driver Safety data');
   const csvText = await response.text();
 
   return new Promise((resolve, reject) => {
@@ -673,7 +673,7 @@ export const fetchLocusControlData = async (sheetId: string): Promise<LocusContr
         const rows = results.data;
         // The sheet has headers in the first row
         if (rows.length < 2) {
-          reject(new Error("No data found in Locus de Control sheet"));
+          reject(new Error("No data found in Driver Safety sheet"));
           return;
         }
 
@@ -683,7 +683,7 @@ export const fetchLocusControlData = async (sheetId: string): Promise<LocusContr
           21: 'a', 22: 'a', 23: 'b'
         };
 
-        const entries: LocusControlEntry[] = [];
+        const entries: DriverSafetyEntry[] = [];
         const riskCounts = { 'RIESGO ALTO': 0, 'RIESGO MEDIO': 0, 'APTO': 0 };
 
         for (let i = 1; i < rows.length; i++) {
