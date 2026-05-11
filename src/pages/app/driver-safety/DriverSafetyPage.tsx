@@ -677,9 +677,9 @@ const DriverSafetyPage = () => {
   const filterOptions = useMemo(() => {
     if (!data?.entries) return { companies: [], levels: [], statuses: [] };
     
-    const companies = Array.from(new Set(data.entries.map(e => e.company))).sort();
-    const levels = Array.from(new Set(data.entries.map(e => e.level))).sort();
-    const statuses = Array.from(new Set(data.entries.map(e => e.status))).sort();
+    const companies = Array.from(new Set(data.entries.map(e => (e.company || '').trim()))).filter(Boolean).sort();
+    const levels = Array.from(new Set(data.entries.map(e => (e.level || '').trim()))).filter(Boolean).sort();
+    const statuses = Array.from(new Set(data.entries.map(e => (e.status || '').trim()))).filter(Boolean).sort();
     
     return { companies, levels, statuses };
   }, [data]);
@@ -879,9 +879,9 @@ const DriverSafetyPage = () => {
                            entry.company.toLowerCase().includes(search.toLowerCase());
       
       const matchesCondition = conditionFilter === "ALL" || entry.result === conditionFilter;
-      const matchesCompany = companyFilter === "ALL" || entry.company === companyFilter;
-      const matchesLevel = levelFilter === "ALL" || entry.level === levelFilter;
-      const matchesStatus = statusFilter === "ALL" || entry.status === statusFilter;
+      const matchesCompany = companyFilter === "ALL" || (entry.company || '').trim() === companyFilter;
+      const matchesLevel = levelFilter === "ALL" || (entry.level || '').trim() === levelFilter;
+      const matchesStatus = statusFilter === "ALL" || (entry.status || '').trim() === statusFilter;
       
       return matchesSearch && matchesCondition && matchesCompany && matchesLevel && matchesStatus;
     });

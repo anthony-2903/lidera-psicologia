@@ -1,10 +1,12 @@
 
 export const DASHBOARD_PALETTES = {
   rauraCategories: {
-    'Liderazgo Visible': '#3b82f6',
-    'Gestión y Cumplimiento': '#f59e0b',
-    'Participación': '#10b981',
-    'Cultura y Comunicación': '#8b5cf6',
+    'Liderazgo': '#3b82f6',
+    'Percepción': '#f59e0b',
+    'Comunicación': '#10b981',
+    'Rol Equipo': '#8b5cf6',
+    'Cultura': '#ec4899',
+    'Motivación': '#06b6d4',
   },
   stack5: ["#ef4444", "#f59e0b", "#eab308", "#10b981", "#3b82f6"],
   team4: ["#ef4444", "#f59e0b", "#10b981", "#3b82f6"],

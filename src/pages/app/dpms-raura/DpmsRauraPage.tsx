@@ -78,7 +78,7 @@ import {
   ChartLegend,
 } from "@/components/dashboard/ChartElements";
 
-const SHEET_ID = "1-yiLe8BFRiw8XbUyn9vdl2e2M3y7ENYQXgKajhEBwUA";
+const SHEET_ID = "16keeTLLxphGx7QtfRbtDC7yG1ACxyyQui1KypTX43o4";
 
 // --- Paletas ---
 const CAT_COLORS = DASHBOARD_PALETTES.rauraCategories;
@@ -119,66 +119,32 @@ const EntryPanel = ({
   entry: RauraEntry;
   onClose: () => void;
 }) => {
-  const getAIAnalysis = (scores: RauraEntry['scores']) => {
-    const categories = {
-      liderazgo: { val: scores.liderazgo, name: "Liderazgo Visible" },
-      gestion: { val: scores.gestion, name: "Gestión" },
-      participación: { val: scores.participacion, name: "Participación" },
-      cultura: { val: scores.cultura, name: "Cultura" }
-    };
-
-    const sorted = Object.values(categories).sort((a,b) => a.val - b.val);
+  const getAIAnalysis = (dims: RauraEntry['dimensions']) => {
+    const sorted = Object.entries(dims).sort((a,b) => a[1].score - b[1].score);
     const lowest = sorted[0];
-    const highest = sorted[3];
+    const highest = sorted[5];
 
-    let analysis = `El perfil presenta una madurez operativa destacada en **${highest.name}** (${Math.round(highest.val)}%), lo que indica una base sólida de confianza institucional. `;
+    let analysis = `El perfil presenta una madurez operativa destacada en **${highest[0].toUpperCase()}** (${Math.round(highest[1].score)}%), categorizado como **${highest[1].perfil}**. `;
     
-    if (lowest.val < 50) {
-      analysis += `Sin embargo, se detecta un vacío crítico en **${lowest.name}** (${Math.round(lowest.val)}%). Desde una perspectiva psicológica, esto sugiere una posible desconexión entre las expectativas de seguridad y la ejecución diaria, posiblemente debida a una percepción de falta de apoyo o recursos.`;
+    if (lowest[1].score < 50) {
+      analysis += `Sin embargo, se detecta un área crítica en **${lowest[0].toUpperCase()}** (${Math.round(lowest[1].score)}%), donde el perfil actual es **${lowest[1].perfil}**. Esto sugiere la necesidad de una intervención inmediata para elevar el nivel de madurez organizacional.`;
     } else {
-      analysis += `El área de **${lowest.name}** es el punto de mejora relativa, aunque se mantiene en niveles aceptables.`;
+      analysis += `Incluso en su punto más bajo (**${lowest[0].toUpperCase()}**), mantiene un nivel aceptable de **${lowest[1].perfil}**, lo que refleja una cultura de seguridad robusta.`;
     }
 
-    const recommendations = {
-      liderazgo: "Fomentar el coaching de seguridad para supervisores, centrando el enfoque en el reconocimiento positivo más que en la sanción.",
-      gestion: "Simplificar los procesos de reporte y asegurar que el feedback de las observaciones sea inmediato para evitar la fatiga por cumplimiento.",
-      participacion: "Implementar círculos de confianza donde el trabajador se sienta seguro de proponer mejoras sin temor a represalias.",
-      cultura: "Fortalecer el ADN de interdependencia mediante talleres de empatía y cuidado mutuo ('Blindaje Grupal')."
-    };
-
-    const rec = recommendations[lowest.name.toLowerCase().split(' ')[0] as keyof typeof recommendations] || "Continuar con el monitoreo preventivo.";
-
-    return { analysis, rec };
+    return { analysis };
   };
 
-  const aiResult = useMemo(() => getAIAnalysis(entry.scores), [entry]);
+  const aiResult = useMemo(() => getAIAnalysis(entry.dimensions), [entry]);
 
   const radarData = useMemo(
     () => [
-      {
-        subject: "LIDERAZGO",
-        A: entry.scores.liderazgo,
-        fullMark: 100,
-        color: CAT_COLORS["Liderazgo Visible"],
-      },
-      {
-        subject: "GESTIÓN",
-        A: entry.scores.gestion,
-        fullMark: 100,
-        color: CAT_COLORS["Gestión y Cumplimiento"],
-      },
-      {
-        subject: "PARTICIPACIÓN",
-        A: entry.scores.participacion,
-        fullMark: 100,
-        color: CAT_COLORS["Participación"],
-      },
-      {
-        subject: "CULTURA",
-        A: entry.scores.cultura,
-        fullMark: 100,
-        color: CAT_COLORS["Cultura y Comunicación"],
-      },
+      { subject: "LIDERAZGO", A: entry.dimensions.liderazgo.score, fullMark: 100 },
+      { subject: "PERCEPCIÓN", A: entry.dimensions.percepcion.score, fullMark: 100 },
+      { subject: "COMUNICACIÓN", A: entry.dimensions.comunicacion.score, fullMark: 100 },
+      { subject: "ROL EQUIPO", A: entry.dimensions.rolEquipo.score, fullMark: 100 },
+      { subject: "CULTURA", A: entry.dimensions.cultura.score, fullMark: 100 },
+      { subject: "MOTIVACIÓN", A: entry.dimensions.motivacion.score, fullMark: 100 },
     ],
     [entry],
   );
@@ -218,10 +184,26 @@ const EntryPanel = ({
         <div className="grid grid-cols-2 gap-4">
           <div className="p-4 rounded-[1.5rem] bg-white/60 border border-white/20 shadow-sm transition-all hover:shadow-md">
             <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">
-              Puesto
+              Cargo
             </p>
             <p className="text-xs font-bold text-foreground truncate uppercase">
-              {entry.puesto}
+              {entry.cargo}
+            </p>
+          </div>
+          <div className="p-4 rounded-[1.5rem] bg-white/60 border border-white/20 shadow-sm transition-all hover:shadow-md">
+            <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">
+              Ubicación
+            </p>
+            <p className="text-xs font-bold text-foreground truncate uppercase">
+              {entry.ubicacion}
+            </p>
+          </div>
+          <div className="p-4 rounded-[1.5rem] bg-white/60 border border-white/20 shadow-sm transition-all hover:shadow-md">
+            <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">
+              DNI
+            </p>
+            <p className="text-xs font-bold text-foreground truncate uppercase">
+              {entry.dni}
             </p>
           </div>
           <div className="p-4 rounded-[1.5rem] bg-white/60 border border-white/20 shadow-sm transition-all hover:shadow-md">
@@ -230,14 +212,6 @@ const EntryPanel = ({
             </p>
             <p className="text-xs font-bold text-foreground truncate uppercase">
               {entry.empresa}
-            </p>
-          </div>
-          <div className="p-4 rounded-[1.5rem] bg-white/60 border border-white/20 shadow-sm transition-all hover:shadow-md">
-            <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">
-              Fecha
-            </p>
-            <p className="text-xs font-bold text-foreground truncate uppercase">
-              {entry.fecha}
             </p>
           </div>
         </div>
@@ -280,10 +254,10 @@ const EntryPanel = ({
           </div>
         </div>
 
-        {/* Categories Grid */}
+        {/* Categories Grid with Qualitative Profiles */}
         <div className="grid grid-cols-2 gap-5">
-          {Object.entries(entry.scores).map(([key, value], idx) => {
-            const label = key.charAt(0).toUpperCase() + key.slice(1);
+          {Object.entries(entry.dimensions).map(([key, dim], idx) => {
+            const label = key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1');
             const color = Object.values(CAT_COLORS)[idx];
             return (
               <div key={key} className="relative group cursor-default">
@@ -291,23 +265,26 @@ const EntryPanel = ({
                   className="absolute inset-0 blur-lg opacity-0 group-hover:opacity-40 transition-opacity rounded-3xl"
                   style={{ backgroundColor: color }}
                 />
-                <Card className="rounded-[2rem] border-border/40 bg-white/80 shadow-sm relative z-10 overflow-hidden group-hover:-translate-y-1 transition-transform">
+                <Card className="rounded-[2rem] border-border/40 bg-white/80 shadow-sm relative z-10 overflow-hidden group-hover:-translate-y-1 transition-transform h-full">
                   <div
                     className="absolute top-0 left-0 w-1.5 h-full"
                     style={{ backgroundColor: color }}
                   />
                   <CardHeader className="p-5 pb-1">
-                    <CardTitle className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
+                    <CardTitle className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">
                       {label}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="p-5 pt-0">
+                  <CardContent className="p-5 pt-0 space-y-1">
                     <p
-                      className="text-3xl font-black tabular-nums tracking-tighter"
+                      className="text-2xl font-black tabular-nums tracking-tighter"
                       style={{ color: color }}
                     >
-                      {Math.round(value)}%
+                      {Math.round(dim.score)}%
                     </p>
+                    <Badge variant="outline" className="text-[8px] font-bold uppercase tracking-tighter border-muted-foreground/20 text-muted-foreground">
+                      {dim.perfil}
+                    </Badge>
                   </CardContent>
                 </Card>
               </div>
@@ -333,10 +310,10 @@ const EntryPanel = ({
                  <p className="text-sm font-medium text-indigo-100/90 leading-relaxed italic border-l-2 border-indigo-500/50 pl-4 py-1" dangerouslySetInnerHTML={{ __html: aiResult.analysis }} />
                  <div className="p-5 bg-white/5 rounded-2xl border border-white/5 space-y-2">
                     <p className="text-[9px] font-black uppercase text-indigo-400 tracking-widest flex items-center gap-2">
-                       <Zap className="w-3 h-3 fill-indigo-400" /> Plan de Acción Recomendado
+                       <Zap className="w-3 h-3 fill-indigo-400" /> Foco de Mejora
                     </p>
                     <p className="text-xs font-bold text-indigo-100/80 leading-relaxed">
-                       {aiResult.rec}
+                       Basado en el perfil cualitativo, se recomienda priorizar el desarrollo de competencias en las áreas de menor puntuación para equilibrar la cultura organizacional.
                     </p>
                  </div>
               </div>
@@ -358,33 +335,8 @@ const EntryPanel = ({
           </div>
         )}
 
-        {/* Interpretation Section (Raw Responses) */}
-        <div className="space-y-6">
-          <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground/80 px-2 flex items-center gap-2 italic">
-            <FileText className="w-4 h-4 text-primary" /> Desglose de Respuestas
-          </h4>
-          <div className="space-y-3">
-             {entry.questions?.map((q, i) => {
-               const val = entry.rawResponses[i];
-               const score = parseInt(val) || 0;
-               if (!q) return null;
+        {/* Interpretación Section (Nota: El desglose de preguntas individuales se encuentra en las pestañas específicas del Excel) */}
 
-               return (
-                 <div key={i} className="bg-white/40 p-5 rounded-2xl border border-white/10 flex justify-between items-center group/item hover:bg-white/60 transition-all">
-                    <span className="text-[10px] font-bold text-slate-500 max-w-[70%] leading-relaxed uppercase">{q}</span>
-                    <Badge className={cn(
-                      "rounded-full px-4 py-1 text-[9px] font-black uppercase tracking-widest",
-                      score >= 4 ? "bg-emerald-500/10 text-emerald-600" :
-                      score >= 3 ? "bg-amber-500/10 text-amber-600" :
-                      "bg-red-500/10 text-red-600"
-                    )}>
-                      {getQuestionText(val)}
-                    </Badge>
-                 </div>
-               );
-             })}
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -413,9 +365,9 @@ export default function DpmsRauraPage() {
     return data.entries
       .filter((e) => {
         const matchesSearch =
-          e.area.toLowerCase().includes(search.toLowerCase()) ||
-          e.puesto.toLowerCase().includes(search.toLowerCase()) ||
-          e.empresa.toLowerCase().includes(search.toLowerCase());
+          (e.name || '').toLowerCase().includes(search.toLowerCase()) ||
+          (e.cargo || '').toLowerCase().includes(search.toLowerCase()) ||
+          (e.empresa || '').toLowerCase().includes(search.toLowerCase());
         const matchesCompany =
           selectedCompany === "all" || e.empresa === selectedCompany;
         return matchesSearch && matchesCompany;
@@ -424,21 +376,24 @@ export default function DpmsRauraPage() {
   }, [data, search, selectedCompany]);
 
   const statsMetrix = useMemo(() => {
-    if (!filteredEntries.length) return { avg: 0, leadership: 0, safety: 0, voice: 0 };
+    if (!filteredEntries.length) return { avg: 0, categories: [], areas: [], voice: 0 };
     
     const avg = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
     
     const categories = [
-      { name: 'Liderazgo Visible', value: avg(filteredEntries.map(e => e.scores.liderazgo)) },
-      { name: 'Gestión y Cumplimiento', value: avg(filteredEntries.map(e => e.scores.gestion)) },
-      { name: 'Participación', value: avg(filteredEntries.map(e => e.scores.participacion)) },
-      { name: 'Cultura y Comunicación', value: avg(filteredEntries.map(e => e.scores.cultura)) }
+      { name: 'Liderazgo', value: avg(filteredEntries.map(e => e.dimensions.liderazgo.score)) },
+      { name: 'Percepción', value: avg(filteredEntries.map(e => e.dimensions.percepcion.score)) },
+      { name: 'Comunicación', value: avg(filteredEntries.map(e => e.dimensions.comunicacion.score)) },
+      { name: 'Rol Equipo', value: avg(filteredEntries.map(e => e.dimensions.rolEquipo.score)) },
+      { name: 'Cultura', value: avg(filteredEntries.map(e => e.dimensions.cultura.score)) },
+      { name: 'Motivación', value: avg(filteredEntries.map(e => e.dimensions.motivacion.score)) }
     ];
 
     const areaGroups: Record<string, number[]> = {};
     filteredEntries.forEach(e => {
-      if (!areaGroups[e.area]) areaGroups[e.area] = [];
-      areaGroups[e.area].push(e.totalScore);
+      const a = (e.area || 'GENERAL').trim().toUpperCase();
+      if (!areaGroups[a]) areaGroups[a] = [];
+      areaGroups[a].push(e.totalScore);
     });
 
     const areas = Object.keys(areaGroups).map(name => ({
@@ -496,7 +451,7 @@ export default function DpmsRauraPage() {
 
   const cultureData = useMemo(() => {
     if (!filteredEntries.length) return { avg: 0, distribution: [], label: "N/A" };
-    const avgCulture = statsMetrix.categories[3].value;
+    const avgCulture = statsMetrix.categories[4]?.value || 0;
 
     const levels = [
       { name: "Reactivo", value: 0, color: "#ef4444", range: "0-25%" },
@@ -506,7 +461,7 @@ export default function DpmsRauraPage() {
     ];
 
     filteredEntries.forEach((e) => {
-      const s = e.scores.cultura;
+      const s = e.dimensions.cultura.score;
       if (s <= 25) levels[0].value++;
       else if (s <= 50) levels[1].value++;
       else if (s <= 75) levels[2].value++;
@@ -635,19 +590,19 @@ export default function DpmsRauraPage() {
           <div className="space-y-20 animate-in fade-in slide-in-from-bottom-12 duration-1000 fill-mode-forwards">
             {/* KPI GRID */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
-              <KpiCard
-                label="Maturity Score"
+               <KpiCard
+                label="Promedio Global"
                 value={`${Math.round(statsMetrix.avg)}%`}
                 icon={Target}
                 color="text-primary"
                 bg="bg-primary/10"
                 border="border-primary/20"
                 glowColor="primary/20"
-                description="Promedio en filtro"
+                description="Madurez Organizacional"
               />
               <KpiCard
                 label="Liderazgo"
-                value={`${Math.round(statsMetrix.categories[0].value)}%`}
+                value={`${Math.round(statsMetrix.categories[0]?.value || 0)}%`}
                 icon={Star}
                 color="text-purple-500"
                 bg="bg-purple-500/10"
@@ -656,24 +611,24 @@ export default function DpmsRauraPage() {
                 description="Percepción directiva"
               />
               <KpiCard
-                label="Seguridad Site"
-                value={`${Math.round(statsMetrix.categories[1].value)}%`}
+                label="Cultura SST"
+                value={`${Math.round(statsMetrix.categories[4]?.value || 0)}%`}
                 icon={ShieldCheck}
+                color="text-emerald-500"
+                bg="bg-emerald-500/10"
+                border="border-emerald-500/20"
+                glowColor="emerald-500/20"
+                description="Curva de Bradley"
+              />
+              <KpiCard
+                label="Participación"
+                value={`${Math.round(statsMetrix.categories[2]?.value || 0)}%`}
+                icon={Users}
                 color="text-blue-500"
                 bg="bg-blue-500/10"
                 border="border-blue-500/20"
                 glowColor="blue-500/20"
-                description="Cumplimiento normativo"
-              />
-              <KpiCard
-                label="Voz del Equipo"
-                value={statsMetrix.voice}
-                icon={MessageSquare}
-                color="text-orange-500"
-                bg="bg-orange-500/10"
-                border="border-orange-500/20"
-                glowColor="orange-500/20"
-                description="Observaciones críticas"
+                description="Comunicación asertiva"
               />
             </div>
 
@@ -1136,22 +1091,19 @@ export default function DpmsRauraPage() {
                   <TableHeader className="bg-slate-100/90 backdrop-blur-md sticky top-0 z-40">
                     <TableRow className="border-border/40 hover:bg-transparent">
                       <TableHead className="w-[120px] font-black text-[11px] uppercase tracking-[0.4em] text-muted-foreground/60 py-4 pl-14 italic sticky top-0 bg-slate-100/90 z-40 shadow-sm">
-                        Identity
+                        Nombre / DNI
                       </TableHead>
                       <TableHead className="font-black text-[11px] uppercase tracking-[0.4em] text-muted-foreground/60 py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">
-                        Área Operativa
+                        Ubicación / Área
                       </TableHead>
                       <TableHead className="font-black text-[11px] uppercase tracking-[0.4em] text-muted-foreground/60 py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">
                         Empresa / Contrata
                       </TableHead>
                       <TableHead className="font-black text-[11px] uppercase tracking-[0.4em] text-muted-foreground/60 py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">
-                        Puesto / Nivel
+                        Cargo / Puesto
                       </TableHead>
                       <TableHead className="font-black text-[11px] uppercase tracking-[0.4em] text-muted-foreground/60 py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">
                         Neural Maturity
-                      </TableHead>
-                      <TableHead className="font-black text-[11px] uppercase tracking-[0.4em] text-muted-foreground/60 py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">
-                        Fecha
                       </TableHead>
                       <TableHead className="text-right font-black text-[11px] uppercase tracking-[0.4em] text-muted-foreground/60 py-4 pr-14 sticky top-0 bg-slate-100/90 z-40 shadow-sm">
                         Detalle
@@ -1171,13 +1123,18 @@ export default function DpmsRauraPage() {
                         )}
                       >
                         <TableCell className="pl-14">
-                          <div className="w-12 h-12 rounded-2xl bg-muted/50 border border-border/20 flex items-center justify-center text-[10px] font-black group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110 transition-all shadow-inner italic">
-                            #{entry.id}
+                          <div className="flex flex-col">
+                            <span className="text-sm font-black uppercase text-foreground truncate max-w-[200px]">
+                              {entry.name}
+                            </span>
+                            <span className="text-[10px] font-bold text-muted-foreground/60 tabular-nums">
+                              {entry.dni}
+                            </span>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <span className="text-lg font-black text-foreground group-hover:translate-x-1 transition-transform uppercase italic tracking-tight">
-                            {entry.area}
+                          <span className="text-[11px] font-black text-foreground group-hover:translate-x-1 transition-transform uppercase italic tracking-tight">
+                            {entry.ubicacion} / {entry.area}
                           </span>
                         </TableCell>
                         <TableCell>
@@ -1190,7 +1147,7 @@ export default function DpmsRauraPage() {
                             variant="outline"
                             className="text-[10px] font-black uppercase tracking-widest px-4 py-1.5 border-border/40 group-hover:bg-background group-hover:border-primary/30 transition-all"
                           >
-                            {entry.puesto}
+                            {entry.cargo}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -1205,11 +1162,6 @@ export default function DpmsRauraPage() {
                               {Math.round(entry.totalScore)}%
                             </span>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-[11px] font-bold text-muted-foreground uppercase opacity-50">
-                            {entry.fecha}
-                          </span>
                         </TableCell>
                         <TableCell className="text-right pr-14">
                           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full border border-border/40 group-hover:bg-primary group-hover:text-white group-hover:border-primary group-hover:rotate-12 transition-all shadow-xl">
@@ -1239,7 +1191,7 @@ export default function DpmsRauraPage() {
                           {e.area}
                         </Badge>
                         <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-40">
-                          {e.puesto}
+                          {e.cargo}
                         </p>
                       </div>
                       <div className="text-[10px] font-black text-muted-foreground/30 italic">

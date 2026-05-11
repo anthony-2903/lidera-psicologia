@@ -75,22 +75,33 @@ export interface FinalDashboardData {
   individuals: IndividualEvaluation[];
 }
 
+export interface RauraDimension {
+  score: number;
+  valor: string;
+  perfil: string;
+}
+
 export interface RauraEntry {
   id: number;
-  area: string;
-  fecha: string;
-  puesto: string;
+  dni: string;
+  name: string;
+  sexo: string;
+  ubicacion: string;
+  instruccion: string;
+  cargo: string;
   empresa: string;
-  scores: {
-    liderazgo: number;
-    gestion: number;
-    participacion: number;
-    cultura: number;
-  };
+  area: string;
   totalScore: number;
-  comentarios: string;
-  rawResponses: string[];
-  questions?: string[];
+  dimensions: {
+    liderazgo: RauraDimension;
+    percepcion: RauraDimension;
+    comunicacion: RauraDimension;
+    rolEquipo: RauraDimension;
+    cultura: RauraDimension;
+    motivacion: RauraDimension;
+  };
+  fecha: string;
+  comentarios?: string;
 }
 
 export interface RauraDashboardData {
@@ -136,18 +147,18 @@ export interface DimensionesEntry {
   empresa: string;
   area: string;
   cargo: string;
+  ubicacion: string;
+  gradoInstruccion: string;
   puntuacionLiderazgo: number;
+  nivelLiderazgo: string;
+  perfilLiderazgo: string;
   puntuacionPercepcion: number;
+  nivelPercepcion: string;
+  perfilPercepcion: string;
   total: number;
   nivel: string;
   perfil: string;
   genero: 'MASCULINO' | 'FEMENINO';
-  lbaScore: number;
-  belbinScore: number;
-  emaScore: number;
-  bigFiveScore: number;
-  entrevistaScore: number;
-  insightPercepcion?: string;
   // Reportes cualitativos de las hojas adicionales
   culturaReport?: DimensionReport;
   comunicacionReport?: DimensionReport;
@@ -539,10 +550,12 @@ export const fetchFinalDashboardData = async (sheetId: string): Promise<FinalDas
 };
 
 // ============================================
-// FUNCION PARSER RAURA DASHBOARD
+// FUNCION PARSER DPMS-RAURA (NUEVA ESTRUCTURA)
 // ============================================
 export const fetchRauraData = async (sheetId: string): Promise<RauraDashboardData> => {
-  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
+  // GID 0 is "pagina principal"
+  const gid = "0";
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
 
   const response = await fetch(url);
   if (!response.ok) throw new Error('Failed to fetch Raura data');
@@ -560,95 +573,88 @@ export const fetchRauraData = async (sheetId: string): Promise<RauraDashboardDat
         }
 
         const entries: RauraEntry[] = [];
-        const questions = rows[0].slice(6, 35);
         
-        const scoreMap: Record<string, number> = {
-          'SIEMPRE': 5,
-          'MUCHAS VECES': 4,
-          'ALGUNAS VECES': 3,
-          'POCAS VECES': 2,
-          'NUNCA': 1
+        const cleanPct = (val: string | undefined): number => {
+          if (!val) return 0;
+          const v = val.replace(/%/g, '').trim();
+          return parseFloat(v) || 0;
         };
 
-        const getScore = (val: string) => {
-          const v = (val || "").trim();
-          if (/^[1-5]$/.test(v)) return parseInt(v);
-          return scoreMap[v.toUpperCase()] || 0;
-        };
-
-        // Question Grouping Indices (0-indexed from CSV) - SHIFTED BY 2 (Col G start)
-        const catIndices = {
-          liderazgo: [6, 9, 10, 11, 13],
-          gestion: [7, 8, 12, 14, 29, 30, 33],
-          participacion: [15, 16, 17, 18, 22, 32, 34],
-          cultura: [19, 20, 21, 23, 24, 25, 26, 27, 28, 31]
-        };
+        const parseDim = (row: string[], startIdx: number): RauraDimension => ({
+          score: cleanPct(row[startIdx]),
+          valor: (row[startIdx + 1] || '').trim(),
+          perfil: (row[startIdx + 2] || '').trim()
+        });
 
         for (let i = 1; i < rows.length; i++) {
           const r = rows[i];
-          if (!r[1]) continue;
+          if (!r[1] || r[1].toLowerCase().includes('total')) continue; // Skip header/footer
 
-          const calcAvg = (indices: number[]) => {
-            const scores = indices.map(idx => getScore(r[idx])).filter(s => s > 0);
-            return scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length) * 20 : 0; 
-          };
-
-          const scores = {
-            liderazgo: calcAvg(catIndices.liderazgo),
-            gestion: calcAvg(catIndices.gestion),
-            participacion: calcAvg(catIndices.participacion),
-            cultura: calcAvg(catIndices.cultura)
-          };
-
-          const totalScore = (scores.liderazgo + scores.gestion + scores.participacion + scores.cultura) / 4;
+          const liderazgo = parseDim(r, 9);
+          const percepcion = parseDim(r, 12);
+          
+          const totalScore = liderazgo.score > 0 && percepcion.score > 0
+            ? Math.round((liderazgo.score + percepcion.score) / 2)
+            : (liderazgo.score || percepcion.score);
 
           entries.push({
             id: i,
-            area: (r[1] || 'SIN ÁREA').trim().toUpperCase(),
-            fecha: r[2],
-            puesto: r[3] || 'No especificado',
-            empresa: r[5] || 'No especificada', // FILTRO COLUMNA F (index 5)
-            scores,
+            dni: (r[2] || '').trim(),
+            name: (r[1] || '').trim(),
+            sexo: (r[3] || '').trim(),
+            empresa: (r[4] || '').trim(),
+            area: (r[5] || '').trim().toUpperCase(),
+            ubicacion: (r[6] || '').trim(),
+            instruccion: (r[7] || '').trim(),
+            cargo: (r[8] || '').trim(),
             totalScore,
-            comentarios: r[35] || '',
-            rawResponses: r.slice(6, 35),
-            questions
+            dimensions: {
+              liderazgo,
+              percepcion,
+              comunicacion: parseDim(r, 15).score ? parseDim(r, 15) : { score: totalScore, valor: 'Promedio', perfil: 'No disp.' },
+              rolEquipo: parseDim(r, 18).score ? parseDim(r, 18) : { score: totalScore, valor: 'Promedio', perfil: 'No disp.' },
+              cultura: parseDim(r, 21).score ? parseDim(r, 21) : { score: totalScore, valor: 'Promedio', perfil: 'No disp.' },
+              motivacion: parseDim(r, 24).score ? parseDim(r, 24) : { score: totalScore, valor: 'Promedio', perfil: 'No disp.' }
+            },
+            fecha: new Date().toLocaleDateString(), // No specific date in main tab
+            comentarios: '' 
           });
         }
 
         // Aggregate Data
         const avg = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
 
-        const globalAvg = avg(entries.map(e => e.totalScore));
-        
         const categories = [
-          { name: 'Liderazgo Visible', value: avg(entries.map(e => e.scores.liderazgo)) },
-          { name: 'Gestión y Cumplimiento', value: avg(entries.map(e => e.scores.gestion)) },
-          { name: 'Participación', value: avg(entries.map(e => e.scores.participacion)) },
-          { name: 'Cultura y Comunicación', value: avg(entries.map(e => e.scores.cultura)) }
+          { name: 'Liderazgo', value: avg(entries.map(e => e.dimensions.liderazgo.score)) },
+          { name: 'Percepción', value: avg(entries.map(e => e.dimensions.percepcion.score)) },
+          { name: 'Comunicación', value: avg(entries.map(e => e.dimensions.comunicacion.score)) },
+          { name: 'Rol Equipo', value: avg(entries.map(e => e.dimensions.rolEquipo.score)) },
+          { name: 'Cultura', value: avg(entries.map(e => e.dimensions.cultura.score)) },
+          { name: 'Motivación', value: avg(entries.map(e => e.dimensions.motivacion.score)) }
         ];
 
         // Group by Area
         const areaGroups: Record<string, number[]> = {};
         entries.forEach(e => {
-          if (!areaGroups[e.area]) areaGroups[e.area] = [];
-          areaGroups[e.area].push(e.totalScore);
+          const a = (e.area || 'GENERAL').trim().toUpperCase();
+          if (!areaGroups[a]) areaGroups[a] = [];
+          areaGroups[a].push(e.totalScore);
         });
 
         const areas = Object.keys(areaGroups).map(name => ({
           name,
           score: Math.round(avg(areaGroups[name]))
-        }));
+        })).sort((a, b) => b.score - a.score);
 
         resolve({
           totalRespondents: entries.length,
-          globalAverage: globalAvg,
+          globalAverage: avg(entries.map(e => e.totalScore)),
           categories,
           areas,
           entries
         });
       },
-      error: reject
+      error: (error) => reject(error)
     });
   });
 };
@@ -803,9 +809,11 @@ const fetchReportSheet = async (
 };
 
 export const fetchDimensionesData = async (sheetId: string): Promise<DimensionesDashboardData> => {
-  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=pagina%20principal`;
+  // Use export?format=csv with gid=0 for reliable index-based parsing
+  // (header:true fails because "Valor" and "PERFIL" appear twice as headers)
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
 
-  // Fetch all sheets in parallel
+  // Fetch main sheet + qualitative report sheets in parallel
   const [mainRes, culturaMap, comunicacionMap, percepcionMap, liderazgoMap] = await Promise.all([
     fetch(url),
     fetchReportSheet(sheetId, '1175296027'),
@@ -818,131 +826,108 @@ export const fetchDimensionesData = async (sheetId: string): Promise<Dimensiones
   const csvText = await mainRes.text();
 
   return new Promise((resolve, reject) => {
-    Papa.parse(csvText, {
-      header: true,
+    Papa.parse<string[]>(csvText, {
+      header: false,
       skipEmptyLines: true,
       complete: (results) => {
-        const rows = results.data as any[];
-        if (rows.length === 0) {
+        const rows = results.data;
+        if (rows.length < 2) {
           reject(new Error("No data found in Dimensiones sheet (pagina principal)"));
           return;
         }
 
-        // Clean headers from meta.fields (more reliable than Object.keys)
-        const keys = (results.meta.fields || []);
-        
-        // Helper to find column key by keywords
-        const getK = (keywords: string[]) => keys.find(k => {
-           const s = k.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-           return keywords.some(kw => s.includes(kw));
-        });
+        // Column mapping based on actual Google Sheet structure:
+        // A(0): N°
+        // B(1): APELLIDOS Y NOMBRES
+        // C(2): DNI
+        // D(3): Sexo
+        // E(4): Empresa
+        // F(5): Area
+        // G(6): UBICACIÓN
+        // H(7): Grado de instrucción
+        // I(8): Cargo
+        // J(9): LIDERAZGO - TOTAL (%)
+        // K(10): Valor (Liderazgo nivel)
+        // L(11): PERFIL (Liderazgo texto cualitativo)
+        // M(12): PERCEPCION DE RIESGOS - TOTAL (%)
+        // N(13): Valor (Percepción nivel)
+        // O(14): PERFIL (Percepción texto cualitativo)
 
-        // Dynamic mapping based on header analysis
-        const map = {
-            nombre: getK(["NOMBRE", "APELLIDOS", "COLABORADOR", "PACIENTE", "EVALUADO"]) || keys[0],
-            dni: getK(["DNI", "NUMERO DNI", "NRO DNI", "D.N.I."]) || keys[2], // Columna C (index 2)
-            empresa: getK(["EMPRESA"]),
-            area: getK(["AREA", "ÁREA"]),
-            cargo: getK(["CARGO", "PUESTO", "CARGO ACTUAL"]),
-            lba: getK(["LIDERAZGO %", "% LIDERAZGO", "LBA"]) || keys[7], // Columna H (index 7)
-            lbaNivel: getK(["NIVEL LIDERAZGO", "LIDERAZGO NIVEL", "VALOR LIDERAZGO"]) || keys[8], // Columna I (index 8)
-            percepcion: getK(["PERCEPCION %", "% PERCEPCION", "RIESGOS %", "RIESGO %"]) || keys[10], // Columna K (index 10)
-            percepcionNivel: getK(["NIVEL PERCEPCION", "RIESGOS NIVEL", "VALOR RIESGO"]) || keys[11], // Columna L (index 11)
-            belbin: getK(["BELBIN"]),
-            ema: getK(["EMA"]),
-            bf: getK(["BIG FIVE", "BF", "PERSONALIDAD"]),
-            entrevista: getK(["ENTREVISTA"]),
-            total: getK(["TOTAL", "PUNTUACION"]),
-            nivel: getK(["NIVEL"]),
-            perfil: getK(["PERFIL"]),
-            sexo: getK(["SEXO", "GENERO", "SEX", "H/M"]),
-            insightPercepcion: getK(["INSIGHT PERCEPCION", "COMENTARIO RIESGO", "ACCION RIESGO"]) || keys[12] // Columna M (index 12)
+        const cleanPct = (val: string | undefined): number => {
+          if (!val) return 0;
+          const v = val.replace(/%/g, '').trim();
+          return parseFloat(v) || 0;
         };
 
         const entries: DimensionesEntry[] = [];
-        
-        rows.forEach((r, i) => {
-          if (!r[map.nombre] || r[map.nombre].trim() === "") return;
 
-          const cleanPct = (val: any) => {
-             if (val === undefined || val === null) return 0;
-             const v = String(val).replace('%', '').trim();
-             return parseFloat(v) || 0;
-          };
+        for (let i = 1; i < rows.length; i++) {
+          const r = rows[i];
+          const nombre = (r[1] || '').trim();
+          if (!nombre || nombre.toLowerCase().includes('total')) continue;
 
-          // Calculation logic based on mapped columns
-          const lbaPct = cleanPct(r[map.lba || ""]);
-          const percepcionPct = cleanPct(r[map.percepcion || ""]);
-          
-          // Priorizamos los porcentajes directos proporcionados por el usuario
-          const liderazgoReal = lbaPct;
-          const percepcionReal = percepcionPct;
+          // DNI extraction with normalization
+          let dniVal = (r[2] || '').trim();
+          if (dniVal) {
+            dniVal = dniVal.replace(/O/g, '0');
+            if (/^\d{7}$/.test(dniVal)) dniVal = '0' + dniVal;
+          }
 
-          const totalScore = cleanPct(r[map.total || ""]);
-          
-          // EMA or Big Five as proxy for other scores if needed, but for perception we use percepcionReal
-          const bfVal = cleanPct(r[map.bf || ""]);
-          const emaVal = cleanPct(r[map.ema || ""]);
-          
+          // Gender detection
           let genero: 'MASCULINO' | 'FEMENINO' = 'MASCULINO';
-          const sexoVal = (r[map.sexo || ""] || "").trim().toUpperCase();
-          
-          if (sexoVal === 'M' || sexoVal === 'MASCULINO' || sexoVal === 'HOMBRE') {
-            genero = 'MASCULINO';
-          } else if (sexoVal === 'F' || sexoVal === 'FEMENINO' || sexoVal === 'MUJER') {
+          const sexoVal = (r[3] || '').trim().toUpperCase();
+          if (sexoVal === 'F' || sexoVal === 'FEMENINO' || sexoVal === 'MUJER') {
             genero = 'FEMENINO';
-          } else {
-            // Fallback al detector por nombre si la columna sexo está vacía o es ambigua
-            genero = detectGender(r[map.nombre] || '');
+          } else if (!sexoVal || (sexoVal !== 'M' && sexoVal !== 'MASCULINO')) {
+            genero = detectGender(nombre);
           }
 
-          // Extracción inteligente de DNI: Debe contener números y no parecer un nombre largo
-          let dniVal = "";
-          const dniCandidates = [map.dni, keys[2], keys[1], keys[0]]; 
-          for (const cand of dniCandidates) {
-            if (!cand) continue;
-            let val = String(r[cand] || "").trim();
-            
-            // Normalización: Corregir 'O' por '0' (error común de tipeo)
-            val = val.replace(/O/g, '0');
+          const liderazgoPct = cleanPct(r[9]);
+          const nivelLiderazgo = (r[10] || '').trim();
+          const perfilLiderazgo = (r[11] || '').trim();
 
-            // Si contiene al menos un número y no tiene ráfagas de letras largas (evita nombres)
-            if (/\d/.test(val) && !/[a-zA-Z]{5,}/.test(val)) {
-              // Si parece un DNI peruano de 8 dígitos y le falta el cero inicial
-              if (/^\d{7}$/.test(val)) val = "0" + val;
-              dniVal = val;
-              break;
-            }
-          }
+          const percepcionPct = cleanPct(r[12]);
+          const nivelPercepcion = (r[13] || '').trim();
+          const perfilPercepcion = (r[14] || '').trim();
 
-          const nameKey = (r[map.nombre] || '').trim().toUpperCase();
+          // Total as average of both dimensions
+          const total = liderazgoPct > 0 && percepcionPct > 0
+            ? Math.round((liderazgoPct + percepcionPct) / 2)
+            : liderazgoPct || percepcionPct;
+
+          // General level based on total
+          let nivel = 'Medio';
+          if (total >= 70) nivel = 'Alto';
+          else if (total < 34) nivel = 'Bajo';
+
+          const nameKey = nombre.toUpperCase();
 
           entries.push({
-            id: i + 1,
-            nombre: r[map.nombre],
-            dni: dniVal || "No registrado",
-            empresa: (r[map.empresa || ""] || r[keys[4]] || "").trim(),
-            area: (r[map.area || ""] || r[keys[5]] || "").trim(),
-            cargo: (r[map.cargo || ""] || r[keys[6]] || "").trim(),
-            puntuacionLiderazgo: liderazgoReal,
-            puntuacionPercepcion: percepcionReal,
-            total: totalScore,
-            nivel: (r[map.nivel || ""] || r[map.lbaNivel || ""] || "Normal").trim(),
-            perfil: (r[map.perfil || ""] || r[map.percepcionNivel || ""] || "").trim(),
+            id: i,
+            nombre,
+            dni: dniVal || 'No registrado',
+            empresa: (r[4] || '').trim(),
+            area: (r[5] || '').trim(),
+            ubicacion: (r[6] || '').trim(),
+            gradoInstruccion: (r[7] || '').trim(),
+            cargo: (r[8] || '').trim(),
+            puntuacionLiderazgo: liderazgoPct,
+            nivelLiderazgo,
+            perfilLiderazgo,
+            puntuacionPercepcion: percepcionPct,
+            nivelPercepcion,
+            perfilPercepcion,
+            total,
+            nivel,
+            perfil: perfilLiderazgo,
             genero,
-            lbaScore: lbaPct,
-            belbinScore: cleanPct(r[map.belbin || ""]),
-            emaScore: emaVal,
-            bigFiveScore: bfVal,
-            entrevistaScore: cleanPct(r[map.entrevista || ""]),
-            insightPercepcion: (r[map.insightPercepcion || ""] || "").trim(),
             // JOIN con las hojas de reporte cualitativo
             culturaReport: culturaMap.get(nameKey),
             comunicacionReport: comunicacionMap.get(nameKey),
             percepcionReport: percepcionMap.get(nameKey),
             liderazgoReport: liderazgoMap.get(nameKey),
           });
-        });
+        }
 
         resolve({
           entries,

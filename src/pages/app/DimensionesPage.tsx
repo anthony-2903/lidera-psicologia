@@ -413,22 +413,19 @@ const DimensionesPage = () => {
                                 <p className="text-[10px] font-bold text-slate-400 italic">Análisis ponderado de competencias.</p>
                             </div>
 
-                            <div className="grid grid-cols-2 md:grid-cols-6 gap-4 flex-1 w-full">
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 flex-1 w-full">
                                 {[
-                                    { label: "LBA II", wt: "30%", val: selectedEntry.lbaScore, c: "text-blue-600", bg: "bg-blue-500/10", bdr: "border-blue-200" },
-                                    { label: "Belbin", wt: "20%", val: selectedEntry.belbinScore, c: "text-purple-600", bg: "bg-purple-500/10", bdr: "border-purple-200" },
-                                    { label: "EMA", wt: "15%", val: selectedEntry.emaScore, c: "text-rose-600", bg: "bg-rose-500/10", bdr: "border-rose-200" },
-                                    { label: "Big Five", wt: "20%", val: selectedEntry.bigFiveScore, c: "text-amber-600", bg: "bg-amber-500/10", bdr: "border-amber-200" },
-                                    { label: "Entrevista", wt: "15%", val: selectedEntry.entrevistaScore, c: "text-indigo-600", bg: "bg-indigo-500/10", bdr: "border-indigo-200" },
-                                    { label: "Total", wt: "100%", val: selectedEntry.total, c: "text-white", bg: "bg-primary shadow-lg shadow-primary/30", bdr: "border-primary", isTotal: true },
+                                    { label: "Liderazgo", wt: "50%", val: selectedEntry.puntuacionLiderazgo, nivel: selectedEntry.nivelLiderazgo, c: "text-blue-600", bg: "bg-blue-500/10", bdr: "border-blue-200" },
+                                    { label: "Percepción de Riesgos", wt: "50%", val: selectedEntry.puntuacionPercepcion, nivel: selectedEntry.nivelPercepcion, c: "text-indigo-600", bg: "bg-indigo-500/10", bdr: "border-indigo-200" },
+                                    { label: "Total General", wt: "100%", val: selectedEntry.total, nivel: selectedEntry.nivel, c: "text-white", bg: "bg-primary shadow-lg shadow-primary/30", bdr: "border-primary", isTotal: true },
                                 ].map((s, i) => (
                                     <div key={i} className={cn(
-                                        "flex flex-col items-center gap-2 p-4 rounded-3xl transition-all hover:scale-105 border",
+                                        "flex flex-col items-center gap-2.5 p-5 rounded-3xl transition-all hover:scale-105 border",
                                         s.bg, s.bdr
                                     )}>
-                                        <span className={cn("text-[8px] font-black uppercase tracking-widest", s.isTotal ? "text-white/70" : "text-slate-400")}>{s.label}</span>
+                                        <span className={cn("text-[8px] font-black uppercase tracking-widest text-center leading-tight", s.isTotal ? "text-white/70" : "text-slate-400")}>{s.label}</span>
                                         <div className="flex items-baseline gap-0.5">
-                                            <span className={cn("text-xl font-black tracking-tighter", s.c)}>
+                                            <span className={cn("text-2xl font-black tracking-tighter", s.c)}>
                                                 {s.val}
                                             </span>
                                             <span className={cn("text-[9px] font-bold", s.isTotal ? "text-white/50" : "text-slate-400")}>%</span>
@@ -441,7 +438,9 @@ const DimensionesPage = () => {
                                                 className={cn("h-full", s.isTotal ? "bg-white" : s.c.replace('text', 'bg'))}
                                             />
                                         </div>
-                                        <span className={cn("text-[7px] font-black uppercase tracking-tight", s.isTotal ? "text-white/60" : "text-slate-300")}>{s.wt} Peso</span>
+                                        <Badge className={cn("rounded-full px-3 py-0.5 text-[7px] font-black uppercase tracking-tighter border-none whitespace-nowrap", s.isTotal ? "bg-white/20 text-white/80" : s.bg, !s.isTotal && s.c)}>
+                                            {s.nivel}
+                                        </Badge>
                                     </div>
                                 ))}
                             </div>
@@ -518,8 +517,8 @@ const DimensionesPage = () => {
                                     icon: Zap,
                                     color: "indigo-500",
                                     gradient: "from-indigo-500/10 to-transparent",
-                                    insightLabel: "Estrategia de Mejora",
-                                    text: selectedEntry.perfil || "Fortalecer la influencia en campo y la proactividad para consolidar un liderazgo más efectivo."
+                                    insightLabel: `Nivel: ${selectedEntry.nivelLiderazgo}`,
+                                    text: selectedEntry.perfilLiderazgo || "Fortalecer la influencia en campo y la proactividad para consolidar un liderazgo más efectivo."
                                 },
                                 { 
                                     title: "Percepción de Riesgos", 
@@ -527,8 +526,8 @@ const DimensionesPage = () => {
                                     icon: Shield,
                                     color: "primary",
                                     gradient: "from-primary/10 to-transparent",
-                                    insightLabel: "Insight Preventivo",
-                                    text: selectedEntry.insightPercepcion || "El colaborador demuestra un enfoque preventivo integrado. Se sugiere mantener el refuerzo positivo en la detección precoz de riesgos."
+                                    insightLabel: `Nivel: ${selectedEntry.nivelPercepcion}`,
+                                    text: selectedEntry.perfilPercepcion || "El colaborador demuestra un enfoque preventivo integrado. Se sugiere mantener el refuerzo positivo en la detección precoz de riesgos."
                                 }
                             ].map((res, idx) => {
                                 const cfg = getLevelConfig(res.score);
@@ -763,7 +762,7 @@ const DimensionesPage = () => {
 
                         const currentScore = Math.round(
                             diagnosticTab === 'cultura' ? selectedEntry.total :
-                            diagnosticTab === 'comunicación' ? (selectedEntry.emaScore || 75) :
+                            diagnosticTab === 'comunicación' ? selectedEntry.total :
                             diagnosticTab === 'percepción' ? selectedEntry.puntuacionPercepcion :
                             selectedEntry.puntuacionLiderazgo
                         );
