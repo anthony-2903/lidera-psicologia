@@ -92,7 +92,7 @@ const getInterpretation = (val: string) => {
     "2": "Nivel Dependiente - Acción basada en supervisión y reglas.",
     "3": "Nivel Independiente - Acción basada en autovigilancia y convicción.",
     "4": "Nivel Interdependiente - Acción basada en el cuidado mutuo y proactividad.",
-    "5": "Excelente / Liderazgo - Cultura preventiva plenamente integrada y ejemplar."
+    "5": "Excelente / Liderazgo - Cultura preventiva plenamente integrada y ejemplar.",
   };
   return map[v] || val;
 };
@@ -100,12 +100,12 @@ const getInterpretation = (val: string) => {
 const getQuestionText = (val: string) => {
   if (!val) return "";
   const v = val.trim();
-  const map: any = { 
-    "1": "Nunca", 
-    "2": "Pocas veces", 
-    "3": "Algunas veces", 
-    "4": "Muchas veces", 
-    "5": "Siempre" 
+  const map: any = {
+    "1": "Nunca",
+    "2": "Pocas veces",
+    "3": "Algunas veces",
+    "4": "Muchas veces",
+    "5": "Siempre",
   };
   return map[v] || v;
 };
@@ -119,13 +119,13 @@ const EntryPanel = ({
   entry: RauraEntry;
   onClose: () => void;
 }) => {
-  const getAIAnalysis = (dims: RauraEntry['dimensions']) => {
-    const sorted = Object.entries(dims).sort((a,b) => a[1].score - b[1].score);
+  const getAIAnalysis = (dims: RauraEntry["dimensions"]) => {
+    const sorted = Object.entries(dims).sort((a, b) => a[1].score - b[1].score);
     const lowest = sorted[0];
     const highest = sorted[5];
 
     let analysis = `El perfil presenta una madurez operativa destacada en **${highest[0].toUpperCase()}** (${Math.round(highest[1].score)}%), categorizado como **${highest[1].perfil}**. `;
-    
+
     if (lowest[1].score < 50) {
       analysis += `Sin embargo, se detecta un área crítica en **${lowest[0].toUpperCase()}** (${Math.round(lowest[1].score)}%), donde el perfil actual es **${lowest[1].perfil}**. Esto sugiere la necesidad de una intervención inmediata para elevar el nivel de madurez organizacional.`;
     } else {
@@ -139,12 +139,32 @@ const EntryPanel = ({
 
   const radarData = useMemo(
     () => [
-      { subject: "LIDERAZGO", A: entry.dimensions.liderazgo.score, fullMark: 100 },
-      { subject: "PERCEPCIÓN", A: entry.dimensions.percepcion.score, fullMark: 100 },
-      { subject: "COMUNICACIÓN", A: entry.dimensions.comunicacion.score, fullMark: 100 },
-      { subject: "ROL EQUIPO", A: entry.dimensions.rolEquipo.score, fullMark: 100 },
+      {
+        subject: "LIDERAZGO",
+        A: entry.dimensions.liderazgo.score,
+        fullMark: 100,
+      },
+      {
+        subject: "PERCEPCIÓN",
+        A: entry.dimensions.percepcion.score,
+        fullMark: 100,
+      },
+      {
+        subject: "COMUNICACIÓN",
+        A: entry.dimensions.comunicacion.score,
+        fullMark: 100,
+      },
+      {
+        subject: "ROL EQUIPO",
+        A: entry.dimensions.rolEquipo.score,
+        fullMark: 100,
+      },
       { subject: "CULTURA", A: entry.dimensions.cultura.score, fullMark: 100 },
-      { subject: "MOTIVACIÓN", A: entry.dimensions.motivacion.score, fullMark: 100 },
+      {
+        subject: "MOTIVACIÓN",
+        A: entry.dimensions.motivacion.score,
+        fullMark: 100,
+      },
     ],
     [entry],
   );
@@ -257,7 +277,9 @@ const EntryPanel = ({
         {/* Categories Grid with Qualitative Profiles */}
         <div className="grid grid-cols-2 gap-5">
           {Object.entries(entry.dimensions).map(([key, dim], idx) => {
-            const label = key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1');
+            const label =
+              key.charAt(0).toUpperCase() +
+              key.slice(1).replace(/([A-Z])/g, " $1");
             const color = Object.values(CAT_COLORS)[idx];
             return (
               <div key={key} className="relative group cursor-default">
@@ -282,7 +304,10 @@ const EntryPanel = ({
                     >
                       {Math.round(dim.score)}%
                     </p>
-                    <Badge variant="outline" className="text-[8px] font-bold uppercase tracking-tighter border-muted-foreground/20 text-muted-foreground">
+                    <Badge
+                      variant="outline"
+                      className="text-[8px] font-bold uppercase tracking-tighter border-muted-foreground/20 text-muted-foreground"
+                    >
                       {dim.perfil}
                     </Badge>
                   </CardContent>
@@ -294,30 +319,39 @@ const EntryPanel = ({
 
         {/* Categoría Neural Analysis (IA) */}
         <div className="relative p-8 bg-gradient-to-br from-indigo-900 to-slate-900 rounded-[3rem] border border-indigo-500/30 shadow-3xl group overflow-hidden">
-           <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-500/20 blur-[80px] -translate-y-1/2 translate-x-1/2" />
-           <div className="relative z-10 space-y-6">
-              <div className="flex items-center gap-3">
-                 <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 flex items-center justify-center text-indigo-300">
-                    <Brain className="w-6 h-6 animate-pulse" />
-                 </div>
-                 <div>
-                    <h4 className="text-[10px] font-black uppercase text-indigo-300 tracking-[0.4em] italic mb-1">Diagnóstico IA Psicología Expert</h4>
-                    <p className="text-xs font-bold text-indigo-100/60">Análisis Conductual y Predictivo</p>
-                 </div>
+          <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-500/20 blur-[80px] -translate-y-1/2 translate-x-1/2" />
+          <div className="relative z-10 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 flex items-center justify-center text-indigo-300">
+                <Brain className="w-6 h-6 animate-pulse" />
               </div>
+              <div>
+                <h4 className="text-[10px] font-black uppercase text-indigo-300 tracking-[0.4em] italic mb-1">
+                  Diagnóstico IA Psicología Expert
+                </h4>
+                <p className="text-xs font-bold text-indigo-100/60">
+                  Análisis Conductual y Predictivo
+                </p>
+              </div>
+            </div>
 
-              <div className="space-y-4">
-                 <p className="text-sm font-medium text-indigo-100/90 leading-relaxed italic border-l-2 border-indigo-500/50 pl-4 py-1" dangerouslySetInnerHTML={{ __html: aiResult.analysis }} />
-                 <div className="p-5 bg-white/5 rounded-2xl border border-white/5 space-y-2">
-                    <p className="text-[9px] font-black uppercase text-indigo-400 tracking-widest flex items-center gap-2">
-                       <Zap className="w-3 h-3 fill-indigo-400" /> Foco de Mejora
-                    </p>
-                    <p className="text-xs font-bold text-indigo-100/80 leading-relaxed">
-                       Basado en el perfil cualitativo, se recomienda priorizar el desarrollo de competencias en las áreas de menor puntuación para equilibrar la cultura organizacional.
-                    </p>
-                 </div>
+            <div className="space-y-4">
+              <p
+                className="text-sm font-medium text-indigo-100/90 leading-relaxed italic border-l-2 border-indigo-500/50 pl-4 py-1"
+                dangerouslySetInnerHTML={{ __html: aiResult.analysis }}
+              />
+              <div className="p-5 bg-white/5 rounded-2xl border border-white/5 space-y-2">
+                <p className="text-[9px] font-black uppercase text-indigo-400 tracking-widest flex items-center gap-2">
+                  <Zap className="w-3 h-3 fill-indigo-400" /> Foco de Mejora
+                </p>
+                <p className="text-xs font-bold text-indigo-100/80 leading-relaxed">
+                  Basado en el perfil cualitativo, se recomienda priorizar el
+                  desarrollo de competencias en las áreas de menor puntuación
+                  para equilibrar la cultura organizacional.
+                </p>
               </div>
-           </div>
+            </div>
+          </div>
         </div>
 
         {/* Comments Section */}
@@ -336,7 +370,6 @@ const EntryPanel = ({
         )}
 
         {/* Interpretación Section (Nota: El desglose de preguntas individuales se encuentra en las pestañas específicas del Excel) */}
-
       </div>
     </div>
   );
@@ -365,9 +398,9 @@ export default function DpmsRauraPage() {
     return data.entries
       .filter((e) => {
         const matchesSearch =
-          (e.name || '').toLowerCase().includes(search.toLowerCase()) ||
-          (e.cargo || '').toLowerCase().includes(search.toLowerCase()) ||
-          (e.empresa || '').toLowerCase().includes(search.toLowerCase());
+          (e.name || "").toLowerCase().includes(search.toLowerCase()) ||
+          (e.cargo || "").toLowerCase().includes(search.toLowerCase()) ||
+          (e.empresa || "").toLowerCase().includes(search.toLowerCase());
         const matchesCompany =
           selectedCompany === "all" || e.empresa === selectedCompany;
         return matchesSearch && matchesCompany;
@@ -376,36 +409,58 @@ export default function DpmsRauraPage() {
   }, [data, search, selectedCompany]);
 
   const statsMetrix = useMemo(() => {
-    if (!filteredEntries.length) return { avg: 0, categories: [], areas: [], voice: 0 };
-    
-    const avg = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
-    
+    if (!filteredEntries.length)
+      return { avg: 0, categories: [], areas: [], voice: 0 };
+
+    const avg = (arr: number[]) =>
+      arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+
     const categories = [
-      { name: 'Liderazgo', value: avg(filteredEntries.map(e => e.dimensions.liderazgo.score)) },
-      { name: 'Percepción', value: avg(filteredEntries.map(e => e.dimensions.percepcion.score)) },
-      { name: 'Comunicación', value: avg(filteredEntries.map(e => e.dimensions.comunicacion.score)) },
-      { name: 'Rol Equipo', value: avg(filteredEntries.map(e => e.dimensions.rolEquipo.score)) },
-      { name: 'Cultura', value: avg(filteredEntries.map(e => e.dimensions.cultura.score)) },
-      { name: 'Motivación', value: avg(filteredEntries.map(e => e.dimensions.motivacion.score)) }
+      {
+        name: "Liderazgo",
+        value: avg(filteredEntries.map((e) => e.dimensions.liderazgo.score)),
+      },
+      {
+        name: "Percepción",
+        value: avg(filteredEntries.map((e) => e.dimensions.percepcion.score)),
+      },
+      {
+        name: "Comunicación",
+        value: avg(filteredEntries.map((e) => e.dimensions.comunicacion.score)),
+      },
+      {
+        name: "Rol Equipo",
+        value: avg(filteredEntries.map((e) => e.dimensions.rolEquipo.score)),
+      },
+      {
+        name: "Cultura",
+        value: avg(filteredEntries.map((e) => e.dimensions.cultura.score)),
+      },
+      {
+        name: "Motivación",
+        value: avg(filteredEntries.map((e) => e.dimensions.motivacion.score)),
+      },
     ];
 
     const areaGroups: Record<string, number[]> = {};
-    filteredEntries.forEach(e => {
-      const a = (e.area || 'GENERAL').trim().toUpperCase();
+    filteredEntries.forEach((e) => {
+      const a = (e.area || "GENERAL").trim().toUpperCase();
       if (!areaGroups[a]) areaGroups[a] = [];
       areaGroups[a].push(e.totalScore);
     });
 
-    const areas = Object.keys(areaGroups).map(name => ({
-      name,
-      score: Math.round(avg(areaGroups[name]))
-    })).sort((a, b) => b.score - a.score);
+    const areas = Object.keys(areaGroups)
+      .map((name) => ({
+        name,
+        score: Math.round(avg(areaGroups[name])),
+      }))
+      .sort((a, b) => b.score - a.score);
 
     return {
-      avg: avg(filteredEntries.map(e => e.totalScore)),
+      avg: avg(filteredEntries.map((e) => e.totalScore)),
       categories,
       areas,
-      voice: filteredEntries.filter(e => e.comentarios).length
+      voice: filteredEntries.filter((e) => e.comentarios).length,
     };
   }, [filteredEntries]);
 
@@ -450,14 +505,20 @@ export default function DpmsRauraPage() {
   }, [filteredEntries]);
 
   const cultureData = useMemo(() => {
-    if (!filteredEntries.length) return { avg: 0, distribution: [], label: "N/A" };
+    if (!filteredEntries.length)
+      return { avg: 0, distribution: [], label: "N/A" };
     const avgCulture = statsMetrix.categories[4]?.value || 0;
 
     const levels = [
       { name: "Reactivo", value: 0, color: "#ef4444", range: "0-25%" },
       { name: "Dependiente", value: 0, color: "#f59e0b", range: "26-50%" },
       { name: "Independiente", value: 0, color: "#3b82f6", range: "51-75%" },
-      { name: "Interdependiente", value: 0, color: "#10b981", range: "76-100%" },
+      {
+        name: "Interdependiente",
+        value: 0,
+        color: "#10b981",
+        range: "76-100%",
+      },
     ];
 
     filteredEntries.forEach((e) => {
@@ -590,7 +651,7 @@ export default function DpmsRauraPage() {
           <div className="space-y-20 animate-in fade-in slide-in-from-bottom-12 duration-1000 fill-mode-forwards">
             {/* KPI GRID */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
-               <KpiCard
+              <KpiCard
                 label="Promedio Global"
                 value={`${Math.round(statsMetrix.avg)}%`}
                 icon={Target}
@@ -825,12 +886,12 @@ export default function DpmsRauraPage() {
                       <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />{" "}
                       Neural Diagnostic Summary
                     </h4>
-                    <Badge 
+                    <Badge
                       className="rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest border-none shadow-lg animate-in zoom-in duration-500"
-                      style={{ 
-                        backgroundColor: `${behaviorCategory.color}20`, 
+                      style={{
+                        backgroundColor: `${behaviorCategory.color}20`,
                         color: behaviorCategory.color,
-                        boxShadow: `0 0 20px ${behaviorCategory.color}30`
+                        boxShadow: `0 0 20px ${behaviorCategory.color}30`,
                       }}
                     >
                       Nivel: {behaviorCategory.name}
@@ -905,12 +966,12 @@ export default function DpmsRauraPage() {
                       <Activity className="w-4 h-4 text-blue-500" />{" "}
                       Organizational DNA Index
                     </h4>
-                    <Badge 
+                    <Badge
                       className="rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest border-none shadow-lg"
-                      style={{ 
-                        backgroundColor: `${cultureData.color}20`, 
+                      style={{
+                        backgroundColor: `${cultureData.color}20`,
                         color: cultureData.color,
-                        boxShadow: `0 0 20px ${cultureData.color}30`
+                        boxShadow: `0 0 20px ${cultureData.color}30`,
                       }}
                     >
                       Nivel: {cultureData.label}
@@ -1051,14 +1112,23 @@ export default function DpmsRauraPage() {
                   />
                 </div>
 
-                <Select value={selectedCompany} onValueChange={setSelectedCompany}>
+                <Select
+                  value={selectedCompany}
+                  onValueChange={setSelectedCompany}
+                >
                   <SelectTrigger className="w-full sm:w-[280px] h-20 bg-white/60 backdrop-blur-3xl border-border/40 rounded-[2rem] shadow-2xl text-lg font-black tracking-tight border-2 px-8">
                     <SelectValue placeholder="Filtrar por Empresa" />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl border-2 bg-white/90 backdrop-blur-xl">
-                    <SelectItem value="all" className="font-bold py-3">Todas las Empresas</SelectItem>
+                    <SelectItem value="all" className="font-bold py-3">
+                      Todas las Empresas
+                    </SelectItem>
                     {companies.map((c) => (
-                      <SelectItem key={c} value={c} className="font-bold py-3 uppercase">
+                      <SelectItem
+                        key={c}
+                        value={c}
+                        className="font-bold py-3 uppercase"
+                      >
                         {c}
                       </SelectItem>
                     ))}
@@ -1224,7 +1294,7 @@ export default function DpmsRauraPage() {
       {/* FLOATING ACTION PANEL */}
       {selectedEntry && (
         <>
-          <div 
+          <div
             className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[90] lg:hidden animate-in fade-in duration-500"
             onClick={() => setSelectedEntry(null)}
           />
