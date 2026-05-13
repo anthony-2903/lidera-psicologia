@@ -29,55 +29,65 @@ const SHEET_ID = "1nrHMcI8fWlBKIWIv9aprjElPhY-ccmXX";
 const RISK_COLORS = {
   'RIESGO ALTO': '#ef4444',   // Red-500
   'RIESGO MEDIO': '#f59e0b',  // Amber-500
-  'APTO': '#10b981'           // Emerald-500
+  'APTO': '#10b981',           // Emerald-500
+  'ERROR': '#64748b'           // Slate-500
 };
 
 const RECOMMENDATIONS = {
   'APTO': {
-    title: '🟢 RECOMENDACIÓN: APTO (Bajo Riesgo)',
-    desc: 'Trabajadores con alto nivel de responsabilidad (control interno).',
+    title: '🟢 RECOMENDACIÓN: APTO (Dominancia Interna)',
+    desc: 'Perfil con dominancia interna sólida. El evaluado tiende a reconocer la influencia de sus propias acciones en los resultados laborales y de seguridad.',
     rec: [
-      'Mantener en tareas críticas, asegurando continuidad del desempeño.',
-      'Designar como modelo de conducta segura dentro del equipo.',
-      'Refuerzo mediante reconocimiento conductual (feedback positivo).',
-      'Involucrar en inducciones o charlas de seguridad como referente.',
-      'Seguimiento periódico (no intensivo) para asegurar sostenibilidad.',
-      'Considerar en procesos de liderazgo.'
+      'Mantener en tareas críticas, según desempeño y criterio operativo.',
+      'Considerar como referente de conducta segura.',
+      'Refuerzar mediante feedback positivo.',
+      'Seguimiento preventivo periódico.',
+      'Potenciar participación en charlas o inducciones de seguridad.'
     ],
-    followUp: 'Reevaluación cada 12 meses'
+    followUp: 'Seguimiento preventivo periódico.'
   },
   'RIESGO MEDIO': {
-    title: '🟡 RECOMENDACIÓN: RIESGO MEDIO (Riesgo Moderado)',
-    desc: 'Trabajadores con responsabilidad parcial, pero con tendencia a justificar errores.',
+    title: '🟡 RECOMENDACIÓN: RIESGO MEDIO (Control Moderado)',
+    desc: 'Perfil con control interno moderado. Si bien el evaluado muestra capacidad para asumir responsabilidad sobre sus acciones, aún puede presentar cierta tendencia a atribuir algunos eventos a factores externos.',
     rec: [
-      'Realizar charlas cortas focalizadas en responsabilidad personal, toma de decisiones, condiciones personales y fallos graves.',
-      'Supervisión más cercana en tareas críticas.',
-      'Retroalimentación directa del supervisor sea inmediata y específica.',
-      'Establecer sensibilización con los compromisos conductuales de seguridad.',
-      'Brindar retroalimentación individual.'
+      'Realizar reforzamiento en responsabilidad personal.',
+      'Brindar retroalimentación directa del supervisor.',
+      'Reforzar uso de herramientas preventivas.',
+      'Monitorear desempeño en tareas críticas.',
+      'Reevaluar en periodo definido por el área.'
     ],
-    followUp: 'Reevaluación cada 6 meses. Monitoreo trimestral de incidentes.'
+    followUp: 'Monitoreo de desempeño en tareas críticas.'
   },
   'RIESGO ALTO': {
-    title: '🔴 RECOMENDACIÓN: RIESGO ALTO (Alto Riesgo)',
-    desc: 'Trabajadores con tendencia fuerte a no asumir responsabilidad.',
+    title: '🔴 RECOMENDACIÓN: RIESGO ALTO (Predominancia Externa)',
+    desc: 'Perfil con predominancia externa. El evaluado podría mostrar mayor tendencia a atribuir los resultados a factores externos, como el entorno, terceros o condiciones fuera de su control.',
     rec: [
-      'Implementar plan de intervención conductual individual.',
-      'Seguimiento por la supervisión en campo estricto y continuo.',
-      'Participación obligatoria en programas de sensibilización en seguridad.',
-      'Retroalimentación directa e inmediata ante desviaciones comportamentales.',
-      'Evaluar antecedentes (incidentes, incumplimientos, reportes).',
-      'Reasignación temporal a funciones de menor exposición al riesgo.',
-      'Reevaluación obligatoria antes de reincorporación a tareas críticas.'
+      'Aplicar intervención conductual individual.',
+      'Reforzar percepción de riesgo y consecuencias.',
+      'Realizar seguimiento cercano en campo.',
+      'Evaluar antecedentes de incidentes o incumplimientos.',
+      'Considerar restricción temporal de tareas críticas según criterio operativo.',
+      'Reevaluar antes de exposición a tareas de mayor riesgo.'
     ],
-    followUp: 'Evaluación cada 3 meses. Seguimiento mensual. Levantar restricciones solo si mejora su nivel.'
+    followUp: 'Intervención conductual individual y seguimiento cercano.'
+  },
+  'ERROR': {
+    title: '⚠️ REGISTRO NO VÁLIDO',
+    desc: 'Registro no válido para interpretación. Las respuestas no completan las 23 preguntas válidas o existe un problema de lectura de datos.',
+    rec: [
+      'Revisar la fila correspondiente en la base de datos.',
+      'Verificar que se hayan completado las 23 respuestas.',
+      'Asegurar que las respuestas sean únicamente A o B.'
+    ],
+    followUp: 'Requiere revisión manual de la base de datos.'
   }
 };
 
-const getAnalysis = (internal: number) => {
-  if (internal >= 19) return "Perfil con dominancia interna sólida (Apto). El evaluado asume responsabilidad directa sobre sus acciones y resultados, mostrando un alto compromiso con la seguridad operativa y el cumplimiento de normas.";
-  if (internal >= 13) return "Perfil con control de riesgo medio. Si bien asume responsabilidad, aún existe una tendencia parcial a atribuir eventos a factores externos. Se recomienda reforzamiento en cultura de seguridad.";
-  return "Perfil con dominancia externa (Riesgo Alto). Existe una marcada tendencia a atribuir los resultados a factores ajenos a su voluntad, lo que aumenta la probabilidad de conductas inseguras por falta de responsabilidad personal.";
+const getAnalysis = (result: string, internal: number) => {
+  if (result === 'ERROR') return "Registro no válido para interpretación. Las respuestas no completan las 23 preguntas válidas o existe un problema de lectura de datos.";
+  if (internal >= 19) return "Perfil con dominancia interna sólida. El evaluado tiende a reconocer la influencia de sus propias acciones en los resultados laborales y de seguridad. Este perfil resulta favorable para tareas críticas, ya que se asocia con responsabilidad personal, cumplimiento de procedimientos y mayor disposición hacia la conducta segura.";
+  if (internal >= 13) return "Perfil con control interno moderado. Si bien el evaluado muestra capacidad para asumir responsabilidad sobre sus acciones, aún puede presentar cierta tendencia a atribuir algunos eventos a factores externos. Se recomienda reforzar la autogestión preventiva, la toma de decisiones seguras y la responsabilidad individual frente al riesgo.";
+  return "Perfil con predominancia externa. El evaluado podría mostrar mayor tendencia a atribuir los resultados a factores externos, como el entorno, terceros o condiciones fuera de su control. Este resultado requiere intervención, seguimiento y refuerzo en responsabilidad personal, percepción de riesgo y conducta segura antes de asignar tareas críticas.";
 };
 
 // Panel Lateral de Detalle Individual
@@ -93,7 +103,7 @@ const DriverSafetyIndividualPanel = ({ entry, distribution, onClose }: {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    const analysis = getAnalysis(entry.internalScore);
+    const analysis = getAnalysis(entry.result, entry.internalScore);
     const date = entry.date;
     const isApto = entry.result === 'APTO';
     const isMedio = entry.result === 'RIESGO MEDIO';
@@ -378,8 +388,11 @@ const DriverSafetyIndividualPanel = ({ entry, distribution, onClose }: {
           </h4>
           
           <div className="space-y-6 relative z-10">
-            {entry.result !== 'RIESGO ALTO' && (
-               <p className="text-sm font-medium text-slate-300 leading-relaxed italic border-b border-white/5 pb-6">"{getAnalysis(entry.internalScore)}"</p>
+            {entry.result !== 'RIESGO ALTO' && entry.result !== 'ERROR' && (
+               <p className="text-sm font-medium text-slate-300 leading-relaxed italic border-b border-white/5 pb-6">"{getAnalysis(entry.result, entry.internalScore)}"</p>
+            )}
+            {entry.result === 'ERROR' && (
+               <p className="text-sm font-medium text-red-400 leading-relaxed italic border-b border-white/5 pb-6">"{getAnalysis(entry.result, entry.internalScore)}"</p>
             )}
             
             <div className="space-y-4">
@@ -432,7 +445,7 @@ const DriverSafetyIndividualPanel = ({ entry, distribution, onClose }: {
             const excelWindow = window.open('', '_blank');
             if (!excelWindow) return;
             
-            const analysis = getAnalysis(entry.internalScore);
+            const analysis = getAnalysis(entry.result, entry.internalScore);
             const diff = entry.internalScore - entry.externalScore;
             const resultText = entry.result;
             const isMedio = entry.result === 'RIESGO MEDIO';
@@ -680,6 +693,7 @@ const DriverSafetyPage = () => {
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ['driverSafety', SHEET_ID],
     queryFn: () => fetchDriverSafetyData(SHEET_ID),
+    refetchInterval: 300000, // 5 minutes
   });
 
   // Extract unique values for filters
@@ -728,9 +742,7 @@ const DriverSafetyPage = () => {
       'Puntaje Externo': entry.externalScore,
       Balance: entry.internalScore - entry.externalScore,
       Resultado: entry.result,
-      'Diagnóstico': entry.internalScore - entry.externalScore > 0 
-        ? "Perfil con dominancia interna. El evaluado asume responsabilidad directa sobre sus acciones y resultados, mostrando proactividad en seguridad." 
-        : "Perfil con dominancia externa. Existe una tendencia a atribuir resultados a factores ajenos, lo que sugiere una menor autonomía operativa."
+      'Diagnóstico': getAnalysis(entry.result, entry.internalScore)
     }));
 
       const script = `
@@ -1187,7 +1199,7 @@ const DriverSafetyPage = () => {
         selectedEntry ? "pr-0 lg:pr-[450px] xl:pr-[500px]" : ""
       )}>
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-border/40 pb-8">
+        <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-border/40 pb-6 pt-4 -mx-4 px-4 md:mx-0 md:px-0 transition-all duration-300 shadow-sm">
           <div className="text-left space-y-2">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-lg">
@@ -1629,6 +1641,8 @@ const DriverSafetyPage = () => {
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm text-center">Estado</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm text-center">Interno</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm text-center">Externo</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm text-center">Total</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm text-center">Validación</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm text-center">Condición</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -1674,11 +1688,27 @@ const DriverSafetyPage = () => {
                       <TableCell className="text-center font-black tabular-nums text-indigo-600">{entry.internalScore}</TableCell>
                       <TableCell className="text-center font-black tabular-nums text-emerald-600">{entry.externalScore}</TableCell>
                       <TableCell className="text-center">
+                        <Badge variant="outline" className={cn(
+                          "text-[9px] font-bold",
+                          entry.totalScore === 23 ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-red-500/10 text-red-600 border-red-500/20 animate-pulse"
+                        )}>
+                          {entry.totalScore}/23
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className={cn(
+                          "text-[9px] font-bold",
+                          entry.validation === 'OK' ? "text-emerald-600" : "text-red-600 font-black underline underline-offset-2"
+                        )}>
+                          {entry.validation}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-center">
                         <Badge 
                           variant="secondary" 
                           className={cn(
                             "text-[10px] font-black italic border-0 shadow-lg shadow-black/5",
-                            entry.result === 'APTO' ? "bg-emerald-500 text-white shadow-emerald-500/20" : (entry.result === 'RIESGO MEDIO' ? "bg-amber-500 text-white shadow-amber-500/20" : "bg-red-500 text-white shadow-red-500/20")
+                            entry.result === 'APTO' ? "bg-emerald-500 text-white shadow-emerald-500/20" : (entry.result === 'RIESGO MEDIO' ? "bg-amber-500 text-white shadow-amber-500/20" : (entry.result === 'ERROR' ? "bg-slate-500 text-white shadow-slate-500/20" : "bg-red-500 text-white shadow-red-500/20"))
                           )}
                         >
                           {entry.result}

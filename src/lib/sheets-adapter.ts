@@ -113,7 +113,7 @@ export interface RauraDashboardData {
 }
 
 export interface DriverSafetyEntry {
-  id: number;
+  id: string | number;
   name: string;
   company: string;
   date: string;
@@ -121,9 +121,22 @@ export interface DriverSafetyEntry {
   level: string;
   position: string;
   line: string;
+
+  answers: unknown[];
+
   internalScore: number;
   externalScore: number;
-  result: string;
+  totalScore: number;
+
+  result: "APTO" | "RIESGO MEDIO" | "RIESGO ALTO" | "ERROR";
+  validation: string;
+  detail: {
+    question: string;
+    answer: string;
+    internal: number;
+    external: number;
+    result: string;
+  }[];
 }
 
 export interface DriverSafetyData {
@@ -229,8 +242,10 @@ const COLORS = [
   "#06b6d4", // Cyan
 ];
 
+const addCacheBypass = (url: string) => `${url}&t=${Date.now()}`;
+
 export const fetchSheetData = async (sheetId: string): Promise<GroupMetric[]> => {
-  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+  const url = addCacheBypass(`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`);
   
   const response = await fetch(url);
   if (!response.ok) {
@@ -333,7 +348,7 @@ export const fetchSheetData = async (sheetId: string): Promise<GroupMetric[]> =>
 };
 
 export const fetchRawRows = async (sheetId: string): Promise<SheetRow[]> => {
-  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+  const url = addCacheBypass(`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`);
 
   const response = await fetch(url);
   if (!response.ok) {
@@ -360,7 +375,7 @@ export const fetchRawRows = async (sheetId: string): Promise<SheetRow[]> => {
 // FUNCION PARSER FINAL DASHBOARD
 // ============================================
 export const fetchFinalDashboardData = async (sheetId: string): Promise<FinalDashboardData> => {
-  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+  const url = addCacheBypass(`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`);
 
   const response = await fetch(url);
   if (!response.ok) throw new Error('Failed to fetch Google Sheet data');
@@ -556,7 +571,7 @@ export const fetchFinalDashboardData = async (sheetId: string): Promise<FinalDas
 export const fetchRauraData = async (sheetId: string): Promise<RauraDashboardData> => {
   // GID 0 is "pagina principal"
   const gid = "0";
-  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+  const url = addCacheBypass(`https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`);
 
   const response = await fetch(url);
   if (!response.ok) throw new Error('Failed to fetch Raura data');
@@ -663,10 +678,109 @@ export const fetchRauraData = async (sheetId: string): Promise<RauraDashboardDat
 // ============================================
 // FUNCION PARSER DRIVER SAFETY
 // ============================================
+// ============================================
+// LOGICA DE EVALUACION DRIVER SAFETY (LOCUS CONTROL)
+// ============================================
+
+const ANSWER_KEY = [
+  { internal: "B", external: "A" }, // P1
+  { internal: "A", external: "B" }, // P2
+  { internal: "A", external: "B" }, // P3
+  { internal: "A", external: "B" }, // P4
+  { internal: "B", external: "A" }, // P5
+  { internal: "B", external: "A" }, // P6
+  { internal: "B", external: "A" }, // P7
+  { internal: "A", external: "B" }, // P8
+  { internal: "A", external: "B" }, // P9
+  { internal: "A", external: "B" }, // P10
+  { internal: "A", external: "B" }, // P11
+  { internal: "A", external: "B" }, // P12
+  { internal: "B", external: "A" }, // P13
+  { internal: "B", external: "A" }, // P14
+  { internal: "B", external: "A" }, // P15
+  { internal: "B", external: "A" }, // P16
+  { internal: "B", external: "A" }, // P17
+  { internal: "A", external: "B" }, // P18
+  { internal: "B", external: "A" }, // P19
+  { internal: "B", external: "A" }, // P20
+  { internal: "A", external: "B" }, // P21
+  { internal: "A", external: "B" }, // P22
+  { internal: "B", external: "A" }, // P23
+];
+
+function normalizeAnswer(value: unknown): string {
+  return String(value ?? "")
+    .trim()
+    .toUpperCase();
+}
+
+function getBusinessResult(internalScore: number, totalScore: number): "APTO" | "RIESGO MEDIO" | "RIESGO ALTO" | "ERROR" {
+  if (totalScore !== 23) return "ERROR";
+
+  if (internalScore >= 19) return "APTO";
+  if (internalScore >= 13) return "RIESGO MEDIO";
+  return "RIESGO ALTO";
+}
+
+function evaluateLocusControl(answers: unknown[]) {
+  let internalScore = 0;
+  let externalScore = 0;
+
+  const detail = ANSWER_KEY.map((key, index) => {
+    const answer = normalizeAnswer(answers[index]);
+
+    if (answer === key.internal) {
+      internalScore += 1;
+      return {
+        question: `P${index + 1}`,
+        answer,
+        internal: 1,
+        external: 0,
+        result: "INTERNO",
+      };
+    }
+
+    if (answer === key.external) {
+      externalScore += 1;
+      return {
+        question: `P${index + 1}`,
+        answer,
+        internal: 0,
+        external: 1,
+        result: "EXTERNO",
+      };
+    }
+
+    return {
+      question: `P${index + 1}`,
+      answer,
+      internal: 0,
+      external: 0,
+      result: "RESPUESTA INVÁLIDA O VACÍA",
+    };
+  });
+
+  const totalScore = internalScore + externalScore;
+  const result = getBusinessResult(internalScore, totalScore);
+
+  return {
+    internalScore,
+    externalScore,
+    totalScore,
+    result,
+    isValid: totalScore === 23,
+    validation:
+      totalScore === 23
+        ? "OK"
+        : `REVISAR: ${totalScore}/23 respuestas válidas`,
+    detail,
+  };
+}
+
 export const fetchDriverSafetyData = async (sheetId: string): Promise<DriverSafetyData> => {
   // Use the specific GID for "BASE DE CONTROL"
   const gid = "1601952485";
-  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+  const url = addCacheBypass(`https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`);
 
   const response = await fetch(url);
   if (!response.ok) throw new Error('Failed to fetch Driver Safety data');
@@ -684,45 +798,18 @@ export const fetchDriverSafetyData = async (sheetId: string): Promise<DriverSafe
           return;
         }
 
-        const internalKey: Record<number, string> = {
-          1: 'b', 2: 'a', 3: 'a', 4: 'a', 5: 'b', 6: 'b', 7: 'b', 8: 'a', 9: 'a', 10: 'a',
-          11: 'a', 12: 'a', 13: 'b', 14: 'b', 15: 'b', 16: 'b', 17: 'b', 18: 'a', 19: 'b', 20: 'b',
-          21: 'a', 22: 'a', 23: 'b'
-        };
-
         const entries: DriverSafetyEntry[] = [];
-        const riskCounts = { 'RIESGO ALTO': 0, 'RIESGO MEDIO': 0, 'APTO': 0 };
+        const riskCounts = { 'RIESGO ALTO': 0, 'RIESGO MEDIO': 0, 'APTO': 0, 'ERROR': 0 };
 
         for (let i = 1; i < rows.length; i++) {
           const r = rows[i];
-          if (!r[1] || r[1] === 'APELLIDOS Y NOMBRES') continue;
+          if (!r[1] || r[1] === 'APELLIDOS Y NOMBRES' || r[1].trim() === '') continue;
 
-          let internalScore = 0;
-          // Questions P1 to P23 are now in columns I to AE (indices 8 to 30)
-          // Shifted due to new 'Linea' column at index 7
-          for (let q = 1; q <= 23; q++) {
-            const responseValue = (r[q + 7] || '').trim().toLowerCase();
-            if (responseValue === internalKey[q]) {
-              internalScore++;
-            }
-          }
+          // Answers are from index 8 to 30
+          const rawAnswers = r.slice(8, 31);
+          const evaluation = evaluateLocusControl(rawAnswers);
 
-          const externalScore = 23 - internalScore;
-          
-          let result: string;
-          if (internalScore >= 19) {
-            result = 'APTO';
-          } else if (internalScore >= 13) {
-            result = 'RIESGO MEDIO';
-          } else {
-            result = 'RIESGO ALTO';
-          }
-
-          if (riskCounts[result as keyof typeof riskCounts] !== undefined) {
-            riskCounts[result as keyof typeof riskCounts]++;
-          }
-
-          // Date detection: Check index 3 (Fecha) and 4 (Estado/Fecha fallback)
+          // Date detection logic
           let evalDate = (r[3] || '').trim();
           if (!evalDate || !/\d/.test(evalDate)) {
              const fallbackDate = (r[4] || '').trim();
@@ -732,27 +819,40 @@ export const fetchDriverSafetyData = async (sheetId: string): Promise<DriverSafe
           }
 
           entries.push({
-            id: parseInt(r[0]) || i,
-            name: r[1],
-            company: r[2],
+            id: r[0] || i,
+            name: (r[1] || '').trim(),
+            company: (r[2] || '').trim(),
             date: evalDate || 'Sin fecha',
             status: (r[4] || '').trim() || 'No especificado',
             level: (r[5] || '').trim() || 'No especificado',
             position: (r[6] || '').trim() || 'No especificado',
             line: (r[7] || '').trim() || 'No especificado',
-            internalScore,
-            externalScore,
-            result,
+            answers: rawAnswers,
+            internalScore: evaluation.internalScore,
+            externalScore: evaluation.externalScore,
+            totalScore: evaluation.totalScore,
+            result: evaluation.result,
+            validation: evaluation.validation,
+            detail: evaluation.detail
           });
+
+          riskCounts[evaluation.result]++;
         }
 
-        const avgInternal = entries.length > 0 ? entries.reduce((acc, curr) => acc + curr.internalScore, 0) / entries.length : 0;
-        const avgExternal = entries.length > 0 ? entries.reduce((acc, curr) => acc + curr.externalScore, 0) / entries.length : 0;
+        // Calculations should ideally exclude errors for averages
+        const validEntries = entries.filter(e => e.result !== 'ERROR');
+        const avgInternal = validEntries.length > 0 
+          ? validEntries.reduce((acc, curr) => acc + curr.internalScore, 0) / validEntries.length 
+          : 0;
+        const avgExternal = validEntries.length > 0 
+          ? validEntries.reduce((acc, curr) => acc + curr.externalScore, 0) / validEntries.length 
+          : 0;
 
         const riskDistribution = [
           { name: 'RIESGO ALTO', value: riskCounts['RIESGO ALTO'] },
           { name: 'RIESGO MEDIO', value: riskCounts['RIESGO MEDIO'] },
-          { name: 'APTO', value: riskCounts['APTO'] }
+          { name: 'APTO', value: riskCounts['APTO'] },
+          { name: 'ERROR', value: riskCounts['ERROR'] }
         ];
 
         resolve({
