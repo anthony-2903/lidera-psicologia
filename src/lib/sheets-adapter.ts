@@ -120,6 +120,7 @@ export interface DriverSafetyEntry {
   status: string;
   level: string;
   position: string;
+  line: string;
   internalScore: number;
   externalScore: number;
   result: string;
@@ -697,10 +698,10 @@ export const fetchDriverSafetyData = async (sheetId: string): Promise<DriverSafe
           if (!r[1] || r[1] === 'APELLIDOS Y NOMBRES') continue;
 
           let internalScore = 0;
-          // Questions P1 to P23 are now in columns H to AD (indices 7 to 29)
-          // Shifted due to new 'Fecha', 'Estado' and 'Trabajo Nivel' columns
+          // Questions P1 to P23 are now in columns I to AE (indices 8 to 30)
+          // Shifted due to new 'Linea' column at index 7
           for (let q = 1; q <= 23; q++) {
-            const responseValue = (r[q + 6] || '').trim().toLowerCase();
+            const responseValue = (r[q + 7] || '').trim().toLowerCase();
             if (responseValue === internalKey[q]) {
               internalScore++;
             }
@@ -737,7 +738,8 @@ export const fetchDriverSafetyData = async (sheetId: string): Promise<DriverSafe
             date: evalDate || 'Sin fecha',
             status: (r[4] || '').trim() || 'No especificado',
             level: (r[5] || '').trim() || 'No especificado',
-            position: r[6] || 'No especificado',
+            position: (r[6] || '').trim() || 'No especificado',
+            line: (r[7] || '').trim() || 'No especificado',
             internalScore,
             externalScore,
             result,
@@ -882,12 +884,19 @@ export const fetchDimensionesData = async (sheetId: string): Promise<Dimensiones
             genero = detectGender(nombre);
           }
 
+          // Function to determine level based on score
+          const calculateLevel = (score: number) => {
+            if (score >= 67) return 'Alto';
+            if (score >= 34) return 'Medio';
+            return 'Bajo';
+          };
+
           const liderazgoPct = cleanPct(r[9]);
-          const nivelLiderazgo = (r[10] || '').trim();
+          const nivelLiderazgo = calculateLevel(liderazgoPct);
           const perfilLiderazgo = (r[11] || '').trim();
 
           const percepcionPct = cleanPct(r[12]);
-          const nivelPercepcion = (r[13] || '').trim();
+          const nivelPercepcion = calculateLevel(percepcionPct);
           const perfilPercepcion = (r[14] || '').trim();
 
           // Total as average of both dimensions
@@ -896,9 +905,7 @@ export const fetchDimensionesData = async (sheetId: string): Promise<Dimensiones
             : liderazgoPct || percepcionPct;
 
           // General level based on total
-          let nivel = 'Medio';
-          if (total >= 70) nivel = 'Alto';
-          else if (total < 34) nivel = 'Bajo';
+          const nivel = calculateLevel(total);
 
           const nameKey = nombre.toUpperCase();
 

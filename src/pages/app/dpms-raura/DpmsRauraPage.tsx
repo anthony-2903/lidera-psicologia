@@ -84,9 +84,51 @@ const SHEET_ID = "16keeTLLxphGx7QtfRbtDC7yG1ACxyyQui1KypTX43o4";
 const CAT_COLORS = DASHBOARD_PALETTES.rauraCategories;
 
 // --- Helpers ---
+const DIMENSION_DEFINITIONS: Record<string, Record<string, string>> = {
+  cultura: {
+    "REACTIVA": "Actuación basada en la respuesta a incidentes, sin enfoque preventivo.",
+    "DEPENDIENTE": "Cumplimiento de normas mediante supervisión y control externo.",
+    "INDEPENDIENTE": "Conducta guiada por la responsabilidad y autocontrol individual.",
+    "INTERDEPENDIENTE": "Cultura de compromiso colectivo y cuidado mutuo."
+  },
+  rolEquipo: {
+    "ACCIÓN": "Ejecución y cumplimiento de tareas.",
+    "SOCIALES": "Colaboración y cohesión del equipo.",
+    "MENTALES": "Análisis, ideas y toma de decisiones."
+  },
+  comunicacion: {
+    "ASERTIVA": "Expresa ideas con claridad y respeto.",
+    "FUNCIONAL": "Orientada al cumplimiento de tareas y objetivos.",
+    "DIRECTA": "Mensajes claros, concretos y sin ambigüedades.",
+    "COLABORATIVA": "Promueve participación y trabajo en equipo."
+  },
+  percepcion: {
+    "REACTIVO": "Actúa solo cuando ocurre un incidente o problema. No anticipa riesgos.",
+    "NORMATIVO-PREVENTIVO": "Cumple normas de seguridad establecidas, sin mayor análisis personal.",
+    "CAUTELOSO ANALITICO": "Evalúa los riesgos antes de actuar y analiza consecuencias.",
+    "PROACTIVO-PREVENTIVO": "Se anticipa a los riesgos, propone mejoras y promueve la seguridad."
+  },
+  liderazgo: {
+    "SOPORTE": "El líder acompaña al equipo, facilita recursos y refuerza el trabajo.",
+    "EMPOWERMENT": "El líder delega autoridad y autonomía, fomentando la responsabilidad.",
+    "COACHING": "El líder guía y desarrolla a las personas mediante retroalimentación.",
+    "DIRECTIVO": "El líder da instrucciones claras y controla la ejecución de tareas."
+  },
+  motivacion: {
+    "INTRÍNSECA": "Impulso interno orientado al interés, desarrollo personal y logro.",
+    "EXTRÍNSECA": "Impulso generado por factores externos como reconocimiento o estabilidad."
+  }
+};
+
 const getInterpretation = (val: string) => {
   if (!val) return "";
-  const v = val.trim();
+  const v = val.trim().toUpperCase();
+  
+  // Buscar en todas las categorías de definiciones
+  for (const cat in DIMENSION_DEFINITIONS) {
+    if (DIMENSION_DEFINITIONS[cat][v]) return `${v} - ${DIMENSION_DEFINITIONS[cat][v]}`;
+  }
+
   const map: Record<string, string> = {
     "1": "Nivel Reactivo - Acción basada en instinto y miedo.",
     "2": "Nivel Dependiente - Acción basada en supervisión y reglas.",
@@ -297,19 +339,45 @@ const EntryPanel = ({
                       {label}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="p-5 pt-0 space-y-1">
-                    <p
-                      className="text-2xl font-black tabular-nums tracking-tighter"
-                      style={{ color: color }}
-                    >
-                      {Math.round(dim.score)}%
-                    </p>
-                    <Badge
-                      variant="outline"
-                      className="text-[8px] font-bold uppercase tracking-tighter border-muted-foreground/20 text-muted-foreground"
-                    >
-                      {dim.perfil}
-                    </Badge>
+                  <CardContent className="p-5 pt-0 space-y-2">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p
+                        className="text-2xl font-black tabular-nums tracking-tighter"
+                        style={{ color: color }}
+                      >
+                        {Math.round(dim.score)}%
+                      </p>
+                      <Badge variant="outline" className="text-[8px] font-bold uppercase tracking-tighter border-muted-foreground/20 text-muted-foreground">
+                        {dim.valor || dim.perfil}
+                      </Badge>
+                    </div>
+                    {(() => {
+                      const val = (dim.valor || dim.perfil || "").toUpperCase().trim();
+                      let definition = "";
+                      for (const cat in DIMENSION_DEFINITIONS) {
+                        if (DIMENSION_DEFINITIONS[cat][val]) {
+                          definition = DIMENSION_DEFINITIONS[cat][val];
+                          break;
+                        }
+                      }
+                      if (!definition) {
+                        // Búsqueda parcial para casos como "Liderazgo de soporte" -> "SOPORTE"
+                        for (const cat in DIMENSION_DEFINITIONS) {
+                          for (const key in DIMENSION_DEFINITIONS[cat]) {
+                            if (val.includes(key)) {
+                              definition = DIMENSION_DEFINITIONS[cat][key];
+                              break;
+                            }
+                          }
+                          if (definition) break;
+                        }
+                      }
+                      return definition ? (
+                        <p className="text-[9px] text-muted-foreground leading-relaxed italic border-l border-muted-foreground/20 pl-2">
+                          {definition}
+                        </p>
+                      ) : null;
+                    })()}
                   </CardContent>
                 </Card>
               </div>
@@ -1093,6 +1161,47 @@ export default function DpmsRauraPage() {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+
+            {/* GLOSSARY / INTERPRETATION GUIDE */}
+            <div className="pt-20 border-t border-border/20 mt-10">
+              <div className="flex items-center gap-4 mb-10">
+                <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 shadow-inner">
+                  <FileText className="w-7 h-7" />
+                </div>
+                <div>
+                  <h3 className="text-3xl font-black tracking-tight text-slate-800 italic">
+                    Guía de Interpretación
+                  </h3>
+                  <p className="text-sm font-bold text-slate-500">
+                    Definiciones cualitativas de las dimensiones evaluadas
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {Object.entries(DIMENSION_DEFINITIONS).map(([key, defs]) => (
+                  <Card key={key} className="rounded-[3rem] border-border/40 bg-white/60 backdrop-blur-3xl shadow-2xl overflow-hidden hover:shadow-primary/10 transition-all border-2 group">
+                    <CardHeader className="bg-slate-100/50 border-b border-border/20 py-5 px-8">
+                      <CardTitle className="text-[11px] font-black uppercase text-slate-400 tracking-[0.3em] italic">
+                        {key.replace(/([A-Z])/g, ' $1').toUpperCase()}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-8 space-y-6">
+                      {Object.entries(defs).map(([level, desc]) => (
+                        <div key={level} className="space-y-2 border-l-2 border-transparent group-hover:border-primary/20 pl-4 transition-colors">
+                          <p className="text-[11px] font-black text-slate-800 uppercase tracking-tighter">
+                            {level}
+                          </p>
+                          <p className="text-[12px] text-slate-500 leading-relaxed italic font-medium">
+                            {desc}
+                          </p>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
           </div>
         )}

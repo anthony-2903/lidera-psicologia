@@ -159,9 +159,10 @@ const DriverSafetyIndividualPanel = ({ entry, distribution, onClose }: {
                   <td style="font-weight: 900; color: ${resultColor}">${entry.result}</td>
                 </tr>
                 <tr>
+                  <td style="padding: 10px 0; color: #64748b; font-weight: 700;">LINEA:</td>
+                  <td style="font-weight: 900;">${entry.line}</td>
                   <td style="padding: 10px 0; color: #64748b; font-weight: 700;">ID EVALUACIÓN:</td>
                   <td style="font-weight: 900;">LOC-${entry.id}</td>
-                  <td colspan="2"></td>
                 </tr>
               </table>
             </div>
@@ -295,6 +296,14 @@ const DriverSafetyIndividualPanel = ({ entry, distribution, onClose }: {
                     {indResult}
                   </span>
                 </div>
+              </Card>
+              <Card className="rounded-3xl border-border/20 bg-background/50 p-4">
+                 <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Puesto / Cargo</p>
+                 <p className="text-sm font-black italic">{entry.position}</p>
+              </Card>
+              <Card className="rounded-3xl border-border/20 bg-background/50 p-4">
+                 <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Línea</p>
+                 <p className="text-sm font-black italic">{entry.line}</p>
               </Card>
         </div>
 
@@ -713,6 +722,7 @@ const DriverSafetyPage = () => {
       Empresa: entry.company,
       Fecha: entry.date,
       Puesto: entry.position,
+      Linea: entry.line,
       Nivel: entry.level,
       'Puntaje Interno': entry.internalScore,
       'Puntaje Externo': entry.externalScore,
@@ -937,7 +947,7 @@ const DriverSafetyPage = () => {
 
                 // --- NEW: CONSOLIDATED BASE SHEET ---
                 const baseSheet = workbook.addWorksheet('BASE CONSOLIDADA');
-                const baseHeaders = ['ID', 'APELLIDOS Y NOMBRES', 'EMPRESA', 'ESTADO', 'NIVEL', 'PUESTO', 'FECHA', 'INTERNO', 'EXTERNO', 'DICTAMEN'];
+                const baseHeaders = ['ID', 'APELLIDOS Y NOMBRES', 'EMPRESA', 'ESTADO', 'NIVEL', 'PUESTO', 'LINEA', 'FECHA', 'INTERNO', 'EXTERNO', 'DICTAMEN'];
                 
                 baseHeaders.forEach((h, i) => {
                   const cell = baseSheet.getCell(1, i + 1);
@@ -955,12 +965,13 @@ const DriverSafetyPage = () => {
                   baseSheet.getCell(rowNum, 4).value = e.status;
                   baseSheet.getCell(rowNum, 5).value = e.level;
                   baseSheet.getCell(rowNum, 6).value = e.position;
-                  baseSheet.getCell(rowNum, 7).value = e.date;
-                  baseSheet.getCell(rowNum, 8).value = e.internalScore;
-                  baseSheet.getCell(rowNum, 9).value = e.externalScore;
-                  baseSheet.getCell(rowNum, 10).value = e.result;
+                  baseSheet.getCell(rowNum, 7).value = e.line;
+                  baseSheet.getCell(rowNum, 8).value = e.date;
+                  baseSheet.getCell(rowNum, 9).value = e.internalScore;
+                  baseSheet.getCell(rowNum, 10).value = e.externalScore;
+                  baseSheet.getCell(rowNum, 11).value = e.result;
                   
-                  for(let i=1; i<=10; i++) {
+                  for(let i=1; i<=11; i++) {
                     baseSheet.getCell(rowNum, i).style = cellStyle;
                   }
                 });
@@ -982,9 +993,9 @@ const DriverSafetyPage = () => {
                 worksheet.getCell('A2').font = { bold: true };
                 worksheet.getCell('A2').border = cellStyle.border;
 
-                worksheet.getCell('A3').value = 'EMPRESA / PUESTO';
+                worksheet.getCell('A3').value = 'EMPRESA / PUESTO / LINEA';
                 worksheet.getCell('A3').style = headerStyle;
-                worksheet.getCell('A4').value = entry.company + ' / ' + entry.position;
+                worksheet.getCell('A4').value = entry.company + ' / ' + entry.position + ' / ' + entry.line;
                 worksheet.getCell('A4').font = { size: 9, italic: true };
                 worksheet.getCell('A4').border = cellStyle.border;
 
@@ -1613,6 +1624,7 @@ const DriverSafetyPage = () => {
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Empresa</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Trabajo Nivel</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Puesto</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Linea</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm text-center">Fecha</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm text-center">Estado</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm text-center">Interno</TableHead>
@@ -1649,6 +1661,9 @@ const DriverSafetyPage = () => {
                       </TableCell>
                       <TableCell>
                         <p className="text-[10px] font-black uppercase tracking-tight">{entry.position}</p>
+                      </TableCell>
+                      <TableCell>
+                        <p className="text-[10px] font-black uppercase tracking-tight">{entry.line}</p>
                       </TableCell>
                       <TableCell className="text-[10px] font-black uppercase text-muted-foreground italic text-center whitespace-nowrap">{entry.date}</TableCell>
                       <TableCell className="text-center">

@@ -60,9 +60,9 @@ const ROLES = [
 ];
 
 const getLevelConfig = (score: number) => {
-  if (score >= 70) return { label: "Alto", color: "text-emerald-500", bg: "bg-emerald-500/10" };
-  if (score >= 51) return { label: "Media", color: "text-amber-500", bg: "bg-amber-500/10" };
-  return { label: "Baja", color: "text-red-500", bg: "bg-red-500/10" };
+  if (score >= 67) return { label: "Alto", color: "text-emerald-500", bg: "bg-emerald-500/10" };
+  if (score >= 34) return { label: "Medio", color: "text-amber-500", bg: "bg-amber-500/10" };
+  return { label: "Bajo", color: "text-red-500", bg: "bg-red-500/10" };
 };
 
 const Silhouette = ({ entry, colorClass }: { entry: DimensionesEntry, colorClass: string }) => {

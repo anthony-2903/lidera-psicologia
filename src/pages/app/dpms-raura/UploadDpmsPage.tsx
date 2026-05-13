@@ -228,8 +228,17 @@ METADATOS A EXTRAER:
 - empresa: Nombre de la empresa o contrata a la que pertenece.
 - puesto: Cargo o puesto que ocupa.
 - area: Área de trabajo.
-- nivel_cultura: Determina el nivel de madurez de cultura de seguridad del entrevistado del 1 al 4 (1: Reactivo, 2: Dependiente, 3: Independiente, 4: Interdependiente). No uses 5.
-- comentarios: Redacta un pequeño resumen o frase crítica (insight conductual) extraído de su participación. Algo que resalte su percepción de riesgo o liderazgo. Corto (max 2 lineas).
+- nivel_cultura: Determina el nivel de madurez de cultura de seguridad del entrevistado (Curva de Bradley) del 1 al 4:
+    1: REACTIVA (Actuación basada en la respuesta a incidentes, sin enfoque preventivo.)
+    2: DEPENDIENTE (Cumplimiento de normas mediante supervisión y control externo.)
+    3: INDEPENDIENTE (Conducta guiada por la responsabilidad y autocontrol individual.)
+    4: INTERDEPENDIENTE (Cultura de compromiso colectivo y cuidado mutuo.)
+- comentarios: Redacta un pequeño resumen o frase crítica (insight conductual) considerando estas dimensiones:
+    * PERCEPCION DE RIESGOS: REACTIVO (actúa tras incidente), NORMATIVO-PREVENTIVO (cumple por obligación), CAUTELOSO ANALITICO (evalúa antes de actuar), PROACTIVO-PREVENTIVO (se anticipa y promueve).
+    * LIDERAZGO: Soporte (facilita), Empowerment (delega autonomía), Coaching (guía/retroalimentación), Directivo (instrucciones claras/control).
+    * COMUNICACIÓN: Asertiva (claridad/respeto), Funcional (orientada a tareas), Directa (claro/sin ambigüedad), Colaborativa (participación/equipo).
+    * ROLES EQUIPO (Belbin): Acción (ejecución), Sociales (colaboración), Mentales (análisis/ideas).
+    * MOTIVACIONAL: Intrínseca (impulso interno), Extrínseca (factores externos).
 
 PREGUNTAS DE EVALUACIÓN:
 Extrae la respuesta o infiere la información a partir de las siguientes preguntas dadas en la entrevista. Algunas requieren texto resumido, otras infieren números:
@@ -260,11 +269,11 @@ INSTRUCCIONES CLAVES:
 - Si un valor numérico no se menciona ni se puede inferir, usa 0.
 - Si un texto no se menciona o no hay respuesta relevante, usa "No especificado".
 - Asegúrate de usar estas claves exactas en el JSON de salida:
-- Evalua de forma critica y conservadora: el mejor escenario permitido sin evidencias concretas, ejemplos verificables, asistencia sostenida y seguimiento documentado es Dependiente.
-- Si el entrevistado no asistio, no participo, muestra desinteres, responde de forma evasiva o la entrevista es insuficiente, clasifica como Reactivo.
-- Para clasificar como Independiente exige evidencia clara de autogestion, seguimiento, aprendizaje de incidentes y responsabilidad asumida sin depender de la supervision.
-- Para clasificar como Interdependiente exige evidencia explicita de cuidado mutuo, intervencion entre pares, aprendizaje colectivo y liderazgo preventivo sostenido. Si falta cualquiera de estos elementos, baja al menos a Dependiente.
-- La asistencia a capacitaciones de lideres es un dato critico. Si es 0, no mencionada o baja, no puede superar Dependiente.
+- Evalua de forma critica y conservadora: el mejor escenario permitido sin evidencias concretas, ejemplos verificables, asistencia sostenida y seguimiento documentado es DEPENDIENTE.
+- Si el entrevistado no asistio, no participo, muestra desinteres, responde de forma evasiva o la entrevista es insuficiente, clasifica como REACTIVA.
+- Para clasificar como INDEPENDIENTE exige evidencia clara de autogestion, seguimiento, aprendizaje de incidentes y responsabilidad asumida sin depender de la supervision.
+- Para clasificar como INTERDEPENDIENTE exige evidencia explicita de cuidado mutuo, intervencion entre pares, aprendizaje colectivo y liderazgo preventivo sostenido. Si falta cualquiera de estos elementos, baja al menos a DEPENDIENTE.
+- La asistencia a capacitaciones de lideres es un dato critico. Si es 0, no mencionada o baja, no puede superar DEPENDIENTE.
 {
   "nombre": "string",
   "empresa": "string",
