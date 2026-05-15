@@ -97,7 +97,7 @@ const RECOMMENDATIONS = {
 const REPORT_ACTIONS = {
   'APTO': 'Sin restricciones operacionales. Candidato a mentor/referente de seguridad. Reevaluación a 12 meses.',
   'RIESGO MEDIO': 'Taller de autorresponsabilidad en seguridad. Monitoreo trimestral. Reevaluación a 6 meses.',
-  'RIESGO ALTO': 'Intervención psicológica individual. Restricción temporal de tareas críticas. Reevaluación a 3 meses.',
+  'RIESGO ALTO': 'SE SOLICITA APERSONARSE AL ÁREA DE GERENCIA PARA RECIBIR LAS INSTRUCCIONES Y DIRECTRICES CORRESPONDIENTES.',
   'ERROR': 'Registro no válido. Revisar base de datos.'
 };
 
@@ -105,7 +105,7 @@ const getAnalysis = (result: string, internal: number) => {
   if (result === 'ERROR') return "Registro no válido para interpretación. Las respuestas no completan las 23 preguntas válidas o existe un problema de lectura de datos.";
   if (internal >= 19) return "Perfil con dominancia interna sólida. El evaluado tiende a reconocer la influencia de sus propias acciones en los resultados laborales y de seguridad. Este perfil resulta favorable para tareas críticas, ya que se asocia con responsabilidad personal, cumplimiento de procedimientos y mayor disposición hacia la conducta segura.";
   if (internal >= 13) return "Perfil con control interno moderado. Si bien el evaluado muestra capacidad para asumir responsabilidad sobre sus acciones, aún puede presentar cierta tendencia a atribuir algunos eventos a factores externos. Se recomienda reforzar la autogestión preventiva, la toma de decisiones seguras y la responsabilidad individual frente al riesgo.";
-  return "Perfil con predominancia externa. El evaluado podría mostrar mayor tendencia a atribuir los resultados a factores externos, como el entorno, terceros o condiciones fuera de su control. Este resultado requiere intervención, seguimiento y refuerzo en responsabilidad personal, percepción de riesgo y conducta segura antes de asignar tareas críticas.";
+  return "SE SOLICITA APERSONARSE AL ÁREA DE GERENCIA DE SU EMPRESA PARA RECIBIR LAS INSTRUCCIONES Y DIRECTRICES CORRESPONDIENTES A SU PERFIL DE RIESGO.";
 };
 
 // Panel Lateral de Detalle Individual
@@ -1181,6 +1181,12 @@ const DriverSafetyPage = () => {
       const matchesStatus = statusFilters.length === 0 || statusFilters.includes((entry.status || '').trim().toUpperCase());
       
       return matchesSearch && matchesCondition && matchesCompany && matchesLevel && matchesStatus;
+    }).sort((a, b) => {
+      const order: Record<string, number> = { 'APTO': 1, 'RIESGO MEDIO': 2, 'RIESGO ALTO': 3, 'ERROR': 4 };
+      const valA = order[a.result] || 99;
+      const valB = order[b.result] || 99;
+      if (valA !== valB) return valA - valB;
+      return a.name.localeCompare(b.name);
     });
   }, [data, search, conditionFilters, companyFilters, levelFilters, statusFilters]);
 
@@ -1417,7 +1423,7 @@ const DriverSafetyPage = () => {
                 const getAnalysisText = (internal) => {
                   if (internal >= 19) return "Perfil con dominancia interna sólida (Apto). El evaluado asume responsabilidad directa sobre sus acciones y resultados, mostrando un alto compromiso con la seguridad operativa y el cumplimiento de normas.";
                   if (internal >= 13) return "Perfil con control de riesgo medio. Si bien asume responsabilidad, aún existe una tendencia parcial a atribuir eventos a factores externos. Se recomienda reforzamiento en cultura de seguridad.";
-                  return "Perfil con dominancia externa (Riesgo Alto). Existe una marcada tendencia a atribuir los resultados a factores ajenos a su voluntad, lo que aumenta la probabilidad de conductas inseguras por falta de responsabilidad personal.";
+                  return "SE SOLICITA APERSONARSE AL ÁREA DE GERENCIA PARA RECIBIR LAS INSTRUCCIONES Y DIRECTRICES CORRESPONDIENTES.";
                 };
 
                 if (entry.result !== 'RIESGO ALTO') {
