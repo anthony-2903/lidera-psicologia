@@ -22,7 +22,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { 
+  Command, 
+  CommandEmpty, 
+  CommandGroup, 
+  CommandInput, 
+  CommandItem, 
+  CommandList 
+} from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+import { ChevronsUpDown, Check as CheckIcon } from "lucide-react";
 
 const SHEET_ID = "1nrHMcI8fWlBKIWIv9aprjElPhY-ccmXX";
 
@@ -95,6 +106,104 @@ const getAnalysis = (result: string, internal: number) => {
   if (internal >= 19) return "Perfil con dominancia interna sólida. El evaluado tiende a reconocer la influencia de sus propias acciones en los resultados laborales y de seguridad. Este perfil resulta favorable para tareas críticas, ya que se asocia con responsabilidad personal, cumplimiento de procedimientos y mayor disposición hacia la conducta segura.";
   if (internal >= 13) return "Perfil con control interno moderado. Si bien el evaluado muestra capacidad para asumir responsabilidad sobre sus acciones, aún puede presentar cierta tendencia a atribuir algunos eventos a factores externos. Se recomienda reforzar la autogestión preventiva, la toma de decisiones seguras y la responsabilidad individual frente al riesgo.";
   return "Perfil con predominancia externa. El evaluado podría mostrar mayor tendencia a atribuir los resultados a factores externos, como el entorno, terceros o condiciones fuera de su control. Este resultado requiere intervención, seguimiento y refuerzo en responsabilidad personal, percepción de riesgo y conducta segura antes de asignar tareas críticas.";
+};
+
+// Panel Lateral de Detalle Individual
+const MultiSelectFilter = ({ 
+  label, 
+  options, 
+  selected, 
+  onChange, 
+  placeholder 
+}: { 
+  label: string; 
+  options: string[]; 
+  selected: string[]; 
+  onChange: (values: string[]) => void; 
+  placeholder?: string;
+}) => {
+  return (
+    <div className="space-y-2">
+      <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">{label}</label>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            className={cn(
+              "w-full h-12 justify-between bg-white/50 border-border/40 rounded-xl shadow-sm text-[11px] font-bold px-3",
+              selected.length === 0 && "text-muted-foreground"
+            )}
+          >
+            <div className="flex gap-1 items-center overflow-hidden">
+              {selected.length > 0 ? (
+                <div className="flex items-center gap-1">
+                  <Badge variant="secondary" className="h-5 px-1.5 rounded-md bg-primary/10 text-primary border-none text-[9px] font-black">
+                    {selected.length}
+                  </Badge>
+                  <span className="truncate max-w-[120px]">
+                    {selected.length === options.length ? "Todos" : selected.join(", ")}
+                  </span>
+                </div>
+              ) : (
+                placeholder || "Seleccionar..."
+              )}
+            </div>
+            <ChevronsUpDown className="h-3 w-3 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[240px] p-0 rounded-2xl shadow-2xl border-primary/5 z-[100]" align="start">
+          <Command className="rounded-2xl">
+            <CommandInput placeholder={`Buscar ${label.toLowerCase()}...`} className="h-10 text-xs" />
+            <CommandList className="max-h-[300px] custom-scrollbar">
+              <CommandEmpty className="py-4 text-xs text-center text-muted-foreground">No se encontraron resultados.</CommandEmpty>
+              <CommandGroup>
+                <CommandItem
+                  onSelect={() => {
+                    if (selected.length === options.length) {
+                      onChange([]);
+                    } else {
+                      onChange([...options]);
+                    }
+                  }}
+                  className="flex items-center gap-2 cursor-pointer py-2.5 px-3 aria-selected:bg-primary/5"
+                >
+                  <div className={cn(
+                    "flex h-4 w-4 items-center justify-center rounded border border-primary transition-colors",
+                    selected.length === options.length ? "bg-primary text-primary-foreground" : "bg-transparent"
+                  )}>
+                    {selected.length === options.length && <CheckIcon className="h-3 w-3" />}
+                  </div>
+                  <span className="text-xs font-bold uppercase tracking-tight">Seleccionar Todos</span>
+                </CommandItem>
+                <div className="h-px bg-border/40 my-1 mx-1" />
+                {options.map((option) => (
+                  <CommandItem
+                    key={option}
+                    onSelect={() => {
+                      const newSelected = selected.includes(option)
+                        ? selected.filter((v) => v !== option)
+                        : [...selected, option];
+                      onChange(newSelected);
+                    }}
+                    className="flex items-center gap-2 cursor-pointer py-2.5 px-3 aria-selected:bg-primary/5"
+                  >
+                    <div className={cn(
+                      "flex h-4 w-4 items-center justify-center rounded border border-primary transition-colors",
+                      selected.includes(option) ? "bg-primary text-primary-foreground" : "bg-transparent"
+                    )}>
+                      {selected.includes(option) && <CheckIcon className="h-3 w-3" />}
+                    </div>
+                    <span className="text-xs font-medium">{option}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
 };
 
 // Panel Lateral de Detalle Individual
@@ -691,10 +800,10 @@ const DriverSafetyIndividualPanel = ({ entry, distribution, onClose }: {
 const DriverSafetyPage = () => {
   const [view, setView] = useState<'dashboard' | 'list'>('dashboard');
   const [search, setSearch] = useState("");
-  const [conditionFilter, setConditionFilter] = useState<string>("ALL");
-  const [companyFilter, setCompanyFilter] = useState<string>("ALL");
-  const [levelFilter, setLevelFilter] = useState<string>("ALL");
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [conditionFilters, setConditionFilters] = useState<string[]>([]);
+  const [companyFilters, setCompanyFilters] = useState<string[]>([]);
+  const [levelFilters, setLevelFilters] = useState<string[]>([]);
+  const [statusFilters, setStatusFilters] = useState<string[]>([]);
   const [selectedEntry, setSelectedEntry] = useState<DriverSafetyEntry | null>(null);
 
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
@@ -705,13 +814,18 @@ const DriverSafetyPage = () => {
 
   // Extract unique values for filters
   const filterOptions = useMemo(() => {
-    if (!data?.entries) return { companies: [], levels: [], statuses: [] };
+    if (!data?.entries) return { companies: [], levels: [], statuses: [], conditions: ['APTO', 'RIESGO MEDIO', 'RIESGO ALTO'] };
     
     const companies = Array.from(new Set(data.entries.map(e => (e.company || '').trim().toUpperCase()))).filter(Boolean).sort();
     const levels = Array.from(new Set(data.entries.map(e => (e.level || '').trim().toUpperCase()))).filter(Boolean).sort();
     const statuses = Array.from(new Set(data.entries.map(e => (e.status || '').trim().toUpperCase()))).filter(Boolean).sort();
     
-    return { companies, levels, statuses };
+    return { 
+      companies, 
+      levels, 
+      statuses,
+      conditions: ['APTO', 'RIESGO MEDIO', 'RIESGO ALTO']
+    };
   }, [data]);
 
   const handleDownloadExcelDashboard = async () => {
@@ -854,10 +968,10 @@ const DriverSafetyPage = () => {
     if (!printWindow) return;
 
     const activeFilters = [];
-    if (companyFilter !== "ALL") activeFilters.push(companyFilter);
-    if (levelFilter !== "ALL") activeFilters.push(levelFilter);
-    if (statusFilter !== "ALL") activeFilters.push(statusFilter);
-    if (conditionFilter !== "ALL") activeFilters.push(conditionFilter);
+    if (companyFilters.length > 0) activeFilters.push(`${companyFilters.length} Emp.`);
+    if (levelFilters.length > 0) activeFilters.push(`${levelFilters.length} Niv.`);
+    if (statusFilters.length > 0) activeFilters.push(`${statusFilters.length} Est.`);
+    if (conditionFilters.length > 0) activeFilters.push(conditionFilters.join(", "));
     
     const filterTitle = activeFilters.length > 0 ? activeFilters.join(" — ") : "Consolidado General";
     const totalN = filteredEntries.length;
@@ -950,9 +1064,6 @@ const DriverSafetyPage = () => {
               </div>
             </div>
 
-            <div class="legend">
-              Escala de clasificación: &ge; 19 pts = <span style="color: #15803d">APTO</span> | 13&ndash;18 pts = <span style="color: #b45309">RIESGO MEDIO</span> | &le; 12 pts = <span style="color: #b91c1c">RIESGO ALTO</span>
-            </div>
 
             <table>
               <thead>
@@ -1064,14 +1175,14 @@ const DriverSafetyPage = () => {
       const matchesSearch = entry.name.toLowerCase().includes(search.toLowerCase()) ||
                            entry.company.toLowerCase().includes(search.toLowerCase());
       
-      const matchesCondition = conditionFilter === "ALL" || entry.result === conditionFilter;
-      const matchesCompany = companyFilter === "ALL" || (entry.company || '').trim().toUpperCase() === companyFilter.toUpperCase();
-      const matchesLevel = levelFilter === "ALL" || (entry.level || '').trim().toUpperCase() === levelFilter.toUpperCase();
-      const matchesStatus = statusFilter === "ALL" || (entry.status || '').trim().toUpperCase() === statusFilter.toUpperCase();
+      const matchesCondition = conditionFilters.length === 0 || conditionFilters.includes(entry.result);
+      const matchesCompany = companyFilters.length === 0 || companyFilters.includes((entry.company || '').trim().toUpperCase());
+      const matchesLevel = levelFilters.length === 0 || levelFilters.includes((entry.level || '').trim().toUpperCase());
+      const matchesStatus = statusFilters.length === 0 || statusFilters.includes((entry.status || '').trim().toUpperCase());
       
       return matchesSearch && matchesCondition && matchesCompany && matchesLevel && matchesStatus;
     });
-  }, [data, search, conditionFilter, companyFilter, levelFilter, statusFilter]);
+  }, [data, search, conditionFilters, companyFilters, levelFilters, statusFilters]);
 
   const stats = useMemo(() => {
     if (!filteredEntries.length) return { 
@@ -1456,83 +1567,55 @@ const DriverSafetyPage = () => {
             </div>
 
             {/* Empresa */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Empresa</label>
-              <Select value={companyFilter} onValueChange={setCompanyFilter}>
-                <SelectTrigger className="h-12 bg-white/50 border-border/40 rounded-xl shadow-sm">
-                  <SelectValue placeholder="Todas las Empresas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">Todas las Empresas</SelectItem>
-                  {filterOptions.companies.map(c => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <MultiSelectFilter 
+              label="Empresa"
+              options={filterOptions.companies}
+              selected={companyFilters}
+              onChange={setCompanyFilters}
+              placeholder="Todas las Empresas"
+            />
 
             {/* Nivel */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Trabajo Nivel</label>
-              <Select value={levelFilter} onValueChange={setLevelFilter}>
-                <SelectTrigger className="h-12 bg-white/50 border-border/40 rounded-xl shadow-sm">
-                  <SelectValue placeholder="Todos los Niveles" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">Todos los Niveles</SelectItem>
-                  {filterOptions.levels.map(l => (
-                    <SelectItem key={l} value={l}>{l}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <MultiSelectFilter 
+              label="Trabajo Nivel"
+              options={filterOptions.levels}
+              selected={levelFilters}
+              onChange={setLevelFilters}
+              placeholder="Todos los Niveles"
+            />
 
             {/* Condición */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Condición</label>
-              <Select value={conditionFilter} onValueChange={setConditionFilter}>
-                <SelectTrigger className="h-12 bg-white/50 border-border/40 rounded-xl shadow-sm">
-                  <SelectValue placeholder="Todas las Condic." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">Todas las Condic.</SelectItem>
-                  <SelectItem value="APTO">Apto</SelectItem>
-                  <SelectItem value="RIESGO MEDIO">Riesgo Medio</SelectItem>
-                  <SelectItem value="RIESGO ALTO">Riesgo Alto</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <MultiSelectFilter 
+              label="Condición"
+              options={filterOptions.conditions}
+              selected={conditionFilters}
+              onChange={setConditionFilters}
+              placeholder="Todas las Condic."
+            />
 
             {/* Estado */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Estado</label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="h-12 bg-white/50 border-border/40 rounded-xl shadow-sm">
-                  <SelectValue placeholder="Todos los Estados" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">Todos los Estados</SelectItem>
-                  {filterOptions.statuses.map(s => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <MultiSelectFilter 
+              label="Estado"
+              options={filterOptions.statuses}
+              selected={statusFilters}
+              onChange={setStatusFilters}
+              placeholder="Todos los Estados"
+            />
           </div>
 
-          <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/10">
+          <div className="flex flex-col md:flex-row justify-between items-center mt-6 pt-6 border-t border-border/10 gap-4">
             <div className="flex items-center gap-4">
               <Button 
-                variant="ghost" 
+                variant="outline" 
                 size="sm"
                 onClick={() => {
                   setSearch("");
-                  setCompanyFilter("ALL");
-                  setLevelFilter("ALL");
-                  setConditionFilter("ALL");
-                  setStatusFilter("ALL");
+                  setCompanyFilters([]);
+                  setLevelFilters([]);
+                  setConditionFilters([]);
+                  setStatusFilters([]);
                 }}
-                className="rounded-xl gap-2 text-[10px] font-bold uppercase tracking-widest h-8 hover:bg-muted"
+                className="rounded-xl gap-2 text-[10px] font-bold uppercase tracking-widest h-10 border-border/40 hover:bg-muted"
               >
                 <RefreshCw className="w-3 h-3" /> Limpiar Filtros
               </Button>
