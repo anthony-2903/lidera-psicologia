@@ -1071,6 +1071,8 @@ const DriverSafetyPage = () => {
       
       return matchesSearch && matchesCondition && matchesCompany && matchesLevel && matchesStatus;
     });
+  }, [data, search, conditionFilter, companyFilter, levelFilter, statusFilter]);
+
   const stats = useMemo(() => {
     if (!filteredEntries.length) return { 
       totalEvaluated: 0, 
