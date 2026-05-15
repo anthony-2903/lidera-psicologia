@@ -843,7 +843,13 @@ const DriverSafetyPage = () => {
             setTimeout(() => window.close(), 1000);
           };
         </script>
-    const handlePrintFilteredReport = () => {
+    `;
+
+    excelWindow.document.write(script);
+    excelWindow.document.close();
+  };
+
+  const handlePrintFilteredReport = () => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
@@ -851,7 +857,7 @@ const DriverSafetyPage = () => {
     if (companyFilter !== "ALL") activeFilters.push(companyFilter);
     if (levelFilter !== "ALL") activeFilters.push(levelFilter);
     if (statusFilter !== "ALL") activeFilters.push(statusFilter);
-    if (conditionFilter !== "ALL" && conditionFilter !== "ALL") activeFilters.push(conditionFilter);
+    if (conditionFilter !== "ALL") activeFilters.push(conditionFilter);
     
     const filterTitle = activeFilters.length > 0 ? activeFilters.join(" — ") : "Consolidado General";
     const totalN = filteredEntries.length;
