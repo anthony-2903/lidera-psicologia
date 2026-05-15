@@ -128,7 +128,7 @@ export interface DriverSafetyEntry {
   externalScore: number;
   totalScore: number;
 
-  result: "APTO" | "RIESGO MEDIO" | "RIESGO ALTO" | "ERROR";
+  result: "RIESGO BAJO" | "RIESGO MEDIO" | "RIESGO ALTO" | "ERROR";
   validation: string;
   detail: {
     question: string;
@@ -714,10 +714,10 @@ function normalizeAnswer(value: unknown): string {
     .toUpperCase();
 }
 
-function getBusinessResult(internalScore: number, totalScore: number): "APTO" | "RIESGO MEDIO" | "RIESGO ALTO" | "ERROR" {
+function getBusinessResult(internalScore: number, totalScore: number): "RIESGO BAJO" | "RIESGO MEDIO" | "RIESGO ALTO" | "ERROR" {
   if (totalScore !== 23) return "ERROR";
 
-  if (internalScore >= 19) return "APTO";
+  if (internalScore >= 19) return "RIESGO BAJO";
   if (internalScore >= 13) return "RIESGO MEDIO";
   return "RIESGO ALTO";
 }
@@ -799,7 +799,7 @@ export const fetchDriverSafetyData = async (sheetId: string): Promise<DriverSafe
         }
 
         const entries: DriverSafetyEntry[] = [];
-        const riskCounts = { 'RIESGO ALTO': 0, 'RIESGO MEDIO': 0, 'APTO': 0, 'ERROR': 0 };
+        const riskCounts = { 'RIESGO ALTO': 0, 'RIESGO MEDIO': 0, 'RIESGO BAJO': 0, 'ERROR': 0 };
 
         for (let i = 1; i < rows.length; i++) {
           const r = rows[i];
@@ -851,7 +851,7 @@ export const fetchDriverSafetyData = async (sheetId: string): Promise<DriverSafe
         const riskDistribution = [
           { name: 'RIESGO ALTO', value: riskCounts['RIESGO ALTO'] },
           { name: 'RIESGO MEDIO', value: riskCounts['RIESGO MEDIO'] },
-          { name: 'APTO', value: riskCounts['APTO'] },
+          { name: 'RIESGO BAJO', value: riskCounts['RIESGO BAJO'] },
           { name: 'ERROR', value: riskCounts['ERROR'] }
         ];
 

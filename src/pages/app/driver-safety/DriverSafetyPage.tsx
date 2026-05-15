@@ -40,13 +40,13 @@ const SHEET_ID = "1nrHMcI8fWlBKIWIv9aprjElPhY-ccmXX";
 const RISK_COLORS = {
   'RIESGO ALTO': '#ef4444',   // Red-500
   'RIESGO MEDIO': '#f59e0b',  // Amber-500
-  'APTO': '#10b981',           // Emerald-500
+  'RIESGO BAJO': '#10b981',           // Emerald-500
   'ERROR': '#64748b'           // Slate-500
 };
 
 const RECOMMENDATIONS = {
-  'APTO': {
-    title: '🟢 RECOMENDACIÓN: APTO (Dominancia Interna)',
+  'RIESGO BAJO': {
+    title: '🟢 RECOMENDACIÓN: RIESGO BAJO (Dominancia Interna)',
     desc: 'Perfil con dominancia interna sólida. El evaluado tiende a reconocer la influencia de sus propias acciones en los resultados laborales y de seguridad.',
     rec: [
       'Mantener en tareas críticas, según desempeño y criterio operativo.',
@@ -95,7 +95,7 @@ const RECOMMENDATIONS = {
 };
 
 const REPORT_ACTIONS = {
-  'APTO': 'Sin restricciones operacionales. Candidato a mentor/referente de seguridad. Reevaluación a 12 meses.',
+  'RIESGO BAJO': 'Sin restricciones operacionales. Candidato a mentor/referente de seguridad. Reevaluación a 12 meses.',
   'RIESGO MEDIO': 'Taller de autorresponsabilidad en seguridad. Monitoreo trimestral. Reevaluación a 6 meses.',
   'RIESGO ALTO': 'SE SOLICITA APERSONARSE AL ÁREA DE GERENCIA PARA RECIBIR LAS INSTRUCCIONES Y DIRECTRICES CORRESPONDIENTES.',
   'ERROR': 'Registro no válido. Revisar base de datos.'
@@ -417,7 +417,7 @@ const DriverSafetyIndividualPanel = ({ entry, distribution, onClose }: {
                   </Badge>
                   <span className={cn(
                     "text-sm font-black italic uppercase",
-                    indResult === 'APTO' ? "text-emerald-500" : (indResult === 'RIESGO MEDIO' ? "text-amber-500" : "text-red-500")
+                    indResult === 'RIESGO BAJO' ? "text-emerald-500" : (indResult === 'RIESGO MEDIO' ? "text-amber-500" : "text-red-500")
                   )}>
                     {indResult}
                   </span>
@@ -471,11 +471,11 @@ const DriverSafetyIndividualPanel = ({ entry, distribution, onClose }: {
                     <div className="relative -translate-x-1/2 flex flex-col items-center">
                        <div className={cn(
                          "w-1.5 h-16 -mt-2 shadow-xl rounded-full",
-                         indResult === 'APTO' ? "bg-emerald-500" : (indResult === 'RIESGO MEDIO' ? "bg-amber-500" : "bg-red-500")
+                         indResult === 'RIESGO BAJO' ? "bg-emerald-500" : (indResult === 'RIESGO MEDIO' ? "bg-amber-500" : "bg-red-500")
                        )} />
                        <div className={cn(
                          "mt-1 px-3 py-1 rounded-full text-[10px] font-black shadow-2xl border border-white/20 whitespace-nowrap",
-                         indResult === 'APTO' ? "bg-emerald-500 text-white" : (indResult === 'RIESGO MEDIO' ? "bg-amber-500 text-white" : "bg-red-500 text-white")
+                         indResult === 'RIESGO BAJO' ? "bg-emerald-500 text-white" : (indResult === 'RIESGO MEDIO' ? "bg-amber-500 text-white" : "bg-red-500 text-white")
                        )}>
                          {indResult} ({indScore} pts)
                        </div>
@@ -490,8 +490,8 @@ const DriverSafetyIndividualPanel = ({ entry, distribution, onClose }: {
                  <div className={cn("text-center p-3 rounded-2xl border border-dashed transition-all", indResult === 'RIESGO MEDIO' ? "bg-amber-500/10 border-amber-500/30 ring-1 border-amber-500/20 shadow-lg shadow-amber-500/10 scale-105" : "opacity-30")}>
                     <p className="text-[9px] font-black uppercase text-amber-600">Riesgo Medio</p>
                  </div>
-                 <div className={cn("text-center p-3 rounded-2xl border border-dashed transition-all", indResult === 'APTO' ? "bg-emerald-500/10 border-emerald-500/30 ring-1 border-emerald-500/20 shadow-lg shadow-emerald-500/10 scale-105" : "opacity-30")}>
-                    <p className="text-[9px] font-black uppercase text-emerald-600">Apto</p>
+                 <div className={cn("text-center p-3 rounded-2xl border border-dashed transition-all", indResult === 'RIESGO BAJO' ? "bg-emerald-500/10 border-emerald-500/30 ring-1 border-emerald-500/20 shadow-lg shadow-emerald-500/10 scale-105" : "opacity-30")}>
+                    <p className="text-[9px] font-black uppercase text-emerald-600">Riesgo Bajo</p>
                  </div>
               </div>
            </div>
@@ -514,7 +514,7 @@ const DriverSafetyIndividualPanel = ({ entry, distribution, onClose }: {
             <div className="space-y-4">
                <div className={cn(
                  "p-6 rounded-2xl border flex flex-col gap-3",
-                 entry.result === 'APTO' ? "bg-emerald-500/5 border-emerald-500/10" : (entry.result === 'RIESGO MEDIO' ? "bg-amber-500/5 border-amber-500/10" : "bg-red-500/5 border-red-500/10")
+                 entry.result === 'RIESGO BAJO' ? "bg-emerald-500/5 border-emerald-500/10" : (entry.result === 'RIESGO MEDIO' ? "bg-amber-500/5 border-amber-500/10" : "bg-red-500/5 border-red-500/10")
                )}>
                   <p className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2" style={{ color: RISK_COLORS[entry.result as keyof typeof RISK_COLORS] }}>
                     <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: RISK_COLORS[entry.result as keyof typeof RISK_COLORS] }} />
@@ -565,8 +565,8 @@ const DriverSafetyIndividualPanel = ({ entry, distribution, onClose }: {
             const diff = entry.internalScore - entry.externalScore;
             const resultText = entry.result;
             const isMedio = entry.result === 'RIESGO MEDIO';
-            const resultColor = entry.result === 'APTO' ? 'FFD1FAE5' : (isMedio ? 'FFFEF3C7' : 'FFFEE2E2'); 
-            const resultTextCol = entry.result === 'APTO' ? 'FF059669' : (isMedio ? 'FFD97706' : 'FFDC2626'); 
+            const resultColor = entry.result === 'RIESGO BAJO' ? 'FFD1FAE5' : (isMedio ? 'FFFEF3C7' : 'FFFEE2E2'); 
+            const resultTextCol = entry.result === 'RIESGO BAJO' ? 'FF059669' : (isMedio ? 'FFD97706' : 'FFDC2626'); 
 
             // @ts-ignore
             const h2c = window.html2canvas || await new Promise((resolve) => {
@@ -671,7 +671,7 @@ const DriverSafetyIndividualPanel = ({ entry, distribution, onClose }: {
                   const rules = [
                     ['<=12', 'RIESGO ALTO'],
                     ['13 a 18', 'RIESGO MEDIO'],
-                    ['19 a 23', 'APTO']
+                    ['19 a 23', 'RIESGO BAJO']
                   ];
                   let ruleRow = 8;
                   worksheet.mergeCells('C' + ruleRow + ':D' + ruleRow);
@@ -814,7 +814,7 @@ const DriverSafetyPage = () => {
 
   // Extract unique values for filters
   const filterOptions = useMemo(() => {
-    if (!data?.entries) return { companies: [], levels: [], statuses: [], conditions: ['APTO', 'RIESGO MEDIO', 'RIESGO ALTO'] };
+    if (!data?.entries) return { companies: [], levels: [], statuses: [], conditions: ['RIESGO BAJO', 'RIESGO MEDIO', 'RIESGO ALTO'] };
     
     const companies = Array.from(new Set(data.entries.map(e => (e.company || '').trim().toUpperCase()))).filter(Boolean).sort();
     const levels = Array.from(new Set(data.entries.map(e => (e.level || '').trim().toUpperCase()))).filter(Boolean).sort();
@@ -824,7 +824,7 @@ const DriverSafetyPage = () => {
       companies, 
       levels, 
       statuses,
-      conditions: ['APTO', 'RIESGO MEDIO', 'RIESGO ALTO']
+      conditions: ['RIESGO BAJO', 'RIESGO MEDIO', 'RIESGO ALTO']
     };
   }, [data]);
 
@@ -932,7 +932,7 @@ const DriverSafetyPage = () => {
 
               // Formato condicional colores
               const resCell = row.getCell(10);
-              if (item.Resultado === 'APTO') {
+              if (item.Resultado === 'RIESGO BAJO') {
                 resCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD1FAE5' } };
                 resCell.font = { color: { argb: 'FF059669' }, bold: true };
               } else if (item.Resultado === 'RIESGO MEDIO') {
@@ -976,11 +976,10 @@ const DriverSafetyPage = () => {
     const filterTitle = activeFilters.length > 0 ? activeFilters.join(" — ") : "Consolidado General";
     const totalN = filteredEntries.length;
     
-    const aptoCount = filteredEntries.filter(e => e.result === 'APTO').length;
+    const bajoCount = filteredEntries.filter(e => e.result === 'RIESGO BAJO').length;
     const medioCount = filteredEntries.filter(e => e.result === 'RIESGO MEDIO').length;
     const altoCount = filteredEntries.filter(e => e.result === 'RIESGO ALTO').length;
-
-    const aptoPct = totalN > 0 ? ((aptoCount / totalN) * 100).toFixed(1) : "0.0";
+    const bajoPct = totalN > 0 ? ((bajoCount / totalN) * 100).toFixed(1) : "0.0";
     const medioPct = totalN > 0 ? ((medioCount / totalN) * 100).toFixed(1) : "0.0";
     const altoPct = totalN > 0 ? ((altoCount / totalN) * 100).toFixed(1) : "0.0";
 
@@ -1004,7 +1003,7 @@ const DriverSafetyPage = () => {
             
             .summary-container { display: grid; grid-cols: 3; display: flex; gap: 15px; margin-bottom: 30px; }
             .summary-box { flex: 1; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid rgba(0,0,0,0.05); }
-            .summary-box.apto { background: #f0fdf4; border-color: #bcf0da; }
+            .summary-box.bajo { background: #f0fdf4; border-color: #bcf0da; }
             .summary-box.medio { background: #fffbeb; border-color: #fde68a; }
             .summary-box.alto { background: #fef2f2; border-color: #fecaca; }
             
@@ -1012,7 +1011,7 @@ const DriverSafetyPage = () => {
             .summary-value { font-size: 32px; font-weight: 900; margin: 0; }
             .summary-pct { font-size: 12px; font-weight: 600; opacity: 0.8; }
             
-            .apto .summary-label, .apto .summary-value { color: #15803d; }
+            .bajo .summary-label, .bajo .summary-value { color: #15803d; }
             .medio .summary-label, .medio .summary-value { color: #b45309; }
             .alto .summary-label, .alto .summary-value { color: #b91c1c; }
 
@@ -1026,7 +1025,7 @@ const DriverSafetyPage = () => {
             .name-cell { font-weight: 700; text-transform: uppercase; width: 200px; }
             .result-badge { padding: 4px 8px; border-radius: 6px; font-weight: 800; text-align: center; display: inline-block; min-width: 80px; }
             
-            .badge-apto { background: #d1fae5; color: #065f46; }
+            .badge-bajo { background: #d1fae5; color: #065f46; }
             .badge-medio { background: #fef3c7; color: #92400e; }
             .badge-alto { background: #fee2e2; color: #991b1b; }
             
@@ -1046,10 +1045,10 @@ const DriverSafetyPage = () => {
             </div>
 
             <div class="summary-container">
-              <div class="summary-box apto">
-                <div class="summary-label">APTO</div>
-                <div class="summary-value">${aptoCount}</div>
-                <div class="summary-pct">${aptoPct}% del total</div>
+              <div class="summary-box bajo">
+                <div class="summary-label">RIESGO BAJO</div>
+                <div class="summary-value">${bajoCount}</div>
+                <div class="summary-pct">${bajoPct}% del total</div>
               </div>
               <div class="summary-box medio">
                 <div class="summary-label">RIESGO MEDIO</div>
@@ -1079,8 +1078,8 @@ const DriverSafetyPage = () => {
                     <td class="row-number">${i + 1}</td>
                     <td class="name-cell">${e.name}</td>
                     <td style="text-align: center">
-                      <span class="result-badge ${e.result === 'APTO' ? 'badge-apto' : (e.result === 'RIESGO MEDIO' ? 'badge-medio' : 'badge-alto')}">
-                        ${e.result === 'APTO' ? 'Apto' : (e.result === 'RIESGO MEDIO' ? 'Riesgo Medio' : 'Riesgo Alto')}
+                      <span class="result-badge ${e.result === 'RIESGO BAJO' ? 'badge-bajo' : (e.result === 'RIESGO MEDIO' ? 'badge-medio' : 'badge-alto')}">
+                        ${e.result === 'RIESGO BAJO' ? 'Riesgo Bajo' : (e.result === 'RIESGO MEDIO' ? 'Riesgo Medio' : 'Riesgo Alto')}
                       </span>
                     </td>
                     <td class="action-cell">
@@ -1181,7 +1180,7 @@ const DriverSafetyPage = () => {
       
       return matchesSearch && matchesCondition && matchesCompany && matchesLevel && matchesStatus;
     }).sort((a, b) => {
-      const order: Record<string, number> = { 'APTO': 1, 'RIESGO MEDIO': 2, 'RIESGO ALTO': 3, 'ERROR': 4 };
+      const order: Record<string, number> = { 'RIESGO BAJO': 1, 'RIESGO MEDIO': 2, 'RIESGO ALTO': 3, 'ERROR': 4 };
       const valA = order[a.result] || 99;
       const valB = order[b.result] || 99;
       if (valA !== valB) return valA - valB;
@@ -1211,7 +1210,7 @@ const DriverSafetyPage = () => {
     }, {} as Record<string, number>);
     
     const riskDistribution = [
-      { name: 'APTO', value: riskCounts['APTO'] || 0 },
+      { name: 'RIESGO BAJO', value: riskCounts['RIESGO BAJO'] || 0 },
       { name: 'RIESGO MEDIO', value: riskCounts['RIESGO MEDIO'] || 0 },
       { name: 'RIESGO ALTO', value: riskCounts['RIESGO ALTO'] || 0 },
     ];
@@ -1343,8 +1342,8 @@ const DriverSafetyPage = () => {
                 worksheet.getCell('C1').value = 'RESULTADOS';
                 worksheet.getCell('C1').style = headerStyle;
 
-                const resultColor = entry.result === 'APTO' ? 'FFD1FAE5' : (entry.result === 'RIESGO MEDIO' ? 'FFFEF3C7' : 'FFFEE2E2');
-                const resultTextCol = entry.result === 'APTO' ? 'FF059669' : (entry.result === 'RIESGO MEDIO' ? 'FFD97706' : 'FFDC2626');
+                const resultColor = entry.result === 'RIESGO BAJO' ? 'FFD1FAE5' : (entry.result === 'RIESGO MEDIO' ? 'FFFEF3C7' : 'FFFEE2E2');
+                const resultTextCol = entry.result === 'RIESGO BAJO' ? 'FF059669' : (entry.result === 'RIESGO MEDIO' ? 'FFD97706' : 'FFDC2626');
 
                 const resultsData = [
                   ['INTERNO', entry.internalScore],
@@ -1386,7 +1385,7 @@ const DriverSafetyPage = () => {
                 
                 // Pointer
                 const pX = 50 + (entry.internalScore / 23) * 700;
-                const pColor = entry.result === 'APTO' ? '#10b981' : (entry.result === 'RIESGO MEDIO' ? '#d97706' : '#dc2626');
+                const pColor = entry.result === 'RIESGO BAJO' ? '#10b981' : (entry.result === 'RIESGO MEDIO' ? '#d97706' : '#dc2626');
                 ctx.fillStyle = pColor;
                 ctx.fillRect(pX - 3, barY - 15, 6, barH + 30);
                 
@@ -1401,7 +1400,7 @@ const DriverSafetyPage = () => {
                 ctx.textAlign = 'left';
                 ctx.fillText('EXTERNO (RIESGO)', 50, barY + barH + 20);
                 ctx.textAlign = 'right';
-                ctx.fillText('INTERNO (APTO)', 750, barY + barH + 20);
+                ctx.fillText('INTERNO (RIESGO BAJO)', 750, barY + barH + 20);
 
                 const chartImgId = workbook.addImage({
                   base64: canvas.toDataURL('image/png'),
@@ -1420,7 +1419,7 @@ const DriverSafetyPage = () => {
                 rR++;
 
                 const getAnalysisText = (internal) => {
-                  if (internal >= 19) return "Perfil con dominancia interna sólida (Apto). El evaluado asume responsabilidad directa sobre sus acciones y resultados, mostrando un alto compromiso con la seguridad operativa y el cumplimiento de normas.";
+                  if (internal >= 19) return "Perfil con dominancia interna sólida (Riesgo Bajo). El evaluado asume responsabilidad directa sobre sus acciones y resultados, mostrando un alto compromiso con la seguridad operativa y el cumplimiento de normas.";
                   if (internal >= 13) return "Perfil con control de riesgo medio. Si bien asume responsabilidad, aún existe una tendencia parcial a atribuir eventos a factores externos. Se recomienda reforzamiento en cultura de seguridad.";
                   return "SE SOLICITA APERSONARSE AL ÁREA DE GERENCIA PARA RECIBIR LAS INSTRUCCIONES Y DIRECTRICES CORRESPONDIENTES.";
                 };
@@ -1737,13 +1736,13 @@ const DriverSafetyPage = () => {
                 info="Puntaje promedio de Locus de Control Externo. Indica la tendencia a atribuir la seguridad a factores externos como la suerte o el entorno."
               />
               <KpiCard 
-                label="Índice de Aptitud" 
-                value={`${((stats.riskDistribution.find(d => d.name === 'APTO')?.value || 0) / (stats.totalEvaluated || 1) * 100).toFixed(0)}%`} 
+                label="Índice de Riesgo Bajo" 
+                value={`${((stats.riskDistribution.find(d => d.name === 'RIESGO BAJO')?.value || 0) / (stats.totalEvaluated || 1) * 100).toFixed(0)}%`} 
                 icon={ShieldCheck} 
                 color="text-amber-500" 
                 bg="bg-amber-500/10" 
                 border="border-amber-500/20" 
-                info="Porcentaje de la población evaluada que ha calificado como 'APTO', mostrando un nivel óptimo de responsabilidad personal y seguridad."
+                info="Porcentaje de la población evaluada que ha calificado como 'RIESGO BAJO', mostrando un nivel óptimo de responsabilidad personal y seguridad."
               />
             </div>
 
@@ -1751,7 +1750,7 @@ const DriverSafetyPage = () => {
               {/* Chart: Risk Distribution */}
               <Card id="dashboard-pie-chart" className="lg:col-span-4 border-2 shadow-2xl rounded-[2.5rem] overflow-hidden group">
                 <CardHeader className="bg-muted/5 border-b border-border/20 p-8">
-                  <CardTitle className="text-xl font-black italic tracking-tighter">Distribución de Aptitud</CardTitle>
+                  <CardTitle className="text-xl font-black italic tracking-tighter">Distribución de Perfiles</CardTitle>
                   <CardDescription className="text-[10px] font-bold uppercase tracking-widest text-primary/60">Segmentación por puntaje interno</CardDescription>
                 </CardHeader>
                 <CardContent className="p-8 h-[350px]">
@@ -1859,7 +1858,7 @@ const DriverSafetyPage = () => {
                     <h3 className="text-xl font-black text-white italic tracking-tighter">Regla de Negocio</h3>
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Apto</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Riesgo Bajo</span>
                         <span className="text-xs font-black text-emerald-500 tracking-tighter italic">19 - 23 pts</span>
                       </div>
                       <div className="flex items-center justify-between">
@@ -1895,7 +1894,7 @@ const DriverSafetyPage = () => {
                <h3 className="text-2xl font-black italic tracking-tighter uppercase px-2">Acciones según Resultados</h3>
                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="p-8 rounded-[2.5rem] bg-emerald-500/5 border border-emerald-500/10 space-y-4">
-                     <p className="text-[10px] font-black uppercase text-emerald-600 tracking-widest">Para Personal Apto</p>
+                     <p className="text-[10px] font-black uppercase text-emerald-600 tracking-widest">Para Riesgo Bajo</p>
                      <ul className="space-y-3 text-xs font-medium text-slate-600 leading-tight italic decoration-emerald-500/50">
                         <li>• Líderes o mentores de seguridad</li>
                         <li>• Asignación a tareas críticas</li>
@@ -2007,7 +2006,7 @@ const DriverSafetyPage = () => {
                           variant="secondary" 
                           className={cn(
                             "text-[10px] font-black italic border-0 shadow-lg shadow-black/5",
-                            entry.result === 'APTO' ? "bg-emerald-500 text-white shadow-emerald-500/20" : (entry.result === 'RIESGO MEDIO' ? "bg-amber-500 text-white shadow-amber-500/20" : (entry.result === 'ERROR' ? "bg-slate-500 text-white shadow-slate-500/20" : "bg-red-500 text-white shadow-red-500/20"))
+                            entry.result === 'RIESGO BAJO' ? "bg-emerald-500 text-white shadow-emerald-500/20" : (entry.result === 'RIESGO MEDIO' ? "bg-amber-500 text-white shadow-amber-500/20" : (entry.result === 'ERROR' ? "bg-slate-500 text-white shadow-slate-500/20" : "bg-red-500 text-white shadow-red-500/20"))
                           )}
                         >
                           {entry.result}
