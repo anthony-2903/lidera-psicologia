@@ -83,6 +83,13 @@ const RECOMMENDATIONS = {
   }
 };
 
+const REPORT_ACTIONS = {
+  'APTO': 'Sin restricciones operacionales. Candidato a mentor/referente de seguridad. Reevaluación a 12 meses.',
+  'RIESGO MEDIO': 'Taller de autorresponsabilidad en seguridad. Monitoreo trimestral. Reevaluación a 6 meses.',
+  'RIESGO ALTO': 'Intervención psicológica individual. Restricción temporal de tareas críticas. Reevaluación a 3 meses.',
+  'ERROR': 'Registro no válido. Revisar base de datos.'
+};
+
 const getAnalysis = (result: string, internal: number) => {
   if (result === 'ERROR') return "Registro no válido para interpretación. Las respuestas no completan las 23 preguntas válidas o existe un problema de lectura de datos.";
   if (internal >= 19) return "Perfil con dominancia interna sólida. El evaluado tiende a reconocer la influencia de sus propias acciones en los resultados laborales y de seguridad. Este perfil resulta favorable para tareas críticas, ya que se asocia con responsabilidad personal, cumplimiento de procedimientos y mayor disposición hacia la conducta segura.";
@@ -700,9 +707,9 @@ const DriverSafetyPage = () => {
   const filterOptions = useMemo(() => {
     if (!data?.entries) return { companies: [], levels: [], statuses: [] };
     
-    const companies = Array.from(new Set(data.entries.map(e => (e.company || '').trim()))).filter(Boolean).sort();
-    const levels = Array.from(new Set(data.entries.map(e => (e.level || '').trim()))).filter(Boolean).sort();
-    const statuses = Array.from(new Set(data.entries.map(e => (e.status || '').trim()))).filter(Boolean).sort();
+    const companies = Array.from(new Set(data.entries.map(e => (e.company || '').trim().toUpperCase()))).filter(Boolean).sort();
+    const levels = Array.from(new Set(data.entries.map(e => (e.level || '').trim().toUpperCase()))).filter(Boolean).sort();
+    const statuses = Array.from(new Set(data.entries.map(e => (e.status || '').trim().toUpperCase()))).filter(Boolean).sort();
     
     return { companies, levels, statuses };
   }, [data]);
@@ -836,9 +843,160 @@ const DriverSafetyPage = () => {
             setTimeout(() => window.close(), 1000);
           };
         </script>
-      `;
-      excelWindow.document.write(script);
-      excelWindow.document.close();
+    const handlePrintFilteredReport = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const activeFilters = [];
+    if (companyFilter !== "ALL") activeFilters.push(companyFilter);
+    if (levelFilter !== "ALL") activeFilters.push(levelFilter);
+    if (statusFilter !== "ALL") activeFilters.push(statusFilter);
+    if (conditionFilter !== "ALL" && conditionFilter !== "ALL") activeFilters.push(conditionFilter);
+    
+    const filterTitle = activeFilters.length > 0 ? activeFilters.join(" — ") : "Consolidado General";
+    const totalN = filteredEntries.length;
+    
+    const aptoCount = filteredEntries.filter(e => e.result === 'APTO').length;
+    const medioCount = filteredEntries.filter(e => e.result === 'RIESGO MEDIO').length;
+    const altoCount = filteredEntries.filter(e => e.result === 'RIESGO ALTO').length;
+
+    const aptoPct = totalN > 0 ? ((aptoCount / totalN) * 100).toFixed(1) : "0.0";
+    const medioPct = totalN > 0 ? ((medioCount / totalN) * 100).toFixed(1) : "0.0";
+    const altoPct = totalN > 0 ? ((altoCount / totalN) * 100).toFixed(1) : "0.0";
+
+    const MONTHS_ES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+    const currentMonth = MONTHS_ES[new Date().getMonth()];
+    const currentYear = new Date().getFullYear();
+
+    const reportHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Informe Driver Safety - ${filterTitle}</title>
+          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+          <style>
+            body { font-family: 'Inter', sans-serif; color: #1e293b; margin: 0; padding: 0; background: #f8fafc; }
+            .page { background: white; width: 210mm; min-height: 297mm; padding: 15mm; margin: 0 auto; box-sizing: border-box; }
+            .header-info { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; }
+            .header-info p { margin: 5px 0; color: #64748b; font-size: 14px; font-weight: 600; }
+            .main-title { font-size: 24px; font-weight: 900; color: #1e1b4b; text-transform: uppercase; margin: 0; letter-spacing: -0.5px; }
+            
+            .summary-container { display: grid; grid-cols: 3; display: flex; gap: 15px; margin-bottom: 30px; }
+            .summary-box { flex: 1; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid rgba(0,0,0,0.05); }
+            .summary-box.apto { background: #f0fdf4; border-color: #bcf0da; }
+            .summary-box.medio { background: #fffbeb; border-color: #fde68a; }
+            .summary-box.alto { background: #fef2f2; border-color: #fecaca; }
+            
+            .summary-label { font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; }
+            .summary-value { font-size: 32px; font-weight: 900; margin: 0; }
+            .summary-pct { font-size: 12px; font-weight: 600; opacity: 0.8; }
+            
+            .apto .summary-label, .apto .summary-value { color: #15803d; }
+            .medio .summary-label, .medio .summary-value { color: #b45309; }
+            .alto .summary-label, .alto .summary-value { color: #b91c1c; }
+
+            .legend { text-align: center; font-size: 12px; font-weight: 700; background: #f1f5f9; padding: 10px; border-radius: 8px; margin-bottom: 30px; }
+            
+            table { width: 100%; border-collapse: collapse; font-size: 11px; }
+            th { background: #1e1b4b; color: white; text-transform: uppercase; padding: 12px 8px; text-align: left; font-weight: 800; border: 1px solid #1e1b4b; }
+            td { padding: 10px 8px; border: 1px solid #e2e8f0; line-height: 1.4; vertical-align: top; }
+            
+            .row-number { text-align: center; font-weight: 700; width: 30px; }
+            .name-cell { font-weight: 700; text-transform: uppercase; width: 200px; }
+            .result-badge { padding: 4px 8px; border-radius: 6px; font-weight: 800; text-align: center; display: inline-block; min-width: 80px; }
+            
+            .badge-apto { background: #d1fae5; color: #065f46; }
+            .badge-medio { background: #fef3c7; color: #92400e; }
+            .badge-alto { background: #fee2e2; color: #991b1b; }
+            
+            .action-cell { color: #475569; font-style: italic; }
+
+            @media print {
+              body { background: white; }
+              .page { box-shadow: none; margin: 0; width: 100%; }
+            }
+          </style>
+        </head>
+        <body>
+          <div id="report-content" class="page">
+            <div class="header-info">
+              <p style="font-weight: 800; font-size: 12px; color: #6366f1;">ANEXO — RESULTADOS FILTRADOS</p>
+              <h1 class="main-title">Prueba Psicométrica: Locus de Control (Escala I-E)</h1>
+              <p>Filtros Activos: ${filterTitle} | N = ${totalN} | ${currentMonth} ${currentYear}</p>
+            </div>
+
+            <div class="summary-container">
+              <div class="summary-box apto">
+                <div class="summary-label">APTO</div>
+                <div class="summary-value">${aptoCount}</div>
+                <div class="summary-pct">${aptoPct}% del total</div>
+              </div>
+              <div class="summary-box medio">
+                <div class="summary-label">RIESGO MEDIO</div>
+                <div class="summary-value">${medioCount}</div>
+                <div class="summary-pct">${medioPct}% del total</div>
+              </div>
+              <div class="summary-box alto">
+                <div class="summary-label">RIESGO ALTO</div>
+                <div class="summary-value">${altoCount}</div>
+                <div class="summary-pct">${altoPct}% del total</div>
+              </div>
+            </div>
+
+            <div class="legend">
+              Escala de clasificación: &ge; 19 pts = <span style="color: #15803d">APTO</span> | 13&ndash;18 pts = <span style="color: #b45309">RIESGO MEDIO</span> | &le; 12 pts = <span style="color: #b91c1c">RIESGO ALTO</span>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th style="text-align: center">Nº</th>
+                  <th>Apellidos y Nombres</th>
+                  <th style="text-align: center">Resultado</th>
+                  <th>Acción Recomendada</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filteredEntries.map((e, i) => `
+                  <tr>
+                    <td class="row-number">${i + 1}</td>
+                    <td class="name-cell">${e.name}</td>
+                    <td style="text-align: center">
+                      <span class="result-badge ${e.result === 'APTO' ? 'badge-apto' : (e.result === 'RIESGO MEDIO' ? 'badge-medio' : 'badge-alto')}">
+                        ${e.result === 'APTO' ? 'Apto' : (e.result === 'RIESGO MEDIO' ? 'Riesgo Medio' : 'Riesgo Alto')}
+                      </span>
+                    </td>
+                    <td class="action-cell">
+                      ${REPORT_ACTIONS[e.result as keyof typeof REPORT_ACTIONS]}
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+
+          <script>
+            window.onload = () => {
+              const element = document.getElementById('report-content');
+              const opt = {
+                margin: 0,
+                filename: 'Informe_Driver_Safety_Filtrado_${filterTitle.replace(/\s+/g, '_')}.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+              };
+              html2pdf().from(element).set(opt).save().then(() => {
+                setTimeout(() => window.close(), 1000);
+              });
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(reportHtml);
+    printWindow.document.close();
   };
 
   const handlePrintDashboard = () => {
@@ -901,13 +1059,41 @@ const DriverSafetyPage = () => {
                            entry.company.toLowerCase().includes(search.toLowerCase());
       
       const matchesCondition = conditionFilter === "ALL" || entry.result === conditionFilter;
-      const matchesCompany = companyFilter === "ALL" || (entry.company || '').trim() === companyFilter;
-      const matchesLevel = levelFilter === "ALL" || (entry.level || '').trim() === levelFilter;
-      const matchesStatus = statusFilter === "ALL" || (entry.status || '').trim() === statusFilter;
+      const matchesCompany = companyFilter === "ALL" || (entry.company || '').trim().toUpperCase() === companyFilter.toUpperCase();
+      const matchesLevel = levelFilter === "ALL" || (entry.level || '').trim().toUpperCase() === levelFilter.toUpperCase();
+      const matchesStatus = statusFilter === "ALL" || (entry.status || '').trim().toUpperCase() === statusFilter.toUpperCase();
       
       return matchesSearch && matchesCondition && matchesCompany && matchesLevel && matchesStatus;
     });
-  }, [data, search, conditionFilter, companyFilter, levelFilter, statusFilter]);
+  const stats = useMemo(() => {
+    if (!filteredEntries.length) return { 
+      totalEvaluated: 0, 
+      avgInternal: 0, 
+      avgExternal: 0, 
+      riskDistribution: [
+        { name: 'APTO', value: 0 },
+        { name: 'RIESGO MEDIO', value: 0 },
+        { name: 'RIESGO ALTO', value: 0 }
+      ] 
+    };
+    
+    const total = filteredEntries.length;
+    const avgInternal = filteredEntries.reduce((acc, e) => acc + e.internalScore, 0) / total;
+    const avgExternal = filteredEntries.reduce((acc, e) => acc + e.externalScore, 0) / total;
+    
+    const riskCounts = filteredEntries.reduce((acc, e) => {
+      acc[e.result] = (acc[e.result] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    const riskDistribution = [
+      { name: 'APTO', value: riskCounts['APTO'] || 0 },
+      { name: 'RIESGO MEDIO', value: riskCounts['RIESGO MEDIO'] || 0 },
+      { name: 'RIESGO ALTO', value: riskCounts['RIESGO ALTO'] || 0 },
+    ];
+    
+    return { totalEvaluated: total, avgInternal, avgExternal, riskDistribution };
+  }, [filteredEntries]);
 
   const handleExportBulkExcel = async () => {
     const excelWindow = window.open('', '_blank');
@@ -1243,6 +1429,136 @@ const DriverSafetyPage = () => {
             </Button>
           </div>
         </div>
+
+        {/* Universal Filters */}
+        <Card className="border-2 shadow-xl rounded-[2rem] p-6 bg-white/80 backdrop-blur-md border-primary/5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+            {/* Buscador */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Buscador</label>
+              <div className="relative group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                <Input 
+                  placeholder="Nombre..." 
+                  className="pl-12 h-12 bg-white/50 border-border/40 rounded-xl focus:ring-2 focus:ring-primary/20 shadow-sm"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Empresa */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Empresa</label>
+              <Select value={companyFilter} onValueChange={setCompanyFilter}>
+                <SelectTrigger className="h-12 bg-white/50 border-border/40 rounded-xl shadow-sm">
+                  <SelectValue placeholder="Todas las Empresas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Todas las Empresas</SelectItem>
+                  {filterOptions.companies.map(c => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Nivel */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Trabajo Nivel</label>
+              <Select value={levelFilter} onValueChange={setLevelFilter}>
+                <SelectTrigger className="h-12 bg-white/50 border-border/40 rounded-xl shadow-sm">
+                  <SelectValue placeholder="Todos los Niveles" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Todos los Niveles</SelectItem>
+                  {filterOptions.levels.map(l => (
+                    <SelectItem key={l} value={l}>{l}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Condición */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Condición</label>
+              <Select value={conditionFilter} onValueChange={setConditionFilter}>
+                <SelectTrigger className="h-12 bg-white/50 border-border/40 rounded-xl shadow-sm">
+                  <SelectValue placeholder="Todas las Condic." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Todas las Condic.</SelectItem>
+                  <SelectItem value="APTO">Apto</SelectItem>
+                  <SelectItem value="RIESGO MEDIO">Riesgo Medio</SelectItem>
+                  <SelectItem value="RIESGO ALTO">Riesgo Alto</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Estado */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Estado</label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-12 bg-white/50 border-border/40 rounded-xl shadow-sm">
+                  <SelectValue placeholder="Todos los Estados" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Todos los Estados</SelectItem>
+                  {filterOptions.statuses.map(s => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/10">
+            <div className="flex items-center gap-4">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => {
+                  setSearch("");
+                  setCompanyFilter("ALL");
+                  setLevelFilter("ALL");
+                  setConditionFilter("ALL");
+                  setStatusFilter("ALL");
+                }}
+                className="rounded-xl gap-2 text-[10px] font-bold uppercase tracking-widest h-8 hover:bg-muted"
+              >
+                <RefreshCw className="w-3 h-3" /> Limpiar Filtros
+              </Button>
+              <div className="h-3 w-px bg-border/40" />
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Filter className="w-3 h-3" />
+                <span className="text-[10px] font-black uppercase tracking-widest">{filteredEntries.length} Casos Filtrados</span>
+              </div>
+            </div>
+            
+            {view === 'list' && (
+              <div className="flex items-center gap-3">
+                <Button 
+                  onClick={handleExportBulkExcel}
+                  size="sm"
+                  className="h-9 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20 gap-2 group transition-all active:scale-95 border-0"
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                  <span className="text-[10px] font-black tracking-tighter uppercase italic">Excel Grupal</span>
+                </Button>
+
+                <Button 
+                  onClick={handlePrintFilteredReport}
+                  size="sm"
+                  variant="outline"
+                  className="h-9 px-4 rounded-xl border-primary/20 hover:bg-primary/5 text-primary shadow-lg shadow-primary/5 gap-2 group transition-all active:scale-95"
+                >
+                  <FileDown className="w-4 h-4" />
+                  <span className="text-[10px] font-black tracking-tighter uppercase italic">Informe PDF</span>
+                </Button>
+              </div>
+            )}
+          </div>
+        </Card>
         
         {/* Intro Info Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1299,7 +1615,7 @@ const DriverSafetyPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <KpiCard 
                 label="Total Evaluados" 
-                value={data.totalEvaluated} 
+                value={stats.totalEvaluated} 
                 icon={Users} 
                 color="text-blue-500" 
                 bg="bg-blue-500/10" 
@@ -1308,7 +1624,7 @@ const DriverSafetyPage = () => {
               />
               <KpiCard 
                 label="Promedio Interno" 
-                value={data.avgInternal.toFixed(1)} 
+                value={stats.avgInternal.toFixed(1)} 
                 icon={Brain} 
                 color="text-indigo-500" 
                 bg="bg-indigo-500/10" 
@@ -1317,7 +1633,7 @@ const DriverSafetyPage = () => {
               />
               <KpiCard 
                 label="Promedio Externo" 
-                value={data.avgExternal.toFixed(1)} 
+                value={stats.avgExternal.toFixed(1)} 
                 icon={Zap} 
                 color="text-emerald-500" 
                 bg="bg-emerald-500/10" 
@@ -1326,7 +1642,7 @@ const DriverSafetyPage = () => {
               />
               <KpiCard 
                 label="Índice de Aptitud" 
-                value={`${((data.riskDistribution.find(d => d.name === 'APTO')?.value || 0) / data.totalEvaluated * 100).toFixed(0)}%`} 
+                value={`${((stats.riskDistribution.find(d => d.name === 'APTO')?.value || 0) / (stats.totalEvaluated || 1) * 100).toFixed(0)}%`} 
                 icon={ShieldCheck} 
                 color="text-amber-500" 
                 bg="bg-amber-500/10" 
@@ -1346,7 +1662,7 @@ const DriverSafetyPage = () => {
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={data.riskDistribution}
+                        data={stats.riskDistribution}
                         cx="50%"
                         cy="50%"
                         innerRadius={80}
@@ -1354,7 +1670,7 @@ const DriverSafetyPage = () => {
                         paddingAngle={8}
                         dataKey="value"
                       >
-                        {data.riskDistribution.map((entry, index) => (
+                        {stats.riskDistribution.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={RISK_COLORS[entry.name as keyof typeof RISK_COLORS]} />
                         ))}
                       </Pie>
@@ -1372,7 +1688,7 @@ const DriverSafetyPage = () => {
                       <Legend verticalAlign="bottom" height={36} content={({ payload }) => (
                         <div className="flex justify-center gap-6 mt-4">
                           {payload?.map((entry: any, index: number) => {
-                            const count = data.riskDistribution.find(d => d.name === entry.value)?.value || 0;
+                            const count = stats.riskDistribution.find(d => d.name === entry.value)?.value || 0;
                             return (
                               <div key={index} className="flex items-center gap-2">
                                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
@@ -1402,18 +1718,18 @@ const DriverSafetyPage = () => {
                     <div className="flex justify-between items-end mb-4">
                       <div className="space-y-1">
                         <p className="text-sm font-black text-indigo-500 uppercase tracking-tighter">Control Interno</p>
-                        <p className="text-4xl font-black tabular-nums italic text-indigo-600">{(data.avgInternal / 23 * 100).toFixed(1)}%</p>
+                        <p className="text-4xl font-black tabular-nums italic text-indigo-600">{(stats.avgInternal / 23 * 100).toFixed(1)}%</p>
                       </div>
                       <div className="text-right space-y-1">
                         <p className="text-sm font-black text-emerald-500 uppercase tracking-tighter">Control Externo</p>
-                        <p className="text-4xl font-black tabular-nums italic text-emerald-600">{(data.avgExternal / 23 * 100).toFixed(1)}%</p>
+                        <p className="text-4xl font-black tabular-nums italic text-emerald-600">{(stats.avgExternal / 23 * 100).toFixed(1)}%</p>
                       </div>
                     </div>
 
                     <div className="relative h-6 w-full bg-muted/20 rounded-full border border-border/50 overflow-hidden shadow-inner">
-                      <div className="absolute inset-y-0 left-0 bg-gradient-to-r from-indigo-500 to-indigo-400 rounded-full transition-all duration-1000" style={{ width: `${(data.avgInternal / 23 * 100)}%` }} />
+                      <div className="absolute inset-y-0 left-0 bg-gradient-to-r from-indigo-500 to-indigo-400 rounded-full transition-all duration-1000" style={{ width: `${(stats.avgInternal / 23 * 100)}%` }} />
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-1 h-10 bg-white shadow-xl z-10 border border-border/20 rounded-full" style={{ left: `${(data.avgInternal / 23 * 100)}%`, position: 'absolute', transform: 'translateX(-50%)' }} />
+                        <div className="w-1 h-10 bg-white shadow-xl z-10 border border-border/20 rounded-full" style={{ left: `${(stats.avgInternal / 23 * 100)}%`, position: 'absolute', transform: 'translateX(-50%)' }} />
                       </div>
                     </div>
 
@@ -1512,119 +1828,6 @@ const DriverSafetyPage = () => {
         ) : (
           /* List View */
           <div className="space-y-6 animate-in slide-in-from-bottom-5 duration-700">
-            <Card className="border-none bg-white/40 backdrop-blur-xl shadow-2xl rounded-[2rem] p-6 mb-8 border border-white/20">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
-                {/* Search */}
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Búsqueda Directa</label>
-                  <div className="relative group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                    <Input 
-                      placeholder="Nombre o Empresa..." 
-                      className="pl-12 h-12 bg-white/50 border-border/40 rounded-xl focus:ring-2 focus:ring-primary/20 shadow-sm"
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                {/* Empresa */}
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Empresa</label>
-                  <Select value={companyFilter} onValueChange={setCompanyFilter}>
-                    <SelectTrigger className="h-12 bg-white/50 border-border/40 rounded-xl shadow-sm">
-                      <SelectValue placeholder="Todas las Empresas" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ALL">Todas las Empresas</SelectItem>
-                      {filterOptions.companies.map(c => (
-                        <SelectItem key={c} value={c}>{c}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Nivel */}
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Trabajo Nivel</label>
-                  <Select value={levelFilter} onValueChange={setLevelFilter}>
-                    <SelectTrigger className="h-12 bg-white/50 border-border/40 rounded-xl shadow-sm">
-                      <SelectValue placeholder="Todos los Niveles" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ALL">Todos los Niveles</SelectItem>
-                      {filterOptions.levels.map(l => (
-                        <SelectItem key={l} value={l}>{l}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Condición */}
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Condición</label>
-                  <Select value={conditionFilter} onValueChange={setConditionFilter}>
-                    <SelectTrigger className="h-12 bg-white/50 border-border/40 rounded-xl shadow-sm">
-                      <SelectValue placeholder="Todas las Condic." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ALL">Todas las Condic.</SelectItem>
-                      <SelectItem value="APTO">Apto</SelectItem>
-                      <SelectItem value="RIESGO MEDIO">Riesgo Medio</SelectItem>
-                      <SelectItem value="RIESGO ALTO">Riesgo Alto</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Estado */}
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Estado</label>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="h-12 bg-white/50 border-border/40 rounded-xl shadow-sm">
-                      <SelectValue placeholder="Todos los Estados" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ALL">Todos los Estados</SelectItem>
-                      {filterOptions.statuses.map(s => (
-                        <SelectItem key={s} value={s}>{s}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="flex flex-col md:flex-row justify-between items-center mt-6 pt-6 border-t border-border/10 gap-4">
-                <div className="flex items-center gap-4">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      setSearch("");
-                      setCompanyFilter("ALL");
-                      setLevelFilter("ALL");
-                      setConditionFilter("ALL");
-                      setStatusFilter("ALL");
-                    }}
-                    className="rounded-xl gap-2 text-[10px] font-bold uppercase tracking-widest h-10 border-border/40 hover:bg-muted"
-                  >
-                    <RefreshCw className="w-3 h-3" /> Limpiar Filtros
-                  </Button>
-                  <div className="h-4 w-px bg-border/40" />
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Filter className="w-3.5 h-3.5" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">{filteredEntries.length} Casos Encontrados</span>
-                  </div>
-                </div>
-
-                <Button 
-                  onClick={handleExportBulkExcel}
-                  className="h-12 px-8 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xl shadow-emerald-500/20 gap-3 group transition-all active:scale-95 border-0"
-                >
-                  <FileSpreadsheet className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-                  <span className="text-sm font-black tracking-tighter uppercase italic">Exportar Base Grupal</span>
-                </Button>
-              </div>
-            </Card>
 
             <Card className="border-2 shadow-2xl rounded-[2.5rem] overflow-hidden">
               <div className="max-h-[750px] overflow-y-auto overflow-x-auto custom-scrollbar relative">
