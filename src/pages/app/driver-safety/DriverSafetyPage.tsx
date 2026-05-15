@@ -1041,7 +1041,6 @@ const DriverSafetyPage = () => {
         <body>
           <div id="report-content" class="page">
             <div class="header-info">
-              <p style="font-weight: 800; font-size: 12px; color: #6366f1;">ANEXO — RESULTADOS FILTRADOS</p>
               <h1 class="main-title">Prueba Psicométrica: Locus de Control (Escala I-E)</h1>
               <p>Filtros Activos: ${filterTitle} | N = ${totalN} | ${currentMonth} ${currentYear}</p>
             </div>
