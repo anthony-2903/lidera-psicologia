@@ -1,5 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,15 +12,31 @@ import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { useEffect } from "react";
+
+const loginSchema = z.object({
+  email: z.string().min(1, "El correo es requerido").email("Formato de correo inválido"),
+  password: z.string().min(1, "La contraseña es requerida"),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 const LoginPage = () => {
   const { session, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
   useEffect(() => {
     if (session && !authLoading) {
@@ -28,31 +47,24 @@ const LoginPage = () => {
         }
         navigate("/app/welcome");
       } else {
-        // Si hay sesión pero no cargó el perfil todavía
         navigate("/app/welcome");
       }
     }
   }, [session, profile, authLoading, navigate]);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) {
-      toast.error("Por favor completa todos los campos");
-      return;
-    }
+  const onSubmit = async (data: LoginFormValues) => {
     setLoading(true);
     
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
       });
 
       if (error) {
         toast.error("Credenciales incorrectas o usuario no encontrado");
-      } else if (data.session) {
+      } else if (authData.session) {
         toast.success("Inicio de sesión exitoso");
-        // El useEffect se encargará de la redirección basándose en el profile
       }
     } catch (err) {
       toast.error("Error al conectar con el servidor");
@@ -84,20 +96,20 @@ const LoginPage = () => {
             <CardDescription className="font-bold text-muted-foreground/60">Ingresa tus credenciales para acceder</CardDescription>
           </CardHeader>
           <CardContent className="p-6 md:p-10 pt-4 md:pt-6">
-            <form onSubmit={handleLogin} className="space-y-5 md:space-y-6 text-left">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 md:space-y-6 text-left">
               <div className="space-y-2">
                 <Label htmlFor="email" className="font-black uppercase text-[10px] tracking-widest text-primary">Correo electrónico</Label>
                 <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/40" />
+                  <Mail className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${errors.email ? 'text-destructive' : 'text-muted-foreground/40'}`} />
                   <Input
                     id="email"
                     type="email"
                     placeholder="correo@ejemplo.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-12 h-14 rounded-xl md:rounded-2xl bg-muted/30 border-0 focus-visible:ring-primary shadow-inner font-bold"
+                    {...register("email")}
+                    className={`pl-12 h-14 rounded-xl md:rounded-2xl bg-muted/30 border-0 focus-visible:ring-primary shadow-inner font-bold ${errors.email ? 'ring-2 ring-destructive bg-destructive/10' : ''}`}
                   />
                 </div>
+                {errors.email && <p className="text-destructive text-xs font-bold mt-1 px-1">{errors.email.message}</p>}
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -111,14 +123,13 @@ const LoginPage = () => {
                   </button>
                 </div>
                 <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/40" />
+                  <Lock className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${errors.password ? 'text-destructive' : 'text-muted-foreground/40'}`} />
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-12 pr-12 h-14 rounded-xl md:rounded-2xl bg-muted/30 border-0 focus-visible:ring-primary shadow-inner font-bold"
+                    {...register("password")}
+                    className={`pl-12 pr-12 h-14 rounded-xl md:rounded-2xl bg-muted/30 border-0 focus-visible:ring-primary shadow-inner font-bold ${errors.password ? 'ring-2 ring-destructive bg-destructive/10' : ''}`}
                   />
                   <button
                     type="button"
@@ -128,6 +139,7 @@ const LoginPage = () => {
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
+                {errors.password && <p className="text-destructive text-xs font-bold mt-1 px-1">{errors.password.message}</p>}
               </div>
               <Button type="submit" className="w-full h-14 md:h-16 rounded-xl md:rounded-2xl gradient-primary text-primary-foreground font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/20 hover:scale-[1.01] active:scale-[0.99] transition-all" disabled={loading}>
                 {loading ? "Ingresando..." : "Iniciar Sesión"}

@@ -5,18 +5,7 @@ import { useAuth } from "./AuthProvider";
 const ProtectedRoute = () => {
   const { session, profile, loading: authLoading } = useAuth();
   const location = useLocation();
-  const [isTimedOut, setIsTimedOut] = useState(false);
-
-  // Fallback para evitar bloqueo permanente si el perfil no carga
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (session && !profile && !authLoading) {
-      timer = setTimeout(() => {
-        setIsTimedOut(true);
-      }, 5000); // 5 segundos de gracia
-    }
-    return () => clearTimeout(timer);
-  }, [session, profile, authLoading]);
+  // El timeout inseguro fue removido para garantizar deny-by-default
 
   if (authLoading) {
     return (
@@ -30,8 +19,8 @@ const ProtectedRoute = () => {
     return <Navigate to="/login" replace />;
   }
 
-  // Si tenemos sesión pero no perfil y no ha pasado el tiempo de espera, esperamos
-  if (!profile && !isTimedOut) {
+  // Si no tenemos perfil cargado, mostramos loading state (sin límite de tiempo inseguro)
+  if (!profile) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background gap-4">
         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
@@ -43,8 +32,8 @@ const ProtectedRoute = () => {
   const allowedViews = profile?.allowed_views || [];
   const currentPath = location.pathname;
 
-  // Si es admin o ha expirado el tiempo, permitimos paso o dashboard por defecto
-  if (profile?.is_admin || isTimedOut) {
+  // Si es admin, permitimos paso
+  if (profile?.is_admin) {
     return <Outlet />;
   }
 

@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,25 +10,52 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
+import { supabase } from "@/lib/supabase";
+
+const recoverySchema = z.object({
+  email: z.string().min(1, "El correo es requerido").email("Formato de correo inválido"),
+});
+
+type RecoveryFormValues = z.infer<typeof recoverySchema>;
 
 const RecoveryPage = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleRecovery = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) {
-      toast.error("Ingresa tu correo electrónico");
-      return;
-    }
+  const {
+    register,
+    handleSubmit,
+    getValues,
+    formState: { errors },
+  } = useForm<RecoveryFormValues>({
+    resolver: zodResolver(recoverySchema),
+    defaultValues: {
+      email: "",
+    },
+  });
+
+  const onSubmit = async (data: RecoveryFormValues) => {
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
+        redirectTo: `${window.location.origin}/login`, 
+      });
+
+      if (error) {
+        console.error("Error al enviar recuperación:", error);
+        // Opcional: si es por rate limit podemos mostrarlo, de lo contrario ocultamos para evitar enumeración.
+      }
+      
+      // Siempre mostramos éxito para evitar ataques de enumeración (CWE-203)
       setSent(true);
       toast.success("Correo de recuperación enviado");
-    }, 1000);
+    } catch (err) {
+      toast.error("Error al conectar con el servidor");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -58,27 +88,27 @@ const RecoveryPage = () => {
               <div className="text-center py-4">
                 <CheckCircle className="w-16 h-16 text-success mx-auto mb-4" />
                 <p className="text-muted-foreground text-sm mb-6">
-                  Hemos enviado un enlace de recuperación a <strong>{email}</strong>
+                  Hemos enviado un enlace de recuperación a <strong>{getValues("email")}</strong>
                 </p>
                 <Button variant="outline" onClick={() => navigate("/login")} className="w-full">
                   Volver al login
                 </Button>
               </div>
             ) : (
-              <form onSubmit={handleRecovery} className="space-y-4">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Correo electrónico</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Mail className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${errors.email ? 'text-destructive' : 'text-muted-foreground'}`} />
                     <Input
                       id="email"
                       type="email"
                       placeholder="correo@ejemplo.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10"
+                      {...register("email")}
+                      className={`pl-10 ${errors.email ? 'ring-2 ring-destructive bg-destructive/10' : ''}`}
                     />
                   </div>
+                  {errors.email && <p className="text-destructive text-xs font-bold mt-1 px-1">{errors.email.message}</p>}
                 </div>
                 <Button type="submit" className="w-full gradient-primary text-primary-foreground" disabled={loading}>
                   {loading ? "Enviando..." : "Enviar enlace"}

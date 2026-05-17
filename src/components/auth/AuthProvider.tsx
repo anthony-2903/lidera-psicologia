@@ -43,6 +43,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (error) {
         console.error("Error fetching profile:", error);
         setProfile(null);
+        // Si hay error (ej. RLS bloquea la lectura), cerramos la sesión por seguridad
+        await supabase.auth.signOut();
+      } else if (data && data.is_active === false) {
+        console.warn("Cuenta desactivada. Forzando cierre de sesión.");
+        setProfile(null);
+        await supabase.auth.signOut();
       } else {
         setProfile(data);
       }
