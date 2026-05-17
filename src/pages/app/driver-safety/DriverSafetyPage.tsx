@@ -221,7 +221,7 @@ const DriverSafetyIndividualPanel = ({ entry, distribution, onClose }: {
 
     const analysis = getAnalysis(entry.result, entry.internalScore);
     const date = entry.date;
-    const isApto = entry.result === 'APTO';
+    const isApto = entry.result === 'RIESGO BAJO';
     const isMedio = entry.result === 'RIESGO MEDIO';
     const resultColor = isApto ? "#10b981" : (isMedio ? "#f59e0b" : "#ef4444");
     const currentRecs = RECOMMENDATIONS[entry.result as keyof typeof RECOMMENDATIONS];
@@ -367,7 +367,7 @@ const DriverSafetyIndividualPanel = ({ entry, distribution, onClose }: {
 
   const indScore = entry.internalScore;
   const indResult = entry.result;
-  const indIsApto = indResult === 'APTO';
+  const indIsApto = indResult === 'RIESGO BAJO';
 
   return (
     <div className={cn(
@@ -987,6 +987,16 @@ const DriverSafetyPage = () => {
     const currentMonth = MONTHS_ES[new Date().getMonth()];
     const currentYear = new Date().getFullYear();
 
+    // Agrupar por empresa (normalizando el nombre para evitar duplicados)
+    const groupedByCompany = filteredEntries.reduce((acc, entry) => {
+      const comp = (entry.company || 'SIN EMPRESA').trim().toUpperCase();
+      if (!acc[comp]) acc[comp] = [];
+      acc[comp].push(entry);
+      return acc;
+    }, {} as Record<string, typeof filteredEntries>);
+
+    const sortedCompanies = Object.keys(groupedByCompany).sort();
+
     const reportHtml = `
       <!DOCTYPE html>
       <html>
@@ -1073,19 +1083,26 @@ const DriverSafetyPage = () => {
                 </tr>
               </thead>
               <tbody>
-                ${filteredEntries.map((e, i) => `
+                ${sortedCompanies.map((company) => `
                   <tr>
-                    <td class="row-number">${i + 1}</td>
-                    <td class="name-cell">${e.name}</td>
-                    <td style="text-align: center">
-                      <span class="result-badge ${e.result === 'RIESGO BAJO' ? 'badge-bajo' : (e.result === 'RIESGO MEDIO' ? 'badge-medio' : 'badge-alto')}">
-                        ${e.result === 'RIESGO BAJO' ? 'Riesgo Bajo' : (e.result === 'RIESGO MEDIO' ? 'Riesgo Medio' : 'Riesgo Alto')}
-                      </span>
-                    </td>
-                    <td class="action-cell">
-                      ${REPORT_ACTIONS[e.result as keyof typeof REPORT_ACTIONS]}
+                    <td colspan="4" style="background: #f1f5f9; color: #0f172a; font-weight: 900; text-transform: uppercase; padding: 10px 12px; font-size: 12px; border: 1px solid #cbd5e1; border-top: 2px solid #94a3b8;">
+                      EMPRESA: ${company} <span style="font-size: 10px; font-weight: 600; float: right; color: #64748b; margin-top: 2px;">(${groupedByCompany[company].length} registros)</span>
                     </td>
                   </tr>
+                  ${groupedByCompany[company].map((e, i) => `
+                    <tr>
+                      <td class="row-number">${i + 1}</td>
+                      <td class="name-cell">${e.name}</td>
+                      <td style="text-align: center">
+                        <span class="result-badge ${e.result === 'RIESGO BAJO' ? 'badge-bajo' : (e.result === 'RIESGO MEDIO' ? 'badge-medio' : 'badge-alto')}">
+                          ${e.result === 'RIESGO BAJO' ? 'Riesgo Bajo' : (e.result === 'RIESGO MEDIO' ? 'Riesgo Medio' : 'Riesgo Alto')}
+                        </span>
+                      </td>
+                      <td class="action-cell">
+                        ${REPORT_ACTIONS[e.result as keyof typeof REPORT_ACTIONS]}
+                      </td>
+                    </tr>
+                  `).join('')}
                 `).join('')}
               </tbody>
             </table>
@@ -1194,7 +1211,7 @@ const DriverSafetyPage = () => {
       avgInternal: 0, 
       avgExternal: 0, 
       riskDistribution: [
-        { name: 'APTO', value: 0 },
+        { name: 'RIESGO BAJO', value: 0 },
         { name: 'RIESGO MEDIO', value: 0 },
         { name: 'RIESGO ALTO', value: 0 }
       ] 
