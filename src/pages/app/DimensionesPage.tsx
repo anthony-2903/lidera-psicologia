@@ -319,10 +319,39 @@ const DimensionesPage = () => {
 
   const filteredEntries = useMemo(() => {
     if (!data?.entries) return [];
-    const searchClean = search.trim().toUpperCase().replace(/O/g, '0');
-    return data.entries.filter(e => 
-        e.dni.includes(searchClean)
-    );
+    const normalizeSearch = (value: unknown) =>
+      String(value ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toUpperCase()
+        .trim();
+
+    const searchClean = normalizeSearch(search);
+    if (!searchClean) return data.entries;
+
+    const searchAsDni = searchClean.replace(/O/g, "0");
+
+    return data.entries.filter((entry) => {
+      const searchableText = [
+        entry.nombre,
+        entry.dni,
+        entry.empresa,
+        entry.area,
+        entry.cargo,
+        entry.ubicacion,
+        entry.gradoInstruccion,
+        entry.nivel,
+        entry.nivelLiderazgo,
+        entry.nivelPercepcion,
+      ]
+        .map(normalizeSearch)
+        .join(" ");
+
+      return (
+        searchableText.includes(searchClean) ||
+        normalizeSearch(entry.dni).includes(searchAsDni)
+      );
+    });
   }, [data, search]);
 
   const selectedEntry = useMemo(() => {

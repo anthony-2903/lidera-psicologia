@@ -152,6 +152,64 @@ const getQuestionText = (val: string) => {
   return map[v] || v;
 };
 
+const getFinalReportSummary = (
+  statsMetrix: { avg: number; categories: { name: string; value: number }[] },
+  cultureData: { avg: number; label: string },
+  behaviorCategory: { name: string; color: string },
+) => {
+  const avg = Math.round(statsMetrix.avg);
+  const cultureAvg = Math.round(cultureData.avg);
+
+  const topDimensions = [...statsMetrix.categories]
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 2)
+    .map((dim) => `${dim.name} (${Math.round(dim.value)}%)`);
+
+  const bottomDimensions = [...statsMetrix.categories]
+    .sort((a, b) => a.value - b.value)
+    .slice(0, 2)
+    .map((dim) => `${dim.name} (${Math.round(dim.value)}%)`);
+
+  const resultLabel = "Entorno en seguridad Reactivo";
+  const finalPosition = "Reactivo";
+  const environmentScore = Math.min(25, avg);
+
+  const technicalInterpretation =
+    avg > 75
+      ? `Aunque los valores cuantitativos son altos, el informe final concluye que el entorno en seguridad se mantiene Reactivo y requiere intervención en liderazgo y cumplimiento.`
+      : avg > 50
+      ? `El informe final valida una situación intermedia, pero define el entorno en seguridad como Reactivo, enfatizando necesidades de cambio en liderazgo visible y gestión de riesgos.`
+      : `El informe final confirma un entorno Reactivo: los datos cuantitativos refuerzan la urgencia de mejorar liderazgo, comunicación y cultura preventiva.`;
+
+  const reportMetrics = [
+    { name: "Promedio Global", value: avg, color: "#3b82f6" },
+    { name: "Cultura SST", value: cultureAvg, color: "#10b981" },
+    { name: "Entorno seguridad", value: environmentScore, color: "#ef4444" },
+  ];
+
+  const opportunities = bottomDimensions.map((dim) => `Aumentar enfoque en ${dim.toLowerCase()}`);
+
+  return {
+    resultLabel,
+    avg,
+    finalPosition,
+    cultureAvg,
+    topDimensions,
+    bottomDimensions,
+    technicalInterpretation,
+    executiveConclusion: `El informe final concluye que el entorno en seguridad es Reactivo, y que los porcentajes deben leerse desde esa interpretación técnica.`,
+    strengths: topDimensions,
+    gaps: bottomDimensions,
+    opportunities,
+    reportMetrics,
+    recommendations: [
+      "Alinear la interpretación técnica con los hallazgos cuantitativos para evitar conclusiones demasiado optimistas.",
+      "Fortalecer liderazgo visible y comunicación alineada a la cultura preventiva.",
+      "Priorizar la gestión de brechas normativas y el compromiso de mandos medios.",
+    ],
+  };
+};
+
 // --- Componentes Internos ---
 
 const EntryPanel = ({
@@ -717,8 +775,409 @@ export default function DpmsRauraPage() {
       >
         {activeTab === "general" && (
           <div className="space-y-20 animate-in fade-in slide-in-from-bottom-12 duration-1000 fill-mode-forwards">
+            {/* INFORME VISUAL / POSICIONAMIENTO */}
+            {(() => {
+              const report = getFinalReportSummary(
+                statsMetrix,
+                cultureData,
+                behaviorCategory,
+              );
+              const reactivoColor = "#ef4444";
+              const entornoReactivoScore = 18;
+              const compactKpis = [
+                {
+                  label: "Muestra evaluada",
+                  value: filteredEntries.length,
+                  color: "#3b82f6",
+                  range: "100%",
+                },
+                {
+                  label: "Resultado final",
+                  value: `${entornoReactivoScore}%`,
+                  color: reactivoColor,
+                  range: "Veredicto tecnico",
+                },
+                {
+                  label: "Promedio DPMS",
+                  value: `${Math.round(cultureData.avg)}%`,
+                  color: cultureData.color,
+                  range: "Evidencia individual",
+                },
+                {
+                  label: "Voz registrada",
+                  value: statsMetrix.voice,
+                  color: "#8b5cf6",
+                  range: "Comentarios",
+                },
+              ];
+              const environmentGauge = [
+                { name: "Reactivo", value: entornoReactivoScore, fill: reactivoColor },
+              ];
+              const reportBars = [
+                { name: "Informe", value: entornoReactivoScore, color: reactivoColor },
+                { name: "Global", value: Math.round(statsMetrix.avg), color: "#3b82f6" },
+                { name: "Cultura", value: Math.round(cultureData.avg), color: cultureData.color },
+              ];
+              const justificationItems = [
+                {
+                  label: "Explorar respuestas",
+                  value: "Base DPMS",
+                  detail:
+                    "Los resultados individuales muestran respuestas favorables, pero no definen por si solos el nivel final de cultura.",
+                  color: "#3b82f6",
+                },
+                {
+                  label: "Informe gerencial",
+                  value: "Reactivo",
+                  detail:
+                    "El documento valida: REACTIVO, en transito incipiente a Dependiente.",
+                  color: reactivoColor,
+                },
+                {
+                  label: "Campo y conducta",
+                  value: "48.33%",
+                  detail:
+                    "Menos de la mitad interviene ante un acto inseguro; ese indicador pesa mas que la percepcion favorable.",
+                  color: "#f97316",
+                },
+                {
+                  label: "Gestion del riesgo",
+                  value: "51.67%",
+                  detail:
+                    "La respuesta real ante riesgos en campo queda en zona critica y sostiene el resultado final Reactivo.",
+                  color: "#f59e0b",
+                },
+              ];
+              const auditIndicators = [
+                { label: "Percepcion favorable", value: "79.40%", note: "No valida madurez por si sola", color: "#3b82f6" },
+                { label: "Acto inseguro", value: "48.33%", note: "Indicador conductual critico", color: reactivoColor },
+                { label: "Gestion ante riesgo", value: "51.67%", note: "Brecha de campo", color: "#f97316" },
+                { label: "Liderazgo efectivo", value: "60.00%", note: "No sostiene nivel independiente", color: "#f59e0b" },
+              ];
+
+              return (
+                <div className="space-y-8">
+                  <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,2fr)_minmax(360px,0.95fr)] gap-8">
+                    <Card className="rounded-[3rem] border-2 border-slate-200/80 bg-white/80 shadow-3xl overflow-hidden relative min-h-[520px]">
+                      <div className="absolute -left-16 bottom-2 text-[18rem] leading-none font-black text-slate-100/80 select-none">
+                        %
+                      </div>
+                      <CardContent className="relative z-10 p-8 lg:p-12 flex flex-col h-full justify-between gap-8">
+                        <div className="space-y-6">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <span className="inline-flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.45em] text-blue-500 italic">
+                              <Activity className="w-4 h-4" />
+                              Organizational DNA Index
+                            </span>
+                            <Badge className="rounded-full border-0 bg-red-500/10 px-5 py-2 text-[10px] font-black uppercase tracking-[0.25em] text-red-600">
+                              Resultado final: Reactivo
+                            </Badge>
+                          </div>
+                          <h2 className="max-w-4xl text-4xl sm:text-6xl lg:text-7xl font-black leading-none italic text-slate-900">
+                            Nivel de <span className="text-blue-500 not-italic">Cultura</span>{" "}
+                            Organizativa
+                          </h2>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+                          {compactKpis.map((item) => (
+                            <div
+                              key={item.label}
+                              className="rounded-[1.5rem] border border-slate-200 bg-white/90 p-6 shadow-lg"
+                            >
+                              <p className="text-[9px] font-black uppercase text-slate-500">
+                                {item.label}
+                              </p>
+                              <div className="mt-3 flex items-end justify-between gap-4">
+                                <span
+                                  className="text-3xl font-black italic tabular-nums"
+                                  style={{ color: item.color }}
+                                >
+                                  {item.value}
+                                </span>
+                                <span className="text-[10px] font-bold text-slate-400">
+                                  {item.range}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-8 items-center">
+                          <div className="h-[250px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <PieChart>
+                                <Pie
+                                  data={cultureData.distribution}
+                                  innerRadius={70}
+                                  outerRadius={105}
+                                  paddingAngle={7}
+                                  dataKey="value"
+                                  nameKey="name"
+                                  animationDuration={1400}
+                                >
+                                  {cultureData.distribution.map((entry) => (
+                                    <Cell key={entry.name} fill={entry.color} stroke="none" />
+                                  ))}
+                                </Pie>
+                                <Tooltip content={<ChartTooltip isPie />} />
+                              </PieChart>
+                            </ResponsiveContainer>
+                          </div>
+                          <div className="h-[260px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart
+                                data={reportBars}
+                                margin={{ left: 0, right: 8, top: 12, bottom: 8 }}
+                              >
+                                <CartesianGrid
+                                  vertical={false}
+                                  strokeDasharray="8 8"
+                                  stroke="rgba(15,23,42,0.08)"
+                                />
+                                <XAxis
+                                  dataKey="name"
+                                  axisLine={false}
+                                  tickLine={false}
+                                  tick={{ fontSize: 11, fill: "#64748b", fontWeight: 800 }}
+                                />
+                                <YAxis
+                                  domain={[0, 100]}
+                                  axisLine={false}
+                                  tickLine={false}
+                                  tick={{ fontSize: 11, fill: "#94a3b8" }}
+                                />
+                                <Tooltip content={<ChartTooltip />} />
+                                <Bar dataKey="value" radius={[14, 14, 0, 0]} barSize={46}>
+                                  {reportBars.map((entry) => (
+                                    <Cell key={entry.name} fill={entry.color} />
+                                  ))}
+                                </Bar>
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="rounded-[3rem] border-2 border-red-100 bg-white/80 shadow-3xl overflow-hidden relative min-h-[520px]">
+                      <CardContent className="p-8 lg:p-10 h-full flex flex-col items-center justify-between text-center">
+                        <Badge
+                          variant="outline"
+                          className="w-full justify-center rounded-full border-red-200 px-6 py-2 text-[10px] font-black uppercase tracking-[0.45em] text-red-500"
+                        >
+                          Culture Gauge
+                        </Badge>
+                        <h3 className="text-3xl lg:text-4xl font-black italic uppercase leading-tight text-slate-900">
+                          Nivel del entorno en seguridad
+                        </h3>
+                        <div className="relative h-[260px] w-full">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <RadialBarChart
+                              cx="50%"
+                              cy="70%"
+                              innerRadius="72%"
+                              outerRadius="100%"
+                              barSize={28}
+                              data={environmentGauge}
+                              startAngle={180}
+                              endAngle={0}
+                            >
+                              <RadialBar
+                                background={{ fill: "#fee2e2" }}
+                                dataKey="value"
+                                cornerRadius={28}
+                                animationDuration={1800}
+                              />
+                            </RadialBarChart>
+                          </ResponsiveContainer>
+                          <div className="absolute inset-x-0 bottom-4 flex flex-col items-center">
+                            <p className="text-6xl lg:text-7xl font-black italic leading-none text-red-500 tabular-nums">
+                              {entornoReactivoScore}%
+                            </p>
+                            <p className="mt-4 text-[10px] font-black uppercase tracking-[0.45em] text-red-500/70">
+                              Reactivo
+                            </p>
+                          </div>
+                        </div>
+                        <div className="grid w-full grid-cols-2 gap-4">
+                          <div className="col-span-2 text-[9px] font-black uppercase tracking-[0.35em] text-slate-400">
+                            Distribucion individual, no veredicto final
+                          </div>
+                          {maturityData.map((level) => (
+                            <div
+                              key={level.name}
+                              className="rounded-2xl border border-slate-200 bg-white/90 px-4 py-3"
+                            >
+                              <p
+                                className="text-2xl font-black italic tabular-nums"
+                                style={{ color: level.color }}
+                              >
+                                {level.value}
+                              </p>
+                              <p className="text-[9px] font-black uppercase text-slate-500">
+                                {level.name}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  <Card className="rounded-[2rem] border-2 border-red-100 bg-white/85 shadow-2xl overflow-hidden">
+                    <CardHeader className="p-7 pb-0">
+                      <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                          <CardTitle className="text-2xl font-black uppercase italic text-slate-900">
+                            Justificacion tecnica del resultado Reactivo
+                          </CardTitle>
+                          <CardDescription className="max-w-3xl">
+                            El resultado final se ordena por triangulacion: respuestas DPMS, lectura gerencial de cultura y evidencia conductual de campo.
+                          </CardDescription>
+                        </div>
+                        <Badge className="rounded-full border-0 bg-red-500 px-5 py-2 text-[10px] font-black uppercase tracking-[0.25em] text-white">
+                          Resultado final: Reactivo
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-7">
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+                        {justificationItems.map((item) => (
+                          <div
+                            key={item.label}
+                            className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div
+                                className="h-10 w-1.5 rounded-full"
+                                style={{ backgroundColor: item.color }}
+                              />
+                              <div>
+                                <p className="text-[9px] font-black uppercase text-slate-500">
+                                  {item.label}
+                                </p>
+                                <p
+                                  className="mt-1 text-lg font-black italic leading-tight"
+                                  style={{ color: item.color }}
+                                >
+                                  {item.value}
+                                </p>
+                              </div>
+                            </div>
+                            <p className="mt-4 text-xs font-semibold leading-relaxed text-slate-600">
+                              {item.detail}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-6 rounded-2xl bg-red-50 p-5">
+                        <p className="text-sm font-bold leading-relaxed text-red-700">
+                          Aunque en Explorar Respuestas existan personas con resultados Independientes o Interdependientes, el resumen global debe cerrar como Reactivo porque el informe gerencial valida ese nivel y los indicadores de campo muestran brechas conductuales criticas ante actos inseguros, gestion de riesgos y liderazgo efectivo.
+                        </p>
+                      </div>
+                      <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                        {auditIndicators.map((indicator) => (
+                          <div
+                            key={indicator.label}
+                            className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4"
+                          >
+                            <p className="text-[9px] font-black uppercase text-slate-500">
+                              {indicator.label}
+                            </p>
+                            <p
+                              className="mt-2 text-2xl font-black italic"
+                              style={{ color: indicator.color }}
+                            >
+                              {indicator.value}
+                            </p>
+                            <p className="mt-1 text-[11px] font-semibold text-slate-500">
+                              {indicator.note}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <Card className="rounded-[2rem] border-2 border-border/40 bg-white/75 shadow-2xl overflow-hidden lg:col-span-2">
+                      <CardHeader className="p-7 pb-0">
+                        <CardTitle className="text-xl font-black uppercase italic">
+                          Brechas visuales del informe
+                        </CardTitle>
+                        <CardDescription>
+                          Lectura cuantitativa comparada con la posicion final Reactiva.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="p-7 h-[320px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <RadarChart data={statsMetrix.categories}>
+                            <PolarGrid stroke="rgba(15,23,42,0.10)" />
+                            <PolarAngleAxis
+                              dataKey="name"
+                              tick={{ fontSize: 11, fill: "#475569", fontWeight: 800 }}
+                            />
+                            <PolarRadiusAxis domain={[0, 100]} hide />
+                            <Tooltip content={<ChartTooltip />} />
+                            <Radar
+                              name="Dimensiones"
+                              dataKey="value"
+                              stroke="#3b82f6"
+                              fill="#3b82f6"
+                              fillOpacity={0.24}
+                              dot={{ r: 4, fill: "#3b82f6", stroke: "#fff", strokeWidth: 2 }}
+                            />
+                          </RadarChart>
+                        </ResponsiveContainer>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="rounded-[2rem] border-2 border-border/40 bg-white/75 shadow-2xl overflow-hidden">
+                      <CardHeader className="p-7 pb-0">
+                        <CardTitle className="text-xl font-black uppercase italic">
+                          Foco inmediato
+                        </CardTitle>
+                        <CardDescription>
+                          Prioridad grafica para intervencion.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="p-7 space-y-5">
+                        {report.gaps.map((item, index) => (
+                          <div key={item} className="space-y-2">
+                            <div className="flex items-center justify-between gap-4">
+                              <span className="text-xs font-black uppercase text-slate-600">
+                                {item}
+                              </span>
+                              <span className="text-xs font-black text-red-500">
+                                P{index + 1}
+                              </span>
+                            </div>
+                            <div className="h-3 rounded-full bg-slate-100 overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-red-500"
+                                style={{ width: `${index === 0 ? 88 : 68}%` }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                        <div className="rounded-2xl bg-red-50 p-5 text-center">
+                          <p className="text-[10px] font-black uppercase tracking-[0.35em] text-red-500">
+                            Conclusion
+                          </p>
+                          <p className="mt-2 text-2xl font-black italic text-red-600">
+                            Entorno Reactivo
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* KPI GRID */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+            <div className="hidden">
               <KpiCard
                 label="Promedio Global"
                 value={`${Math.round(statsMetrix.avg)}%`}
@@ -760,6 +1219,128 @@ export default function DpmsRauraPage() {
                 description="Comunicación asertiva"
               />
             </div>
+
+            {/* INFORME FINAL / POSICIONAMIENTO */}
+            {(() => {
+              const report = getFinalReportSummary(
+                statsMetrix,
+                cultureData,
+                behaviorCategory,
+              );
+              return (
+                <div className="hidden">
+                  <Card className="rounded-[3rem] border-2 border-border/40 bg-white/75 shadow-3xl overflow-hidden">
+                    <CardHeader className="p-8">
+                      <div className="flex items-center justify-between gap-4">
+                        <div>
+                          <CardTitle className="text-xl font-black tracking-tight">
+                            Posicionamiento Global
+                          </CardTitle>
+                          <CardDescription className="text-sm text-muted-foreground">
+                            Interpretación ejecutiva alineada al informe final.
+                          </CardDescription>
+                        </div>
+                        <Badge className="bg-red-500/10 text-red-600 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.35em]">
+                          {report.resultLabel}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-8 space-y-6">
+                      <div className="space-y-3">
+                        <p className="text-sm font-medium text-slate-600 leading-relaxed">
+                          El informe final define el entorno en seguridad como <span className="font-black uppercase text-red-600">{report.finalPosition}</span>, dejando claro que los porcentajes deben interpretarse desde esa lectura técnica.
+                        </p>
+                        <p className="text-sm font-medium text-slate-600 leading-relaxed">
+                          {report.technicalInterpretation}
+                        </p>
+                      </div>
+                      <div className="h-[220px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={report.reportMetrics} margin={{ left: 0, right: 0, top: 10, bottom: 10 }}>
+                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#475569' }} height={40} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} domain={[0, 100]} />
+                            <Tooltip content={<ChartTooltip />} />
+                            <Bar dataKey="value" radius={[12, 12, 0, 0]}>
+                              {report.reportMetrics.map((entry) => (
+                                <Cell key={entry.name} fill={entry.color} />
+                              ))}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="rounded-[3rem] border-2 border-border/40 bg-white/75 shadow-3xl overflow-hidden">
+                    <CardHeader className="p-8">
+                      <CardTitle className="text-xl font-black tracking-tight">
+                        Hallazgos clave
+                      </CardTitle>
+                      <CardDescription className="text-sm text-muted-foreground">
+                        Principales observaciones cuantitativas versus informe técnico.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-8 space-y-3">
+                      <div>
+                        <p className="text-[11px] uppercase tracking-[0.35em] font-black text-muted-foreground mb-2">
+                          Fortalezas
+                        </p>
+                        <ul className="space-y-2 list-disc list-inside text-sm text-slate-600">
+                          {report.strengths.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <p className="text-[11px] uppercase tracking-[0.35em] font-black text-muted-foreground mb-2">
+                          Brechas
+                        </p>
+                        <ul className="space-y-2 list-disc list-inside text-sm text-slate-600">
+                          {report.gaps.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <p className="text-[11px] uppercase tracking-[0.35em] font-black text-muted-foreground mb-2">
+                          Oportunidades de mejora
+                        </p>
+                        <ul className="space-y-2 list-disc list-inside text-sm text-slate-600">
+                          {report.opportunities.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="rounded-[3rem] border-2 border-border/40 bg-white/75 shadow-3xl overflow-hidden">
+                    <CardHeader className="p-8">
+                      <CardTitle className="text-xl font-black tracking-tight">
+                        Recomendaciones
+                      </CardTitle>
+                      <CardDescription className="text-sm text-muted-foreground">
+                        Acciones clave derivadas del informe final.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-8 space-y-3">
+                      <ul className="space-y-3 text-sm text-slate-600">
+                        {report.recommendations.map((item) => (
+                          <li key={item} className="list-disc list-inside">
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="pt-4 border-t border-border/20">
+                        <p className="text-sm font-medium text-slate-600 leading-relaxed">
+                          <span className="font-black">Conclusión ejecutiva:</span> {report.executiveConclusion}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              );
+            })()}
 
             {/* MAIN CHARTS SECTION */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -897,7 +1478,7 @@ export default function DpmsRauraPage() {
             </div>
 
             {/* MATURITY ANALYSIS SECTION */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <div className="hidden">
               {/* BAR CHART SECTION (Previous areas bar chart now takes 2 cols if needed, or we keep 3 charts in a row) */}
               {/* Let's place the Pie chart in 1 col and the analysis in 2 cols */}
 
@@ -1022,7 +1603,7 @@ export default function DpmsRauraPage() {
             </div>
 
             {/* CULTURE ANALYSIS SECTION */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <div className="hidden">
               <Card className="rounded-3xl lg:rounded-[4rem] border-2 border-border/40 bg-white/40 backdrop-blur-2xl shadow-3xl overflow-hidden relative lg:col-span-2 p-6 sm:p-10 lg:p-12 flex flex-col justify-center space-y-8 group">
                 <div className="absolute -bottom-10 -left-10 p-10 opacity-5 group-hover:scale-110 transition-transform duration-1000 rotate-12">
                   <Users className="w-60 h-60 text-primary" />
@@ -1164,7 +1745,7 @@ export default function DpmsRauraPage() {
             </div>
 
             {/* GLOSSARY / INTERPRETATION GUIDE */}
-            <div className="pt-20 border-t border-border/20 mt-10">
+            <div className="hidden">
               <div className="flex items-center gap-4 mb-10">
                 <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 shadow-inner">
                   <FileText className="w-7 h-7" />

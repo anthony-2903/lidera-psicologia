@@ -810,9 +810,8 @@ const DriverSafetyIndividualPanel = ({
                   ? "FFD97706"
                   : "FFDC2626";
 
-            // @ts-ignore
             const h2c =
-              window.html2canvas ||
+              (window as any).html2canvas ||
               (await new Promise((resolve) => {
                 const script = document.createElement("script");
                 script.src =
@@ -1112,9 +1111,8 @@ const DriverSafetyPage = () => {
     const excelWindow = window.open("", "_blank");
     if (!excelWindow) return;
 
-    // @ts-ignore
     const h2c =
-      window.html2canvas ||
+      (window as any).html2canvas ||
       (await new Promise((resolve) => {
         const script = document.createElement("script");
         script.src =
@@ -1614,6 +1612,99 @@ const DriverSafetyPage = () => {
   const handleExportBulkExcel = async () => {
     const excelWindow = window.open("", "_blank");
     if (!excelWindow) return;
+
+    excelWindow.document.write(`
+      <html>
+        <head>
+          <title>Generando Excel...</title>
+          <style>
+            body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #f8fafc; color: #1e293b; }
+            .loader { border: 4px solid #e2e8f0; border-top: 4px solid #2563eb; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 20px; }
+            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+            .status { font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+          </style>
+        </head>
+        <body>
+          <div class="loader"></div>
+          <div id="status" class="status">Generando archivo Excel...</div>
+          <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+          <script>
+            (async function() {
+              try {
+                let attempts = 0;
+                while (!window.ExcelJS && attempts < 50) {
+                  await new Promise(resolve => setTimeout(resolve, 100));
+                  attempts++;
+                }
+
+                if (!window.ExcelJS) throw new Error("No se pudo cargar ExcelJS");
+
+                const entries = ${JSON.stringify(filteredEntries)};
+                const workbook = new ExcelJS.Workbook();
+                workbook.creator = "LideraMina";
+                workbook.created = new Date();
+
+                const worksheet = workbook.addWorksheet("Evaluados");
+                worksheet.columns = [
+                  { header: "Evaluado", key: "evaluado", width: 45 },
+                  { header: "Empresa", key: "empresa", width: 35 },
+                ];
+
+                worksheet.getRow(1).eachCell((cell) => {
+                  cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+                  cell.fill = {
+                    type: "pattern",
+                    pattern: "solid",
+                    fgColor: { argb: "FF1E293B" },
+                  };
+                  cell.alignment = { horizontal: "center" };
+                  cell.border = {
+                    top: { style: "thin" },
+                    left: { style: "thin" },
+                    bottom: { style: "thin" },
+                    right: { style: "thin" },
+                  };
+                });
+
+                entries.forEach((entry) => {
+                  worksheet.addRow({
+                    evaluado: entry.name || "",
+                    empresa: entry.company || "",
+                  });
+                });
+
+                worksheet.eachRow((row, rowNumber) => {
+                  if (rowNumber === 1) return;
+                  row.eachCell((cell) => {
+                    cell.border = {
+                      top: { style: "thin" },
+                      left: { style: "thin" },
+                      bottom: { style: "thin" },
+                      right: { style: "thin" },
+                    };
+                    cell.alignment = { vertical: "middle" };
+                  });
+                });
+
+                const buffer = await workbook.xlsx.writeBuffer();
+                saveAs(
+                  new Blob([buffer], {
+                    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                  }),
+                  "Driver_Safety_Evaluado_Empresa.xlsx"
+                );
+                setTimeout(() => window.close(), 1200);
+              } catch (err) {
+                document.getElementById("status").innerHTML = "ERROR: " + err.message;
+                console.error(err);
+              }
+            })();
+          </script>
+        </body>
+      </html>
+    `);
+    return;
 
     excelWindow.document.write(`
       <html>
