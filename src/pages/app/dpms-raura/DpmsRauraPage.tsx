@@ -1072,11 +1072,7 @@ export default function DpmsRauraPage() {
                           </div>
                         ))}
                       </div>
-                      <div className="mt-6 rounded-2xl bg-red-50 p-5">
-                        <p className="text-sm font-bold leading-relaxed text-red-700">
-                          Aunque en Explorar Respuestas existan personas con resultados Independientes o Interdependientes, el resumen global debe cerrar como Reactivo porque el informe gerencial valida ese nivel y los indicadores de campo muestran brechas conductuales criticas ante actos inseguros, gestion de riesgos y liderazgo efectivo.
-                        </p>
-                      </div>
+
                       <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                         {auditIndicators.map((indicator) => (
                           <div
