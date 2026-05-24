@@ -740,7 +740,8 @@ export default function DpmsRauraPage() {
       <DashboardHeader
         title={
           <>
-            DPMS <span className="text-primary not-italic">Raura</span>
+            DIAGNOSTICO DE PERCEPCION Y MADUREZ EN SEGURIDAD{" "}
+            <span className="text-primary not-italic">Raura</span>
           </>
         }
         subtitle="Métricas de percepción y madurez en seguridad minera. Análisis de comportamiento y liderazgo visible."
