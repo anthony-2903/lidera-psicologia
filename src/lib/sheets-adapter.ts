@@ -149,9 +149,21 @@ export interface DriverSafetyData {
 
 export interface DimensionReport {
   tipo: string;
+  concepto: string;
   fortalezas: string;
   riesgos: string;
   enfoque: string;
+}
+
+export interface DimensionGuideItem {
+  term: string;
+  description: string;
+  example?: string;
+}
+
+export interface DimensionGuide {
+  title: string;
+  items: DimensionGuideItem[];
 }
 
 export interface DimensionesEntry {
@@ -175,15 +187,18 @@ export interface DimensionesEntry {
   genero: 'MASCULINO' | 'FEMENINO';
   // Reportes cualitativos de las hojas adicionales
   culturaReport?: DimensionReport;
+  rolEquipoReport?: DimensionReport;
   comunicacionReport?: DimensionReport;
   percepcionReport?: DimensionReport;
   liderazgoReport?: DimensionReport;
+  motivacionReport?: DimensionReport;
 }
 
 export interface DimensionesDashboardData {
   entries: DimensionesEntry[];
   totalEvaluated: number;
   avgScore: number;
+  referenceGuides: Record<string, DimensionGuide>;
 }
 
 export interface SheetRow {
@@ -413,11 +428,13 @@ export const fetchFinalDashboardData = async (sheetId: string): Promise<FinalDas
         const extractState = (text: string): string => {
           if (!text) return '';
           const upperText = text.toUpperCase();
+          if (upperText.includes('EN DESAROLLO')) return 'EN DESARROLLO';
           const VALID_STATES = [
             'MUY ALTO', 'MUY BAJO', 'PROMEDIO', 'REGULAR', 
             'EN OBSERVACION', 'EN OBSERVACIÓN', 'EN DESARROLLO', 
             'ADECUADO', 'RIESGO', 'ALTO', 'BAJO', 'MEDIO', 
-            'AUTORITARIO FLEXIBLE', 'AUTORITARIO', 'CONSULTIVO', 'PARTICIPATIVO'
+            'AUTORITARIO FLEXIBLE', 'FORMADOR (COACHING)', 'PARTICIPATIVO',
+            'AUTORITARIO', 'CONSULTIVO', 'COACHING', 'SOPORTE'
           ];
           
           // Ordenar por longitud descendente para evitar 'ALTO' antes de 'MUY ALTO'
@@ -428,6 +445,7 @@ export const fetchFinalDashboardData = async (sheetId: string): Promise<FinalDas
           for (const state of sortedStates) {
             if (upperText.includes(state)) {
               if (state === 'EN OBSERVACIÓN') return 'EN OBSERVACION';
+              if (state === 'EN DESAROLLO') return 'EN DESARROLLO';
               return state;
             }
           }
@@ -877,6 +895,14 @@ const fetchReportSheet = async (
   gid: string
 ): Promise<Map<string, DimensionReport>> => {
   const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+  const normalizeKey = (value: string) =>
+    value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .toUpperCase();
+
   try {
     const res = await fetch(url);
     if (!res.ok) return new Map();
@@ -893,11 +919,12 @@ const fetchReportSheet = async (
             const r = rows[i];
             const name = (r[1] || '').trim();
             if (!name) continue;
-            map.set(name.toUpperCase(), {
+            map.set(normalizeKey(name), {
               tipo: (r[2] || '').trim(),
-              fortalezas: (r[3] || '').trim(),
-              riesgos: (r[4] || '').trim(),
-              enfoque: (r[5] || '').trim(),
+              concepto: (r[3] || '').trim(),
+              fortalezas: (r[4] || '').trim(),
+              riesgos: (r[5] || '').trim(),
+              enfoque: (r[6] || '').trim(),
             });
           }
           resolve();
@@ -910,19 +937,111 @@ const fetchReportSheet = async (
   }
 };
 
+const splitGuideText = (value: string) => {
+  const cleaned = value.replace(/\s+/g, " ").trim();
+  const separatorIndex = cleaned.indexOf(":");
+  if (separatorIndex === -1) {
+    return { term: cleaned, description: "" };
+  }
+
+  return {
+    term: cleaned.slice(0, separatorIndex).trim(),
+    description: cleaned.slice(separatorIndex + 1).trim(),
+  };
+};
+
+const fetchGuideSheet = async (
+  sheetId: string,
+  gid: string,
+  guideColumn: number,
+  exampleColumn?: number
+): Promise<DimensionGuide> => {
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return { title: "", items: [] };
+    const csv = await res.text();
+
+    return await new Promise<DimensionGuide>((resolve) => {
+      Papa.parse(csv, {
+        header: false,
+        skipEmptyLines: false,
+        complete: (results) => {
+          const rows = results.data as string[][];
+          const values = rows
+            .map((row) => ({
+              text: (row[guideColumn] || "").trim(),
+              example: exampleColumn !== undefined ? (row[exampleColumn] || "").trim() : "",
+            }))
+            .filter((row) => row.text);
+
+          const [titleRow, ...itemRows] = values;
+          resolve({
+            title: titleRow?.text || "",
+            items: itemRows.map((row) => {
+              const parsed = splitGuideText(row.text);
+              return {
+                ...parsed,
+                example: row.example || undefined,
+              };
+            }),
+          });
+        },
+      });
+    });
+  } catch {
+    return { title: "", items: [] };
+  }
+};
+
 export const fetchDimensionesData = async (sheetId: string): Promise<DimensionesDashboardData> => {
   // Use export?format=csv with gid=0 for reliable index-based parsing
   // (header:true fails because "Valor" and "PERFIL" appear twice as headers)
   const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
 
   // Fetch main sheet + qualitative report sheets in parallel
-  const [mainRes, culturaMap, comunicacionMap, percepcionMap, liderazgoMap] = await Promise.all([
+  const [
+    mainRes,
+    culturaMap,
+    rolEquipoMap,
+    comunicacionMap,
+    percepcionMap,
+    liderazgoMap,
+    motivacionMap,
+    scoringGuide,
+    culturaGuide,
+    rolGuide,
+    comunicacionGuide,
+    percepcionGuide,
+    liderazgoGuide,
+    motivacionGuide,
+  ] = await Promise.all([
     fetch(url),
     fetchReportSheet(sheetId, '1175296027'),
+    fetchReportSheet(sheetId, '1873675096'),
     fetchReportSheet(sheetId, '656786103'),
     fetchReportSheet(sheetId, '495762530'),
     fetchReportSheet(sheetId, '1509919201'),
+    fetchReportSheet(sheetId, '1838103820'),
+    fetchGuideSheet(sheetId, '0', 17),
+    fetchGuideSheet(sheetId, '1175296027', 13),
+    fetchGuideSheet(sheetId, '1873675096', 9),
+    fetchGuideSheet(sheetId, '656786103', 11),
+    fetchGuideSheet(sheetId, '495762530', 11, 12),
+    fetchGuideSheet(sheetId, '1509919201', 11),
+    fetchGuideSheet(sheetId, '1838103820', 10),
   ]);
+
+  const referenceGuides = {
+    scoring: scoringGuide,
+    cultura: culturaGuide,
+    rol: rolGuide,
+    comunicacion: comunicacionGuide,
+    percepcion: percepcionGuide,
+    liderazgo: liderazgoGuide,
+    motivacion: motivacionGuide,
+  };
 
   if (!mainRes.ok) throw new Error('Failed to fetch Dimensiones data');
   const csvText = await mainRes.text();
@@ -962,6 +1081,13 @@ export const fetchDimensionesData = async (sheetId: string): Promise<Dimensiones
         };
 
         const entries: DimensionesEntry[] = [];
+        const normalizeKey = (value: string) =>
+          value
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/\s+/g, " ")
+            .trim()
+            .toUpperCase();
 
         for (let i = 1; i < rows.length; i++) {
           const r = rows[i];
@@ -1007,7 +1133,7 @@ export const fetchDimensionesData = async (sheetId: string): Promise<Dimensiones
           // General level based on total
           const nivel = calculateLevel(total);
 
-          const nameKey = nombre.toUpperCase();
+          const nameKey = normalizeKey(nombre);
 
           entries.push({
             id: i,
@@ -1030,16 +1156,19 @@ export const fetchDimensionesData = async (sheetId: string): Promise<Dimensiones
             genero,
             // JOIN con las hojas de reporte cualitativo
             culturaReport: culturaMap.get(nameKey),
+            rolEquipoReport: rolEquipoMap.get(nameKey),
             comunicacionReport: comunicacionMap.get(nameKey),
             percepcionReport: percepcionMap.get(nameKey),
             liderazgoReport: liderazgoMap.get(nameKey),
+            motivacionReport: motivacionMap.get(nameKey),
           });
         }
 
         resolve({
           entries,
           totalEvaluated: entries.length,
-          avgScore: entries.length > 0 ? entries.reduce((acc, e) => acc + e.total, 0) / entries.length : 0
+          avgScore: entries.length > 0 ? entries.reduce((acc, e) => acc + e.total, 0) / entries.length : 0,
+          referenceGuides,
         });
       },
       error: reject

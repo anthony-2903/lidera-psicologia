@@ -24,7 +24,7 @@ export const mapScaleToNum = (val: string) => {
   const v = (val || "").toUpperCase().trim();
   if (v === "MUY ALTO") return 5;
   if (v === "ALTO" || v === "ADECUADO") return 4;
-  if (v === "PROMEDIO" || v === "REGULAR" || v === "EN OBSERVACION" || v === "MEDIO") return 3;
+  if (v === "PROMEDIO" || v === "REGULAR" || v === "EN OBSERVACION" || v === "EN DESARROLLO" || v === "EN DESAROLLO" || v === "MEDIO") return 3;
   if (v === "BAJO" || v === "RIESGO") return 2;
   if (v === "MUY BAJO") return 1;
   return 0;

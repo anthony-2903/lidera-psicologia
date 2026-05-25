@@ -11,6 +11,7 @@ const breadcrumbMap: Record<string, string> = {
   dashboard: "Dashboard General",
   diagnostic: "Seguimiento de Aplicación",
   "final-dashboard": "Dashboard Final",
+  dimensiones: "Diagnóstico Psicosocial",
   "dpms-raura": "DPMS-Raura",
   "driver-safety": "Driver Safety",
 };
