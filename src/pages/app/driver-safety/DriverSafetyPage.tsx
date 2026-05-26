@@ -323,8 +323,8 @@ const DriverSafetyIndividualPanel = ({
             .scale-container { background: #f8fafc; border-radius: 20px; padding: 30px; border: 1px solid #e2e8f0; position: relative; margin-top: 20px; }
             .ruler { height: 12px; background: #e2e8f0; border-radius: 6px; overflow: hidden; display: flex; margin: 20px 0; }
             .pointer { position: absolute; top: 45px; transform: translateX(-50%); text-align: center; }
-            .pointer-line { width: 3px; height: 35px; background: ${isApto ? "#10b981" : "#ef4444"}; margin: 0 auto; border-radius: 2px; }
-            .pointer-val { background: ${isApto ? "#10b981" : "#ef4444"}; color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 900; margin-top: 5px; }
+            .pointer-line { width: 3px; height: 35px; background: ${resultColor}; margin: 0 auto; border-radius: 2px; }
+            .pointer-val { background: ${resultColor}; color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 900; margin-top: 5px; }
             .analysis-box { background: #0f172a; color: white; padding: 30px; border-radius: 20px; line-height: 1.6; font-style: italic; font-size: 15px; }
             .footer { position: absolute; bottom: 20mm; left: 20mm; right: 20mm; text-align: center; font-size: 10px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 10px; }
           </style>
@@ -575,7 +575,7 @@ const DriverSafetyIndividualPanel = ({
             <div className="flex justify-between text-[8px] font-black uppercase text-muted-foreground/40 px-1 italic">
               <span>Riesgo Alto (0-12)</span>
               <span>Riesgo Medio (13-18)</span>
-              <span>Apto (19-23)</span>
+              <span>Riesgo Bajo (19-23)</span>
             </div>
 
             <div className="relative h-12 w-full flex items-center">
@@ -1076,6 +1076,7 @@ const DriverSafetyPage = () => {
     null,
   );
   const [sortBy, setSortBy] = useState<"id" | "risk" | "name">("id");
+  const [tableOffsetX, setTableOffsetX] = useState(0);
 
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ["driverSafety", SHEET_ID],
@@ -2639,12 +2640,69 @@ const DriverSafetyPage = () => {
               </div>
             </div>
 
-            <Card className="border-2 shadow-2xl rounded-[2.5rem] overflow-hidden">
-              <div className="overflow-x-scroll driver-safety-scrollbar">
-                <div className="min-w-[1650px]">
-                  <div className="max-h-[750px] overflow-y-scroll overflow-x-visible custom-scrollbar relative">
-                    <Table className="w-full">
-                  <TableHeader className="bg-slate-100/90 backdrop-blur-md sticky top-0 z-40">
+            <Card className="border-2 shadow-2xl rounded-[2.5rem] overflow-visible">
+              <div className="sticky top-0 z-[60] overflow-hidden rounded-t-[2.5rem] border-b border-border/30 bg-slate-100/95 shadow-lg backdrop-blur-md">
+                <div
+                  className="w-[1650px]"
+                  style={{ marginLeft: `-${tableOffsetX}px` }}
+                >
+                  <Table className="w-full">
+                    <TableHeader className="bg-slate-100/95">
+                      <TableRow className="hover:bg-transparent border-b-2">
+                        <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 px-8 bg-slate-100/95 shadow-sm">
+                          ID
+                        </TableHead>
+                        <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 bg-slate-100/95 shadow-sm">
+                          Evaluado
+                        </TableHead>
+                        <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 bg-slate-100/95 shadow-sm">
+                          Empresa
+                        </TableHead>
+                        <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 bg-slate-100/95 shadow-sm">
+                          Área
+                        </TableHead>
+                        <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 bg-slate-100/95 shadow-sm">
+                          Trabajo Nivel
+                        </TableHead>
+                        <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 bg-slate-100/95 shadow-sm">
+                          Puesto
+                        </TableHead>
+                        <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 bg-slate-100/95 shadow-sm">
+                          Linea
+                        </TableHead>
+                        <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 bg-slate-100/95 shadow-sm text-center">
+                          Fecha
+                        </TableHead>
+                        <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 bg-slate-100/95 shadow-sm text-center">
+                          Estado
+                        </TableHead>
+                        <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 bg-slate-100/95 shadow-sm text-center">
+                          Interno
+                        </TableHead>
+                        <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 bg-slate-100/95 shadow-sm text-center">
+                          Externo
+                        </TableHead>
+                        <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 bg-slate-100/95 shadow-sm text-center">
+                          Total
+                        </TableHead>
+                        <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 bg-slate-100/95 shadow-sm text-center">
+                          Validación
+                        </TableHead>
+                        <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 bg-slate-100/95 shadow-sm text-center">
+                          Condición
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                  </Table>
+                </div>
+              </div>
+              <div className="h-[48vh] min-h-[320px] max-h-[560px] overflow-y-scroll overflow-x-hidden custom-scrollbar relative">
+                <div
+                  className="w-[1650px]"
+                  style={{ marginLeft: `-${tableOffsetX}px` }}
+                >
+                  <Table className="w-full">
+                  <TableHeader className="hidden">
                     <TableRow className="hover:bg-transparent border-b-2">
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 px-8 sticky top-0 bg-slate-100/90 z-40 shadow-sm">
                         ID
@@ -2803,8 +2861,16 @@ const DriverSafetyPage = () => {
                       </TableRow>
                     ))}
                   </TableBody>
-                    </Table>
-                  </div>
+                  </Table>
+                </div>
+              </div>
+              <div className="border-t border-border/30 bg-white/95 px-4 py-3">
+                <div
+                  className="driver-safety-scrollbar overflow-x-scroll overflow-y-hidden rounded-full bg-slate-100/80 border border-slate-200/80 shadow-inner"
+                  aria-label="Desplazamiento horizontal de la tabla Driver Safety"
+                  onScroll={(event) => setTableOffsetX(event.currentTarget.scrollLeft)}
+                >
+                  <div className="h-3 w-[1650px]" />
                 </div>
               </div>
             </Card>
