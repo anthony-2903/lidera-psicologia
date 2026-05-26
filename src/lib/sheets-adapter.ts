@@ -116,6 +116,7 @@ export interface DriverSafetyEntry {
   id: string | number;
   name: string;
   company: string;
+  area: string;
   date: string;
   status: string;
   level: string;
@@ -795,6 +796,27 @@ function evaluateLocusControl(answers: unknown[]) {
   };
 }
 
+const normalizeDriverSafetyHeader = (value: unknown): string =>
+  String(value ?? "")
+    .trim()
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ");
+
+const findDriverSafetyColumn = (
+  headers: string[],
+  aliases: string[],
+  fallback: number,
+) => {
+  const normalizedAliases = aliases.map(normalizeDriverSafetyHeader);
+  const foundIndex = headers.findIndex((header) =>
+    normalizedAliases.includes(normalizeDriverSafetyHeader(header)),
+  );
+
+  return foundIndex >= 0 ? foundIndex : fallback;
+};
+
 export const fetchDriverSafetyData = async (sheetId: string): Promise<DriverSafetyData> => {
   // Use the specific GID for "BASE DE CONTROL"
   const gid = "1601952485";
@@ -816,35 +838,51 @@ export const fetchDriverSafetyData = async (sheetId: string): Promise<DriverSafe
           return;
         }
 
+        const headers = rows[0] ?? [];
+        const columns = {
+          id: findDriverSafetyColumn(headers, ["ID", "fAESA"], 0),
+          name: findDriverSafetyColumn(headers, ["APELLIDOS Y NOMBRES", "NOMBRES"], 1),
+          company: findDriverSafetyColumn(headers, ["EMPRESA"], 2),
+          area: findDriverSafetyColumn(headers, ["AREA"], 3),
+          date: findDriverSafetyColumn(headers, ["FECHA"], 4),
+          status: findDriverSafetyColumn(headers, ["ESTADO"], 5),
+          level: findDriverSafetyColumn(headers, ["TRABAJO NIVEL", "NIVEL"], 6),
+          position: findDriverSafetyColumn(headers, ["PUESTO", "CARGO"], 7),
+          line: findDriverSafetyColumn(headers, ["LINEA", "LÍNEA"], 8),
+        };
+        const answerColumns = Array.from({ length: 23 }, (_, index) =>
+          findDriverSafetyColumn(headers, [`P${index + 1}`], 9 + index),
+        );
+
         const entries: DriverSafetyEntry[] = [];
         const riskCounts = { 'RIESGO ALTO': 0, 'RIESGO MEDIO': 0, 'RIESGO BAJO': 0, 'ERROR': 0 };
 
         for (let i = 1; i < rows.length; i++) {
           const r = rows[i];
-          if (!r[1] || r[1] === 'APELLIDOS Y NOMBRES' || r[1].trim() === '') continue;
+          const name = (r[columns.name] || "").trim();
+          if (!name || name === 'APELLIDOS Y NOMBRES') continue;
 
-          // Answers are from index 8 to 30
-          const rawAnswers = r.slice(8, 31);
+          const rawAnswers = answerColumns.map((column) => r[column]);
           const evaluation = evaluateLocusControl(rawAnswers);
 
-          // Date detection logic
-          let evalDate = (r[3] || '').trim();
+          let evalDate = (r[columns.date] || '').trim();
           if (!evalDate || !/\d/.test(evalDate)) {
-             const fallbackDate = (r[4] || '').trim();
-             if (/\d{2}\/\d{2}\/\d{4}/.test(fallbackDate)) {
-               evalDate = fallbackDate;
-             }
+            const fallbackDate = (r[columns.status] || '').trim();
+            if (/\d{2}\/\d{2}\/\d{4}/.test(fallbackDate)) {
+              evalDate = fallbackDate;
+            }
           }
 
           entries.push({
-            id: r[0] || i,
-            name: (r[1] || '').trim(),
-            company: (r[2] || '').trim(),
+            id: r[columns.id] || i,
+            name,
+            company: (r[columns.company] || '').trim(),
+            area: (r[columns.area] || '').trim() || 'No especificado',
             date: evalDate || 'Sin fecha',
-            status: (r[4] || '').trim() || 'No especificado',
-            level: (r[5] || '').trim() || 'No especificado',
-            position: (r[6] || '').trim() || 'No especificado',
-            line: (r[7] || '').trim() || 'No especificado',
+            status: (r[columns.status] || '').trim() || 'No especificado',
+            level: (r[columns.level] || '').trim() || 'No especificado',
+            position: (r[columns.position] || '').trim() || 'No especificado',
+            line: (r[columns.line] || '').trim() || 'No especificado',
             answers: rawAnswers,
             internalScore: evaluation.internalScore,
             externalScore: evaluation.externalScore,

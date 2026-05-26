@@ -348,6 +348,10 @@ const DriverSafetyIndividualPanel = ({
                 <tr>
                   <td style="padding: 10px 0; color: #64748b; font-weight: 700;">EMPRESA:</td>
                   <td style="font-weight: 900;">${entry.company}</td>
+                  <td style="padding: 10px 0; color: #64748b; font-weight: 700;">ÁREA:</td>
+                  <td style="font-weight: 900;">${entry.area}</td>
+                </tr>
+                <tr>
                   <td style="padding: 10px 0; color: #64748b; font-weight: 700;">FECHA EVALUACIÓN:</td>
                   <td style="font-weight: 900;">${entry.date}</td>
                 </tr>
@@ -500,6 +504,12 @@ const DriverSafetyIndividualPanel = ({
               Empresa
             </p>
             <p className="text-sm font-black italic">{entry.company}</p>
+          </Card>
+          <Card className="rounded-3xl border-border/20 bg-background/50 p-4">
+            <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">
+              Área
+            </p>
+            <p className="text-sm font-black italic">{entry.area}</p>
           </Card>
           <Card className="rounded-3xl border-border/20 bg-background/50 p-4">
             <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">
@@ -1136,6 +1146,7 @@ const DriverSafetyPage = () => {
       ID: `LOC-${entry.id}`,
       Nombre: entry.name,
       Empresa: entry.company,
+      Area: entry.area,
       Fecha: entry.date,
       Puesto: entry.position,
       Linea: entry.line,
@@ -1511,7 +1522,8 @@ const DriverSafetyPage = () => {
       .filter((entry) => {
         const matchesSearch =
           entry.name.toLowerCase().includes(search.toLowerCase()) ||
-          entry.company.toLowerCase().includes(search.toLowerCase());
+          entry.company.toLowerCase().includes(search.toLowerCase()) ||
+          entry.area.toLowerCase().includes(search.toLowerCase());
 
         const matchesCondition =
           conditionFilters.length === 0 ||
@@ -1752,7 +1764,7 @@ const DriverSafetyPage = () => {
 
                 // --- NEW: CONSOLIDATED BASE SHEET ---
                 const baseSheet = workbook.addWorksheet('BASE CONSOLIDADA');
-                const baseHeaders = ['ID', 'APELLIDOS Y NOMBRES', 'EMPRESA', 'ESTADO', 'NIVEL', 'PUESTO', 'LINEA', 'FECHA', 'INTERNO', 'EXTERNO', 'DICTAMEN'];
+                const baseHeaders = ['ID', 'APELLIDOS Y NOMBRES', 'EMPRESA', 'AREA', 'ESTADO', 'NIVEL', 'PUESTO', 'LINEA', 'FECHA', 'INTERNO', 'EXTERNO', 'DICTAMEN'];
                 
                 baseHeaders.forEach((h, i) => {
                   const cell = baseSheet.getCell(1, i + 1);
@@ -1767,16 +1779,17 @@ const DriverSafetyPage = () => {
                   baseSheet.getCell(rowNum, 1).value = e.id;
                   baseSheet.getCell(rowNum, 2).value = e.name;
                   baseSheet.getCell(rowNum, 3).value = e.company;
-                  baseSheet.getCell(rowNum, 4).value = e.status;
-                  baseSheet.getCell(rowNum, 5).value = e.level;
-                  baseSheet.getCell(rowNum, 6).value = e.position;
-                  baseSheet.getCell(rowNum, 7).value = e.line;
-                  baseSheet.getCell(rowNum, 8).value = e.date;
-                  baseSheet.getCell(rowNum, 9).value = e.internalScore;
-                  baseSheet.getCell(rowNum, 10).value = e.externalScore;
-                  baseSheet.getCell(rowNum, 11).value = e.result;
+                  baseSheet.getCell(rowNum, 4).value = e.area;
+                  baseSheet.getCell(rowNum, 5).value = e.status;
+                  baseSheet.getCell(rowNum, 6).value = e.level;
+                  baseSheet.getCell(rowNum, 7).value = e.position;
+                  baseSheet.getCell(rowNum, 8).value = e.line;
+                  baseSheet.getCell(rowNum, 9).value = e.date;
+                  baseSheet.getCell(rowNum, 10).value = e.internalScore;
+                  baseSheet.getCell(rowNum, 11).value = e.externalScore;
+                  baseSheet.getCell(rowNum, 12).value = e.result;
                   
-                  for(let i=1; i<=11; i++) {
+                  for(let i=1; i<=12; i++) {
                     baseSheet.getCell(rowNum, i).style = cellStyle;
                   }
                 });
@@ -2628,7 +2641,7 @@ const DriverSafetyPage = () => {
 
             <Card className="border-2 shadow-2xl rounded-[2.5rem] overflow-hidden">
               <div className="overflow-x-scroll driver-safety-scrollbar">
-                <div className="min-w-[1500px]">
+                <div className="min-w-[1650px]">
                   <div className="max-h-[750px] overflow-y-scroll overflow-x-visible custom-scrollbar relative">
                     <Table className="w-full">
                   <TableHeader className="bg-slate-100/90 backdrop-blur-md sticky top-0 z-40">
@@ -2641,6 +2654,9 @@ const DriverSafetyPage = () => {
                       </TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">
                         Empresa
+                      </TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">
+                        Área
                       </TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">
                         Trabajo Nivel
@@ -2700,6 +2716,11 @@ const DriverSafetyPage = () => {
                         <TableCell>
                           <p className="text-[11px] font-bold text-muted-foreground uppercase">
                             {entry.company}
+                          </p>
+                        </TableCell>
+                        <TableCell>
+                          <p className="text-[11px] font-bold text-muted-foreground uppercase">
+                            {entry.area}
                           </p>
                         </TableCell>
                         <TableCell>
