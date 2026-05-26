@@ -1062,7 +1062,7 @@ export const fetchDimensionesData = async (sheetId: string): Promise<Dimensiones
     fetchReportSheet(sheetId, '495762530'),
     fetchReportSheet(sheetId, '1509919201'),
     fetchReportSheet(sheetId, '1838103820'),
-    fetchGuideSheet(sheetId, '0', 17),
+    fetchGuideSheet(sheetId, '0', 18),
     fetchGuideSheet(sheetId, '1175296027', 13),
     fetchGuideSheet(sheetId, '1873675096', 9),
     fetchGuideSheet(sheetId, '656786103', 11),
@@ -1119,6 +1119,7 @@ export const fetchDimensionesData = async (sheetId: string): Promise<Dimensiones
         };
 
         const entries: DimensionesEntry[] = [];
+        const headers = rows[0] ?? [];
         const normalizeKey = (value: string) =>
           value
             .normalize("NFD")
@@ -1126,14 +1127,42 @@ export const fetchDimensionesData = async (sheetId: string): Promise<Dimensiones
             .replace(/\s+/g, " ")
             .trim()
             .toUpperCase();
+        const findColumn = (aliases: string[], fallback: number) => {
+          const normalizedAliases = aliases.map(normalizeKey);
+          const foundIndex = headers.findIndex((header) =>
+            normalizedAliases.includes(normalizeKey(header || ""))
+          );
+
+          return foundIndex >= 0 ? foundIndex : fallback;
+        };
+        const findColumnIncludes = (requiredParts: string[], fallback: number) => {
+          const normalizedParts = requiredParts.map(normalizeKey);
+          const foundIndex = headers.findIndex((header) => {
+            const normalizedHeader = normalizeKey(header || "");
+            return normalizedParts.every((part) => normalizedHeader.includes(part));
+          });
+
+          return foundIndex >= 0 ? foundIndex : fallback;
+        };
+        const columns = {
+          nombre: findColumn(["APELLIDOS Y NOMBRES", "NOMBRES"], 1),
+          dni: findColumn(["DNI", "DOCUMENTO"], 2),
+          sexo: findColumn(["SEXO"], 3),
+          empresa: findColumn(["EMPRESA"], 5),
+          ubicacion: findColumn(["UBICACION", "UBICACIÓN", "AREA", "ÁREA"], 6),
+          gradoInstruccion: findColumn(["GRADO DE INSTRUCCION", "GRADO DE INSTRUCCIÓN"], 7),
+          cargo: findColumn(["CARGO", "PUESTO"], 8),
+          liderazgoTotal: findColumnIncludes(["LIDERAZGO", "TOTAL"], 10),
+          percepcionTotal: findColumnIncludes(["PERCEPCION", "RIESGOS", "TOTAL"], 13),
+        };
 
         for (let i = 1; i < rows.length; i++) {
           const r = rows[i];
-          const nombre = (r[1] || '').trim();
+          const nombre = (r[columns.nombre] || '').trim();
           if (!nombre || nombre.toLowerCase().includes('total')) continue;
 
           // DNI extraction with normalization
-          let dniVal = (r[2] || '').trim();
+          let dniVal = (r[columns.dni] || '').trim();
           if (dniVal) {
             dniVal = dniVal.replace(/O/g, '0');
             if (/^\d{7}$/.test(dniVal)) dniVal = '0' + dniVal;
@@ -1141,7 +1170,7 @@ export const fetchDimensionesData = async (sheetId: string): Promise<Dimensiones
 
           // Gender detection
           let genero: 'MASCULINO' | 'FEMENINO' = 'MASCULINO';
-          const sexoVal = (r[3] || '').trim().toUpperCase();
+          const sexoVal = (r[columns.sexo] || '').trim().toUpperCase();
           if (sexoVal === 'F' || sexoVal === 'FEMENINO' || sexoVal === 'MUJER') {
             genero = 'FEMENINO';
           } else if (!sexoVal || (sexoVal !== 'M' && sexoVal !== 'MASCULINO')) {
@@ -1155,13 +1184,13 @@ export const fetchDimensionesData = async (sheetId: string): Promise<Dimensiones
             return 'Bajo';
           };
 
-          const liderazgoPct = cleanPct(r[9]);
+          const liderazgoPct = cleanPct(r[columns.liderazgoTotal]);
           const nivelLiderazgo = calculateLevel(liderazgoPct);
-          const perfilLiderazgo = (r[11] || '').trim();
+          const perfilLiderazgo = (r[columns.liderazgoTotal + 2] || '').trim();
 
-          const percepcionPct = cleanPct(r[12]);
+          const percepcionPct = cleanPct(r[columns.percepcionTotal]);
           const nivelPercepcion = calculateLevel(percepcionPct);
-          const perfilPercepcion = (r[14] || '').trim();
+          const perfilPercepcion = (r[columns.percepcionTotal + 2] || '').trim();
 
           // Total as average of both dimensions
           const total = liderazgoPct > 0 && percepcionPct > 0
@@ -1177,11 +1206,11 @@ export const fetchDimensionesData = async (sheetId: string): Promise<Dimensiones
             id: i,
             nombre,
             dni: dniVal || 'No registrado',
-            empresa: (r[4] || '').trim(),
-            area: (r[5] || '').trim(),
-            ubicacion: (r[6] || '').trim(),
-            gradoInstruccion: (r[7] || '').trim(),
-            cargo: (r[8] || '').trim(),
+            empresa: (r[columns.empresa] || '').trim(),
+            area: (r[columns.ubicacion] || '').trim(),
+            ubicacion: (r[columns.ubicacion] || '').trim(),
+            gradoInstruccion: (r[columns.gradoInstruccion] || '').trim(),
+            cargo: (r[columns.cargo] || '').trim(),
             puntuacionLiderazgo: liderazgoPct,
             nivelLiderazgo,
             perfilLiderazgo,
