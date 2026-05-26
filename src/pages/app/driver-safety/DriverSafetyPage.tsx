@@ -2627,8 +2627,10 @@ const DriverSafetyPage = () => {
             </div>
 
             <Card className="border-2 shadow-2xl rounded-[2.5rem] overflow-hidden">
-              <div className="max-h-[750px] overflow-y-auto overflow-x-auto custom-scrollbar relative">
-                <Table>
+              <div className="overflow-x-scroll driver-safety-scrollbar">
+                <div className="min-w-[1500px]">
+                  <div className="max-h-[750px] overflow-y-scroll overflow-x-visible custom-scrollbar relative">
+                    <Table className="w-full">
                   <TableHeader className="bg-slate-100/90 backdrop-blur-md sticky top-0 z-40">
                     <TableRow className="hover:bg-transparent border-b-2">
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 px-8 sticky top-0 bg-slate-100/90 z-40 shadow-sm">
@@ -2780,7 +2782,9 @@ const DriverSafetyPage = () => {
                       </TableRow>
                     ))}
                   </TableBody>
-                </Table>
+                    </Table>
+                  </div>
+                </div>
               </div>
             </Card>
           </div>
