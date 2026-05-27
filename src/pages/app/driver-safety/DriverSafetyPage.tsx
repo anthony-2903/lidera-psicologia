@@ -1581,6 +1581,19 @@ const DriverSafetyPage = () => {
     sortBy,
   ]);
 
+  const filteredResultCounts = useMemo(() => {
+    return filteredEntries.reduce(
+      (acc, entry) => {
+        if (entry.result === "RIESGO BAJO") acc.low += 1;
+        else if (entry.result === "RIESGO MEDIO") acc.medium += 1;
+        else if (entry.result === "RIESGO ALTO") acc.high += 1;
+        else acc.review += 1;
+        return acc;
+      },
+      { low: 0, medium: 0, high: 0, review: 0 },
+    );
+  }, [filteredEntries]);
+
   const stats = useMemo(() => {
     if (!filteredEntries.length)
       return {
@@ -2223,8 +2236,8 @@ const DriverSafetyPage = () => {
             />
           </div>
 
-          <div className="flex flex-col md:flex-row justify-between items-center mt-6 pt-6 border-t border-border/10 gap-4">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mt-6 pt-6 border-t border-border/10 gap-4">
+            <div className="flex flex-wrap items-center gap-3">
               <Button
                 variant="outline"
                 size="sm"
@@ -2245,6 +2258,20 @@ const DriverSafetyPage = () => {
                 <span className="text-[10px] font-black uppercase tracking-widest">
                   {filteredEntries.length} Casos Filtrados
                 </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge className="rounded-full border-emerald-200 bg-emerald-50 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-emerald-700 shadow-none hover:bg-emerald-50">
+                  Bajo {filteredResultCounts.low}
+                </Badge>
+                <Badge className="rounded-full border-amber-200 bg-amber-50 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-amber-700 shadow-none hover:bg-amber-50">
+                  Medio {filteredResultCounts.medium}
+                </Badge>
+                <Badge className="rounded-full border-rose-200 bg-rose-50 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-rose-700 shadow-none hover:bg-rose-50">
+                  Alto {filteredResultCounts.high}
+                </Badge>
+                <Badge className="rounded-full border-slate-200 bg-slate-50 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-slate-600 shadow-none hover:bg-slate-50">
+                  Revisar {filteredResultCounts.review}
+                </Badge>
               </div>
             </div>
 
@@ -2641,7 +2668,7 @@ const DriverSafetyPage = () => {
             </div>
 
             <Card className="border-2 shadow-2xl rounded-[2.5rem] overflow-visible">
-              <div className="sticky top-0 z-[60] overflow-hidden rounded-t-[2.5rem] border-b border-border/30 bg-slate-100/95 shadow-lg backdrop-blur-md">
+              <div className="sticky top-0 z-30 overflow-hidden rounded-t-[2.5rem] border-b border-border/30 bg-slate-100/95 shadow-lg backdrop-blur-md">
                 <div
                   className="w-[1650px]"
                   style={{ marginLeft: `-${tableOffsetX}px` }}
