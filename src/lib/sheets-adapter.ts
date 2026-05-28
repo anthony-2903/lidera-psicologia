@@ -115,6 +115,7 @@ export interface RauraDashboardData {
 export interface DriverSafetyEntry {
   id: string | number;
   name: string;
+  dni: string;
   company: string;
   area: string;
   date: string;
@@ -842,6 +843,7 @@ export const fetchDriverSafetyData = async (sheetId: string): Promise<DriverSafe
         const columns = {
           id: findDriverSafetyColumn(headers, ["ID", "fAESA"], 0),
           name: findDriverSafetyColumn(headers, ["APELLIDOS Y NOMBRES", "NOMBRES"], 1),
+          dni: findDriverSafetyColumn(headers, ["DNI", "DOCUMENTO"], 4),
           company: findDriverSafetyColumn(headers, ["EMPRESA"], 2),
           area: findDriverSafetyColumn(headers, ["AREA"], 3),
           date: findDriverSafetyColumn(headers, ["FECHA"], 4),
@@ -876,6 +878,7 @@ export const fetchDriverSafetyData = async (sheetId: string): Promise<DriverSafe
           entries.push({
             id: r[columns.id] || i,
             name,
+            dni: (r[columns.dni] || "").trim() || "No registrado",
             company: (r[columns.company] || '').trim(),
             area: (r[columns.area] || '').trim() || 'No especificado',
             date: evalDate || 'Sin fecha',

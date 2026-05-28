@@ -77,6 +77,10 @@ import { ChevronsUpDown, Check as CheckIcon } from "lucide-react";
 
 const SHEET_ID = "1nrHMcI8fWlBKIWIv9aprjElPhY-ccmXX";
 
+const DRIVER_SAFETY_TABLE_COLUMN_WIDTHS = [
+  90, 210, 120, 110, 130, 150, 180, 140, 120, 180, 100, 100, 90, 130, 160,
+];
+
 const RISK_COLORS = {
   "RIESGO ALTO": "#ef4444", // Red-500
   "RIESGO MEDIO": "#f59e0b", // Amber-500
@@ -1146,6 +1150,7 @@ const DriverSafetyPage = () => {
     const excelData = filteredEntries.map((entry) => ({
       ID: `LOC-${entry.id}`,
       Nombre: entry.name,
+      DNI: entry.dni,
       Empresa: entry.company,
       Area: entry.area,
       Fecha: entry.date,
@@ -1168,7 +1173,7 @@ const DriverSafetyPage = () => {
             const worksheet = workbook.addWorksheet('Dashboard Data');
             
             // Título
-            worksheet.mergeCells('A1:I1');
+            worksheet.mergeCells('A1:L1');
             const titleCell = worksheet.getCell('A1');
             titleCell.value = 'REPORTE EJECUTIVO - DRIVER SAFETY';
             titleCell.font = { size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
@@ -1198,7 +1203,7 @@ const DriverSafetyPage = () => {
             currentY += 18;
 
             // Tabla de Datos
-            const headers = ['ID', 'Nombre', 'Empresa', 'Fecha', 'Puesto', 'Nivel', 'Interno', 'Externo', 'Balance', 'Resultado', 'Diagnóstico'];
+            const headers = ['ID', 'Nombre', 'DNI', 'Empresa', 'Fecha', 'Puesto', 'Nivel', 'Interno', 'Externo', 'Balance', 'Resultado', 'Diagnóstico'];
             const headerRow = worksheet.getRow(currentY);
             headers.forEach((h, i) => {
               const cell = headerRow.getCell(i + 1);
@@ -1212,19 +1217,20 @@ const DriverSafetyPage = () => {
               const row = worksheet.getRow(currentY + 1 + idx);
               row.getCell(1).value = item.ID;
               row.getCell(2).value = item.Nombre;
-              row.getCell(3).value = item.Empresa;
-              row.getCell(4).value = item.Fecha;
-              row.getCell(5).value = item.Puesto;
-              row.getCell(6).value = item.Nivel;
-              row.getCell(7).value = item['Puntaje Interno'];
-              row.getCell(8).value = item['Puntaje Externo'];
-              row.getCell(9).value = item.Balance;
-              row.getCell(10).value = item.Resultado;
-              row.getCell(11).value = item.Diagnóstico;
-              row.getCell(11).alignment = { wrapText: true, vertical: 'middle' };
+              row.getCell(3).value = item.DNI;
+              row.getCell(4).value = item.Empresa;
+              row.getCell(5).value = item.Fecha;
+              row.getCell(6).value = item.Puesto;
+              row.getCell(7).value = item.Nivel;
+              row.getCell(8).value = item['Puntaje Interno'];
+              row.getCell(9).value = item['Puntaje Externo'];
+              row.getCell(10).value = item.Balance;
+              row.getCell(11).value = item.Resultado;
+              row.getCell(12).value = item.Diagnóstico;
+              row.getCell(12).alignment = { wrapText: true, vertical: 'middle' };
 
               // Formato condicional colores
-              const resCell = row.getCell(10);
+              const resCell = row.getCell(11);
               if (item.Resultado === 'RIESGO BAJO') {
                 resCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD1FAE5' } };
                 resCell.font = { color: { argb: 'FF059669' }, bold: true };
@@ -1240,10 +1246,11 @@ const DriverSafetyPage = () => {
             // Ajustes de ancho
             worksheet.getColumn(1).width = 12;
             worksheet.getColumn(2).width = 30;
-            worksheet.getColumn(3).width = 20;
-            worksheet.getColumn(4).width = 25;
-            worksheet.getColumn(9).width = 15;
-            worksheet.getColumn(10).width = 50;
+            worksheet.getColumn(3).width = 14;
+            worksheet.getColumn(4).width = 20;
+            worksheet.getColumn(5).width = 25;
+            worksheet.getColumn(10).width = 15;
+            worksheet.getColumn(12).width = 50;
 
             const buffer = await workbook.xlsx.writeBuffer();
             saveAs(new Blob([buffer]), "Reporte_General_Driver_Safety.xlsx");
@@ -1523,6 +1530,7 @@ const DriverSafetyPage = () => {
       .filter((entry) => {
         const matchesSearch =
           entry.name.toLowerCase().includes(search.toLowerCase()) ||
+          entry.dni.toLowerCase().includes(search.toLowerCase()) ||
           entry.company.toLowerCase().includes(search.toLowerCase()) ||
           entry.area.toLowerCase().includes(search.toLowerCase());
 
@@ -1674,6 +1682,7 @@ const DriverSafetyPage = () => {
                 const worksheet = workbook.addWorksheet("Evaluados");
                 worksheet.columns = [
                   { header: "Evaluado", key: "evaluado", width: 45 },
+                  { header: "DNI", key: "dni", width: 16 },
                   { header: "Empresa", key: "empresa", width: 35 },
                 ];
 
@@ -1696,6 +1705,7 @@ const DriverSafetyPage = () => {
                 entries.forEach((entry) => {
                   worksheet.addRow({
                     evaluado: entry.name || "",
+                    dni: entry.dni || "No registrado",
                     empresa: entry.company || "",
                   });
                 });
@@ -1718,7 +1728,7 @@ const DriverSafetyPage = () => {
                   new Blob([buffer], {
                     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                   }),
-                  "Driver_Safety_Evaluado_Empresa.xlsx"
+                  "Driver_Safety_Evaluado_DNI_Empresa.xlsx"
                 );
                 setTimeout(() => window.close(), 1200);
               } catch (err) {
@@ -1778,7 +1788,7 @@ const DriverSafetyPage = () => {
 
                 // --- NEW: CONSOLIDATED BASE SHEET ---
                 const baseSheet = workbook.addWorksheet('BASE CONSOLIDADA');
-                const baseHeaders = ['ID', 'APELLIDOS Y NOMBRES', 'EMPRESA', 'AREA', 'ESTADO', 'NIVEL', 'PUESTO', 'LINEA', 'FECHA', 'INTERNO', 'EXTERNO', 'DICTAMEN'];
+                const baseHeaders = ['ID', 'APELLIDOS Y NOMBRES', 'DNI', 'EMPRESA', 'AREA', 'ESTADO', 'NIVEL', 'PUESTO', 'LINEA', 'FECHA', 'INTERNO', 'EXTERNO', 'DICTAMEN'];
                 
                 baseHeaders.forEach((h, i) => {
                   const cell = baseSheet.getCell(1, i + 1);
@@ -1792,18 +1802,19 @@ const DriverSafetyPage = () => {
                   const rowNum = idx + 2;
                   baseSheet.getCell(rowNum, 1).value = e.id;
                   baseSheet.getCell(rowNum, 2).value = e.name;
-                  baseSheet.getCell(rowNum, 3).value = e.company;
-                  baseSheet.getCell(rowNum, 4).value = e.area;
-                  baseSheet.getCell(rowNum, 5).value = e.status;
-                  baseSheet.getCell(rowNum, 6).value = e.level;
-                  baseSheet.getCell(rowNum, 7).value = e.position;
-                  baseSheet.getCell(rowNum, 8).value = e.line;
-                  baseSheet.getCell(rowNum, 9).value = e.date;
-                  baseSheet.getCell(rowNum, 10).value = e.internalScore;
-                  baseSheet.getCell(rowNum, 11).value = e.externalScore;
-                  baseSheet.getCell(rowNum, 12).value = e.result;
+                  baseSheet.getCell(rowNum, 3).value = e.dni;
+                  baseSheet.getCell(rowNum, 4).value = e.company;
+                  baseSheet.getCell(rowNum, 5).value = e.area;
+                  baseSheet.getCell(rowNum, 6).value = e.status;
+                  baseSheet.getCell(rowNum, 7).value = e.level;
+                  baseSheet.getCell(rowNum, 8).value = e.position;
+                  baseSheet.getCell(rowNum, 9).value = e.line;
+                  baseSheet.getCell(rowNum, 10).value = e.date;
+                  baseSheet.getCell(rowNum, 11).value = e.internalScore;
+                  baseSheet.getCell(rowNum, 12).value = e.externalScore;
+                  baseSheet.getCell(rowNum, 13).value = e.result;
                   
-                  for(let i=1; i<=12; i++) {
+                  for(let i=1; i<=13; i++) {
                     baseSheet.getCell(rowNum, i).style = cellStyle;
                   }
                 });
@@ -2670,10 +2681,15 @@ const DriverSafetyPage = () => {
             <Card className="border-2 shadow-2xl rounded-[2.5rem] overflow-visible">
               <div className="sticky top-0 z-30 overflow-hidden rounded-t-[2.5rem] border-b border-border/30 bg-slate-100/95 shadow-lg backdrop-blur-md">
                 <div
-                  className="w-[1650px]"
+                  className="w-[2010px]"
                   style={{ marginLeft: `-${tableOffsetX}px` }}
                 >
-                  <Table className="w-full">
+                  <Table className="w-full table-fixed">
+                    <colgroup>
+                      {DRIVER_SAFETY_TABLE_COLUMN_WIDTHS.map((width, index) => (
+                        <col key={index} style={{ width }} />
+                      ))}
+                    </colgroup>
                     <TableHeader className="bg-slate-100/95">
                       <TableRow className="hover:bg-transparent border-b-2">
                         <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 px-8 bg-slate-100/95 shadow-sm">
@@ -2681,6 +2697,9 @@ const DriverSafetyPage = () => {
                         </TableHead>
                         <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 bg-slate-100/95 shadow-sm">
                           Evaluado
+                        </TableHead>
+                        <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 bg-slate-100/95 shadow-sm">
+                          DNI
                         </TableHead>
                         <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 bg-slate-100/95 shadow-sm">
                           Empresa
@@ -2725,10 +2744,15 @@ const DriverSafetyPage = () => {
               </div>
               <div className="h-[48vh] min-h-[320px] max-h-[560px] overflow-y-scroll overflow-x-hidden custom-scrollbar relative">
                 <div
-                  className="w-[1650px]"
+                  className="w-[2010px]"
                   style={{ marginLeft: `-${tableOffsetX}px` }}
                 >
-                  <Table className="w-full">
+                  <Table className="w-full table-fixed">
+                  <colgroup>
+                    {DRIVER_SAFETY_TABLE_COLUMN_WIDTHS.map((width, index) => (
+                      <col key={index} style={{ width }} />
+                    ))}
+                  </colgroup>
                   <TableHeader className="hidden">
                     <TableRow className="hover:bg-transparent border-b-2">
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 px-8 sticky top-0 bg-slate-100/90 z-40 shadow-sm">
@@ -2736,6 +2760,9 @@ const DriverSafetyPage = () => {
                       </TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">
                         Evaluado
+                      </TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">
+                        DNI
                       </TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">
                         Empresa
@@ -2797,6 +2824,11 @@ const DriverSafetyPage = () => {
                               {entry.name}
                             </span>
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          <p className="text-[11px] font-black tabular-nums text-slate-500 uppercase">
+                            {entry.dni}
+                          </p>
                         </TableCell>
                         <TableCell>
                           <p className="text-[11px] font-bold text-muted-foreground uppercase">
@@ -2897,7 +2929,7 @@ const DriverSafetyPage = () => {
                   aria-label="Desplazamiento horizontal de la tabla Driver Safety"
                   onScroll={(event) => setTableOffsetX(event.currentTarget.scrollLeft)}
                 >
-                  <div className="h-3 w-[1650px]" />
+                  <div className="h-3 w-[2010px]" />
                 </div>
               </div>
             </Card>

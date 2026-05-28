@@ -32,6 +32,21 @@ const TEAM_COLORS_4 = DASHBOARD_PALETTES.team4;
 const PROJ_COLORS_3 = DASHBOARD_PALETTES.proj3;
 const LEAD_COLORS_4 = DASHBOARD_PALETTES.lead4;
 
+const DASHBOARD_READING_GUIDE = [
+  {
+    title: "Lectura General",
+    text: "Resume el comportamiento del grupo evaluado: promedios, distribuciones y dimensiones con mayor concentracion de resultados.",
+  },
+  {
+    title: "Barras Apiladas",
+    text: "Cada barra muestra cuantas personas caen en cada nivel. Los colores separan bajo, promedio y alto para ubicar patrones rapidamente.",
+  },
+  {
+    title: "Casos Prioritarios",
+    text: "Ordena a los evaluados que requieren revision tecnica por menor potencial, baja completitud o ausencia de resultados clave.",
+  },
+];
+
 // Helper para calcular porcentaje de rellenado
 const calculateCompletion = (ind: IndividualEvaluation) => {
   const fields = [
@@ -472,7 +487,45 @@ export default function FinalDashboardPage() {
 
         {/* --- VIEW SWITCHER --- */}
         {view === 'charts' && data ? (
-          <div className="space-y-16 animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-400 fill-mode-forwards">
+          <div className="space-y-10 lg:space-y-14 animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-400 fill-mode-forwards">
+            <Card className="border-2 border-primary/10 bg-card/55 backdrop-blur-xl shadow-xl rounded-3xl overflow-hidden">
+              <CardHeader className="p-5 sm:p-6 border-b border-border/20 bg-primary/5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <CardTitle className="text-lg sm:text-xl font-black tracking-tighter flex items-center gap-2">
+                      <Info className="w-5 h-5 text-primary" />
+                      Guia rapida de lectura
+                    </CardTitle>
+                    <CardDescription className="text-xs sm:text-sm font-semibold text-muted-foreground">
+                      Esta seccion ayuda a interpretar los graficos antes de revisar cada dimension.
+                    </CardDescription>
+                  </div>
+                  <Badge className="self-start sm:self-center bg-primary/10 text-primary border-primary/20 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest">
+                    Vista ejecutiva
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="p-5 sm:p-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {DASHBOARD_READING_GUIDE.map((item, index) => (
+                    <div key={item.title} className="rounded-2xl border border-border/30 bg-background/60 p-4">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-[10px] font-black">
+                          {index + 1}
+                        </div>
+                        <h3 className="text-[11px] font-black uppercase tracking-widest text-foreground">
+                          {item.title}
+                        </h3>
+                      </div>
+                      <p className="text-xs leading-relaxed text-muted-foreground font-medium">
+                        {item.text}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
               <Card className="xl:col-span-5 border-border/40 bg-card/40 backdrop-blur-xl shadow-2xl rounded-3xl overflow-hidden">
                 <CardHeader className="border-b border-border/20 p-6">
@@ -483,10 +536,13 @@ export default function FinalDashboardPage() {
                     <div>
                       <CardTitle className="text-xl font-black tracking-tighter">Radar Global de Dimensiones</CardTitle>
                       <CardDescription className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/70">Foto general del grupo evaluado</CardDescription>
+                      <p className="mt-2 max-w-xl text-xs font-medium leading-relaxed text-muted-foreground">
+                        Compara el promedio del grupo en personalidad, motivacion, equipo, proyectivo, liderazgo y conducta. Mientras mas cerca del borde, mayor fortaleza relativa en esa dimension.
+                      </p>
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="h-[360px] p-6">
+                <CardContent className="h-[320px] sm:h-[360px] p-4 sm:p-6">
                   <ResponsiveContainer width="100%" height="100%">
                     <RadarChart data={stats?.globalRadar || []} outerRadius="75%">
                       <PolarGrid stroke="hsl(var(--border)/0.55)" />
@@ -501,7 +557,7 @@ export default function FinalDashboardPage() {
 
               <Card className="xl:col-span-7 border-border/40 bg-card/40 backdrop-blur-xl shadow-2xl rounded-3xl overflow-hidden">
                 <CardHeader className="border-b border-border/20 p-6">
-                  <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center text-red-500">
                         <Target className="w-6 h-6" />
@@ -509,6 +565,9 @@ export default function FinalDashboardPage() {
                       <div>
                         <CardTitle className="text-xl font-black tracking-tighter">Ranking de Prioridad</CardTitle>
                         <CardDescription className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/70">Casos para revisión técnica</CardDescription>
+                        <p className="mt-2 max-w-2xl text-xs font-medium leading-relaxed text-muted-foreground">
+                          Lista los evaluados que requieren una mirada tecnica primero. El porcentaje resume el potencial calculado y la completitud indica cuanto avance de resultados tiene cada caso.
+                        </p>
                       </div>
                     </div>
                     <Badge className="bg-red-500/10 text-red-600 border-red-500/20 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest">
@@ -546,12 +605,12 @@ export default function FinalDashboardPage() {
               </Card>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <div className="grid grid-cols-1 2xl:grid-cols-2 gap-8 lg:gap-10">
               {/* PERSONALITY */}
               <Card className="border-border/40 bg-card/30 backdrop-blur-xl shadow-2xl rounded-3xl lg:rounded-[2.5rem] overflow-hidden group/card relative border-2 hover:border-primary/20 transition-colors duration-700">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent pointer-events-none opacity-0 group-hover/card:opacity-100 transition-opacity duration-1000"></div>
-                <CardHeader className="border-b border-border/20 p-8 bg-muted/5">
-                  <div className="flex items-center justify-between">
+                <CardHeader className="border-b border-border/20 p-5 sm:p-8 bg-muted/5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 shadow-xl border border-blue-500/10 group-hover/card:scale-110 group-hover/card:rotate-3 transition-all duration-700">
                         <BarChart3 className="w-6 h-6" />
@@ -559,12 +618,16 @@ export default function FinalDashboardPage() {
                       <div>
                         <CardTitle className="text-xl lg:text-2xl font-black tracking-tighter italic">Perfil de Personalidad</CardTitle>
                         <p className="text-[9px] font-bold uppercase tracking-[0.4em] text-blue-500/60 mt-1">Big Five Dimensional Mapping</p>
+                        <p className="mt-2 max-w-xl text-xs font-medium leading-relaxed text-muted-foreground normal-case tracking-normal">
+                          Distribuye al grupo por nivel en cada rasgo de personalidad. Sirve para ver donde predominan fortalezas o alertas.
+                        </p>
                       </div>
                     </div>
                     <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest text-center">Global Sync</Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="p-4 lg:p-8 h-[300px] lg:h-[400px]">
+                <CardContent className="p-4 lg:p-8 h-[340px] sm:h-[380px] lg:h-[430px] overflow-x-auto custom-scrollbar">
+                  <div className="h-full min-w-[620px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart layout="vertical" data={data.personality} margin={{ top: 0, right: 40, left: 40, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="15 15" horizontal={false} stroke="hsl(var(--border)/0.4)" />
@@ -579,14 +642,15 @@ export default function FinalDashboardPage() {
                       <Bar dataKey="MUY ALTO" stackId="a" fill={STACK_COLORS_5[4]} radius={[0, 16, 16, 0]} barSize={32} />
                     </BarChart>
                   </ResponsiveContainer>
+                  </div>
                 </CardContent>
               </Card>
 
               {/* MOTIVATIONAL */}
               <Card className="border-border/40 bg-card/30 backdrop-blur-xl shadow-2xl rounded-3xl lg:rounded-[2.5rem] overflow-hidden group/card relative border-2 hover:border-orange-500/20 transition-colors duration-700">
                  <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent pointer-events-none opacity-0 group-hover/card:opacity-100 transition-opacity duration-1000"></div>
-                <CardHeader className="border-b border-border/20 p-8 bg-muted/5">
-                  <div className="flex items-center justify-between">
+                <CardHeader className="border-b border-border/20 p-5 sm:p-8 bg-muted/5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500 shadow-xl border border-orange-500/10 group-hover/card:scale-110 group-hover/card:-rotate-3 transition-all duration-700">
                         <TrendingUp className="w-6 h-6" />
@@ -594,12 +658,16 @@ export default function FinalDashboardPage() {
                       <div>
                         <CardTitle className="text-xl lg:text-2xl font-black tracking-tighter italic">Perfil Motivacional</CardTitle>
                         <p className="text-[9px] font-bold uppercase tracking-[0.4em] text-orange-500/60 mt-1">Intrinsic Engagement Factors</p>
+                        <p className="mt-2 max-w-xl text-xs font-medium leading-relaxed text-muted-foreground normal-case tracking-normal">
+                          Muestra que factores impulsan o limitan la motivacion del grupo, separando niveles para priorizar acciones.
+                        </p>
                       </div>
                     </div>
                     <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/20 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest text-center">Multi-Axis</Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="p-4 lg:p-8 h-[300px] lg:h-[400px]">
+                <CardContent className="p-4 lg:p-8 h-[340px] sm:h-[380px] lg:h-[430px] overflow-x-auto custom-scrollbar">
+                  <div className="h-full min-w-[620px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart layout="vertical" data={data.motivational} margin={{ top: 0, right: 40, left: 40, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="15 15" horizontal={false} stroke="hsl(var(--border)/0.4)" />
@@ -614,6 +682,7 @@ export default function FinalDashboardPage() {
                       <Bar dataKey="MUY ALTO" stackId="a" fill={STACK_COLORS_5[4]} radius={[0, 10, 10, 0]} barSize={18} />
                     </BarChart>
                   </ResponsiveContainer>
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -621,15 +690,18 @@ export default function FinalDashboardPage() {
             {/* TEAMWORK - FULL WIDTH */}
             <Card className="border-border/40 bg-card/30 backdrop-blur-xl shadow-2xl rounded-3xl lg:rounded-[5rem] overflow-hidden group/card relative border-2 hover:border-emerald-500/20 transition-all duration-1000">
                <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/10 via-transparent to-transparent pointer-events-none opacity-60"></div>
-              <CardHeader className="border-b border-border/20 p-6 lg:p-16 bg-muted/5 lg:px-20">
-                <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-12">
+              <CardHeader className="border-b border-border/20 p-6 lg:p-12 bg-muted/5 lg:px-14">
+                <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-8">
                   <div className="flex items-center gap-4 lg:gap-8">
                     <div className="w-16 h-16 lg:w-24 lg:h-24 rounded-2xl lg:rounded-[2.5rem] bg-emerald-500/10 flex items-center justify-center text-emerald-500 shadow-2xl border border-emerald-500/20 group-hover/card:rotate-6 transition-transform duration-1000">
                       <Users2 className="w-8 h-8 lg:w-12 lg:h-12" />
                     </div>
                     <div>
-                      <CardTitle className="text-2xl sm:text-5xl lg:text-7xl font-black tracking-tighter decoration-emerald-500/30 underline-offset-[16px] italic leading-tight">Perfil de Trabajo en Equipo</CardTitle>
+                      <CardTitle className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tighter decoration-emerald-500/30 underline-offset-[16px] italic leading-tight">Perfil de Trabajo en Equipo</CardTitle>
                       <p className="text-xs font-black uppercase tracking-[0.5em] text-muted-foreground/60 mt-3 sm:mt-5">Team Belbin Matrix</p>
+                      <p className="mt-3 max-w-2xl text-xs sm:text-sm font-medium leading-relaxed text-muted-foreground normal-case tracking-normal">
+                        Compara los roles de equipo y permite identificar si el grupo se concentra en accion, cohesion social o analisis.
+                      </p>
                     </div>
                   </div>
                   <div className="px-6 lg:px-12 py-4 lg:py-6 rounded-2xl lg:rounded-[3rem] bg-background/60 border-2 border-border/10 backdrop-blur-3xl shadow-xl group/badge hover:border-emerald-500/30 transition-all">
@@ -638,7 +710,8 @@ export default function FinalDashboardPage() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="p-6 lg:p-16 h-[400px] lg:h-[650px] lg:px-20">
+              <CardContent className="p-4 sm:p-6 lg:p-10 h-[420px] sm:h-[460px] lg:h-[560px] overflow-x-auto custom-scrollbar">
+                <div className="h-full min-w-[820px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={data.teamwork} margin={{ top: 20, right: 20, left: 20, bottom: 60 }}>
                     <CartesianGrid strokeDasharray="10 10" vertical={false} stroke="hsl(var(--border)/0.3)" />
@@ -658,23 +731,28 @@ export default function FinalDashboardPage() {
                     <Bar dataKey="MUY ALTO" stackId="a" fill={TEAM_COLORS_4[3]} radius={[32, 32, 0, 0]} barSize={60} />
                   </BarChart>
                 </ResponsiveContainer>
+                </div>
               </CardContent>
             </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-8 lg:gap-10">
               {/* SMALL PERFILES GRID */}
               {[
-                { title: "Perfil Proyectivo", desc: "Índice de Estabilidad Proyectiva", data: data.projective, type: "bar", colors: PROJ_COLORS_3 },
-                { title: "Perfil Liderazgo", desc: "Mapa de Alineación", data: data.leadership, type: "pie", colors: LEAD_COLORS_4 },
-                { title: "Perfil Conductual", desc: "Dinámica Psicosocial", data: data.behavioral, type: "pie", colors: PROJ_COLORS_3 },
+                { title: "Perfil Proyectivo", desc: "Indice de estabilidad proyectiva", helper: "Agrupa resultados segun riesgo, observacion o nivel adecuado para detectar necesidades de soporte.", data: data.projective, type: "bar", colors: PROJ_COLORS_3 },
+                { title: "Perfil Liderazgo", desc: "Mapa de alineacion", helper: "Resume estilos de liderazgo presentes en el grupo y ayuda a ver que forma de conduccion predomina.", data: data.leadership, type: "pie", colors: LEAD_COLORS_4 },
+                { title: "Perfil Conductual", desc: "Dinamica psicosocial", helper: "Muestra la distribucion de perfiles conductuales para reconocer tendencias de interaccion y respuesta.", data: data.behavioral, type: "pie", colors: PROJ_COLORS_3 },
               ].map((item, i) => (
-                <Card key={i} className="border-2 bg-card/30 backdrop-blur-xl shadow-2xl rounded-3xl lg:rounded-[4rem] overflow-hidden group hover:-translate-y-4 transition-all duration-1000 relative border-border/40 hover:border-primary/30">
+                <Card key={i} className="border-2 bg-card/30 backdrop-blur-xl shadow-2xl rounded-3xl lg:rounded-[3rem] overflow-hidden group hover:-translate-y-2 transition-all duration-700 relative border-border/40 hover:border-primary/30">
                   <div className="absolute inset-x-0 bottom-0 h-1.5 bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
-                  <CardHeader className="p-8 lg:p-12 pb-0 text-center space-y-3">
-                    <CardTitle className="text-2xl lg:text-3xl font-black tracking-tighter italic">{item.title}</CardTitle>
+                  <CardHeader className="p-6 lg:p-8 pb-0 text-center space-y-3">
+                    <CardTitle className="text-xl lg:text-2xl font-black tracking-tighter italic">{item.title}</CardTitle>
                     <CardDescription className="text-[10px] font-black uppercase tracking-[0.4em] text-primary/70">{item.desc}</CardDescription>
+                    <p className="mx-auto max-w-sm text-xs font-medium leading-relaxed text-muted-foreground normal-case tracking-normal">
+                      {item.helper}
+                    </p>
                   </CardHeader>
-                  <CardContent className={cn("p-6 lg:p-12 flex items-center justify-center relative", item.type === 'bar' ? 'h-[300px] lg:h-[400px]' : 'h-[320px] lg:h-[420px]')}>
+                  <CardContent className={cn("p-4 lg:p-8 flex items-center justify-center relative", item.type === 'bar' ? 'h-[300px] lg:h-[360px] overflow-x-auto custom-scrollbar' : 'h-[300px] lg:h-[360px]')}>
+                    <div className={cn("h-full w-full", item.type === 'bar' && "min-w-[420px]")}>
                     <ResponsiveContainer width="100%" height="100%">
                       {item.type === 'bar' ? (
                         <BarChart data={item.data} margin={{ bottom: 30 }}>
@@ -704,8 +782,9 @@ export default function FinalDashboardPage() {
                         </PieChart>
                       )}
                     </ResponsiveContainer>
+                    </div>
                   </CardContent>
-                  <div className="px-12 pb-12 flex flex-wrap justify-center gap-4">
+                  <div className="px-6 lg:px-8 pb-8 flex flex-wrap justify-center gap-3">
                      {item.data.map((d, idx) => (
                        <div key={idx} className="flex items-center gap-2 px-5 py-2 rounded-full bg-background/50 border border-border/10 text-[9px] font-black uppercase tracking-widest shadow-sm hover:border-primary/20 transition-all cursor-default group/pill">
                          <div className="w-2 h-2 rounded-full shadow-lg transition-transform" style={{ backgroundColor: item.colors[idx % item.colors.length] }}></div>

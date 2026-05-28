@@ -17,7 +17,7 @@ export const GroupBreakdown = ({ groupMetrics, onGroupClick }: GroupBreakdownPro
       <h2 className="text-base md:text-xl font-black uppercase tracking-tight">Desglose por Empresa</h2>
     </div>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
       {groupMetrics.map((group) => {
         const completionRate = Math.round((group.completed / group.total) * 100);
 
@@ -30,9 +30,9 @@ export const GroupBreakdown = ({ groupMetrics, onGroupClick }: GroupBreakdownPro
             <div className="h-1 w-full" style={{ backgroundColor: `${group.color}20` }}>
               <div className="h-full transition-all duration-1000" style={{ width: `${completionRate}%`, backgroundColor: group.color }} />
             </div>
-            <CardHeader className="flex flex-row items-start justify-between pb-2 px-4 md:px-6">
+            <CardHeader className="flex flex-row items-start justify-between gap-3 pb-2 px-4 md:px-5">
               <div className="space-y-0.5">
-                <CardTitle className="text-xl md:text-2xl font-black tracking-tight group-hover/card:text-primary transition-colors">{group.name}</CardTitle>
+                <CardTitle className="text-lg md:text-xl font-black tracking-tight group-hover/card:text-primary transition-colors">{group.name}</CardTitle>
                 <CardDescription className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                   {group.total} Participantes • <Info className="w-3 h-3 text-primary/40" /> Detalles
                 </CardDescription>
@@ -41,8 +41,8 @@ export const GroupBreakdown = ({ groupMetrics, onGroupClick }: GroupBreakdownPro
                 {completionRate}%
               </Badge>
             </CardHeader>
-            <CardContent className="space-y-4 md:space-y-8 pt-2 md:pt-4 px-4 md:px-6 pb-4 md:pb-6">
-              <div className="grid grid-cols-3 gap-2 md:gap-4">
+            <CardContent className="space-y-4 pt-2 md:pt-3 px-4 md:px-5 pb-4 md:pb-5">
+              <div className="grid grid-cols-3 gap-2">
                 <div className="p-2 md:p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
                   <div className="text-[8px] md:text-[9px] font-black uppercase tracking-widest text-emerald-600 mb-0.5 whitespace-nowrap">Listos</div>
                   <div className="text-base md:text-xl font-black text-emerald-700">{group.completed}</div>
