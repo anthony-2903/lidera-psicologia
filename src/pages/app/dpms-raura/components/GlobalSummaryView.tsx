@@ -101,15 +101,21 @@ export const GlobalSummaryView = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
               {FINAL_RAURA_KPIS.map((item) => (
-                <div key={item.label} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                  <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">
+                <div
+                  key={item.label}
+                  className="flex min-h-[160px] flex-col justify-between rounded-2xl border border-slate-200 bg-slate-50 p-5"
+                >
+                  <p className="text-[10px] font-black uppercase leading-snug tracking-wide text-slate-500">
                     {item.label}
                   </p>
-                  <div className="mt-3 flex items-end justify-between gap-4">
-                    <span className="text-3xl font-black italic tabular-nums" style={{ color: item.color }}>
+                  <div className="mt-4 space-y-3">
+                    <span
+                      className="block whitespace-nowrap text-[clamp(1.9rem,2.3vw,2.45rem)] font-black italic leading-none tabular-nums"
+                      style={{ color: item.color }}
+                    >
                       {item.value}
                     </span>
-                    <span className="max-w-[150px] text-right text-[10px] font-bold leading-snug text-slate-400">
+                    <span className="block text-[11px] font-bold leading-snug text-slate-500">
                       {item.detail}
                     </span>
                   </div>
@@ -119,25 +125,27 @@ export const GlobalSummaryView = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-[0.8fr_1.2fr] gap-6">
               <div className="relative h-[260px] rounded-2xl border border-red-100 bg-red-50/70 p-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadialBarChart
-                    cx="50%"
-                    cy="70%"
-                    innerRadius="70%"
-                    outerRadius="100%"
-                    barSize={30}
-                    data={environmentGauge}
-                    startAngle={180}
-                    endAngle={0}
-                  >
-                    <RadialBar background={{ fill: "#fecaca" }} dataKey="value" cornerRadius={24} />
-                  </RadialBarChart>
-                </ResponsiveContainer>
-                <div className="absolute inset-x-0 bottom-8 text-center">
-                  <p className="text-6xl font-black italic leading-none text-red-600 tabular-nums">
+                <div className="mx-auto h-[170px] w-[180px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadialBarChart
+                      cx="50%"
+                      cy="68%"
+                      innerRadius="58%"
+                      outerRadius="82%"
+                      barSize={22}
+                      data={environmentGauge}
+                      startAngle={180}
+                      endAngle={0}
+                    >
+                      <RadialBar background={{ fill: "#fecaca" }} dataKey="value" cornerRadius={24} />
+                    </RadialBarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="absolute inset-x-0 bottom-12 text-center">
+                  <p className="text-[clamp(2.25rem,3.4vw,3rem)] font-black italic leading-none text-red-600 tabular-nums">
                     {FINAL_RAURA_REPORT.verdictScore}%
                   </p>
-                  <p className="mt-2 text-[10px] font-black uppercase tracking-[0.35em] text-red-500">
+                  <p className="mt-3 text-[10px] font-black uppercase tracking-[0.28em] text-red-500">
                     Veredicto Reactivo
                   </p>
                 </div>
@@ -217,9 +225,11 @@ export const GlobalSummaryView = () => {
                   Lo que ocurre ante el riesgo real
                 </CardDescription>
               </div>
-              <div className="rounded-2xl bg-red-600 px-5 py-4 text-right text-white shadow-xl shadow-red-500/20">
+              <div className="min-w-[170px] rounded-2xl bg-red-600 px-5 py-4 text-right text-white shadow-xl shadow-red-500/20">
                 <p className="text-[10px] font-black uppercase tracking-widest text-red-100">Madurez real</p>
-                <p className="text-3xl font-black italic tabular-nums">{FINAL_RAURA_REPORT.reactive}%</p>
+                <p className="mt-1 text-4xl font-black italic leading-none tabular-nums">
+                  {FINAL_RAURA_REPORT.verdictScore}%
+                </p>
               </div>
             </div>
           </CardHeader>
@@ -313,11 +323,13 @@ export const GlobalSummaryView = () => {
                 </div>
                 <div className="text-right">
                   <p className="text-[10px] font-black uppercase tracking-widest text-red-600">Conducta reactiva</p>
-                  <p className="mt-1 text-4xl font-black italic text-red-600 tabular-nums">{FINAL_RAURA_REPORT.reactive}%</p>
+                  <p className="mt-1 text-4xl font-black italic text-red-600 tabular-nums">
+                    {FINAL_RAURA_REPORT.verdictScore}%
+                  </p>
                 </div>
               </div>
               <div className="mt-4 h-3 overflow-hidden rounded-full bg-white">
-                <div className="h-full rounded-full bg-red-600" style={{ width: `${FINAL_RAURA_REPORT.reactive}%` }} />
+                <div className="h-full rounded-full bg-red-600" style={{ width: `${FINAL_RAURA_REPORT.verdictScore}%` }} />
               </div>
               <p className="mt-3 text-xs font-semibold leading-relaxed text-slate-500">
                 La percepcion no equivale a madurez preventiva; el criterio decisivo es la respuesta ante actos inseguros.
