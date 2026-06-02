@@ -992,7 +992,23 @@ export default function UploadDpmsPage() {
 
   const handleExportCSV = () => {
     if (evaluados.length === 0) return;
-    const csv = Papa.unparse(evaluados);
+    const exportRows = evaluados.map((ev) => {
+      const row: Record<string, string | number> = {
+        Nombre: ev.nombre || "",
+        Empresa: ev.empresa || "",
+        Area: ev.area || "",
+        "Nivel de cultura": ev.nivel_cultura ?? "",
+        Comentarios: ev.comentarios || "",
+      };
+
+      QUESTIONS.forEach(({ id, text }) => {
+        row[text] = ev[id] ?? ev.respuestas?.[id] ?? "";
+      });
+
+      return row;
+    });
+
+    const csv = Papa.unparse(exportRows);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
