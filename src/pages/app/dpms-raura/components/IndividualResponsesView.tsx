@@ -53,7 +53,7 @@ export const IndividualResponsesView = ({
                   <div className="absolute -inset-1.5 bg-gradient-to-r from-primary/30 to-blue-500/30 blur-2xl opacity-0 group-hover:opacity-100 transition duration-1000"></div>
                   <Search className="absolute left-8 top-1/2 -translate-y-1/2 w-6 h-6 text-primary relative z-10" />
                   <Input
-                    placeholder="Buscando por Ãrea, Puesto o Empresa..."
+                    placeholder="Buscar por Área, Personal, Empresa o Contrata..."
                     value={search}
                     onChange={(e) => onSearchChange(e.target.value)}
                     className="pl-20 h-20 bg-white/60 backdrop-blur-3xl border-border/40 rounded-[2rem] shadow-2xl focus:ring-8 focus:ring-primary/5 text-xl font-black tracking-tight relative z-10 border-2"

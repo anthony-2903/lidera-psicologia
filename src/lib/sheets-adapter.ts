@@ -643,7 +643,7 @@ export const fetchRauraData = async (sheetId: string): Promise<RauraDashboardDat
 
         const nameIdx = findColumn(["PERSONAL DE DIRECCION", "PERSONAL DE DIRECCIÓN", "NOMBRE", "APELLIDOS Y NOMBRES"], 3);
         const areaIdx = findColumn(["AREA", "ÁREA"], 1);
-        const companyIdx = findColumn(["NOMBRE DE EMPRESA O CONTRATA", "EMPRESA"], 4);
+        const companyIdx = findColumn(["EMPRESA"], 4);
         const contrataIdx = findColumn(["NOMBRE DE EMPRESA O CONTRATA", "CONTRATA"], 5);
         const dateIdx = findColumn(["FECHA"], 2);
         const dniIdx = findColumn(["DNI", "DOCUMENTO"], 0);

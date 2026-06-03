@@ -13,6 +13,7 @@ import {
   Filter,
   ArrowLeft,
   Info,
+  FileText,
 } from "lucide-react";
 import {
   Tooltip,
@@ -236,6 +237,15 @@ const DimensionesPage = () => {
                             entry={selectedEntry} 
                             colorClass={selectedRole === "supervisor" ? "text-cyan-500" : "text-emerald-500"} 
                         />
+
+                        <button
+                            type="button"
+                            className="group mt-8 flex items-center gap-3 rounded-full bg-slate-900 px-6 py-3 text-[10px] font-black uppercase tracking-[0.25em] text-white shadow-xl shadow-slate-900/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary hover:shadow-primary/25 active:scale-95"
+                        >
+                            <FileText className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" />
+                            Ver informe
+                            <ChevronRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                        </button>
                     </div>
 
                     {/* RIGHT: RESULTS */}

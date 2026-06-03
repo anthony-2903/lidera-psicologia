@@ -2,6 +2,13 @@ import { useMemo } from "react";
 import { RauraEntry } from "@/lib/sheets-adapter";
 import { toPercent } from "./dpmsRaura.utils";
 
+const normalizeFilterText = (value: string | number | undefined | null) =>
+  String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
 export const useDpmsRauraDashboard = (
   entries: RauraEntry[] | undefined,
   search: string,
@@ -9,20 +16,37 @@ export const useDpmsRauraDashboard = (
 ) => {
   const companies = useMemo(() => {
     if (!entries) return [];
-    return Array.from(new Set(entries.map((e) => e.empresa))).sort();
+    return Array.from(
+      new Set(entries.map((e) => e.empresa?.trim()).filter(Boolean)),
+    ).sort((a, b) => a.localeCompare(b, "es"));
   }, [entries]);
 
   const filteredEntries = useMemo(() => {
     if (!entries) return [];
-    const normalizedSearch = search.toLowerCase();
+    const normalizedSearch = normalizeFilterText(search);
+    const normalizedCompany = normalizeFilterText(selectedCompany);
+
     return entries
       .filter((e) => {
+        const searchableText = [
+          e.id,
+          e.area,
+          e.fecha,
+          e.name,
+          e.empresa,
+          e.contrata,
+          e.cargo,
+          e.dni,
+        ]
+          .map(normalizeFilterText)
+          .join(" ");
+
         const matchesSearch =
-          (e.name || "").toLowerCase().includes(normalizedSearch) ||
-          (e.cargo || "").toLowerCase().includes(normalizedSearch) ||
-          (e.empresa || "").toLowerCase().includes(normalizedSearch);
+          !normalizedSearch || searchableText.includes(normalizedSearch);
         const matchesCompany =
-          selectedCompany === "all" || e.empresa === selectedCompany;
+          selectedCompany === "all" ||
+          normalizeFilterText(e.empresa) === normalizedCompany;
+
         return matchesSearch && matchesCompany;
       })
       .sort((a, b) => a.id - b.id);
