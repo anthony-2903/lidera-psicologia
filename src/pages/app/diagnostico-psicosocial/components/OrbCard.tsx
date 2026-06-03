@@ -13,9 +13,11 @@ interface OrbCardProps {
   };
   lines: string[];
   delay: number;
+  onHoverStart?: () => void;
+  onHoverEnd?: () => void;
 }
 
-export const OrbCard = ({ orb, lines, delay }: OrbCardProps) => {
+export const OrbCard = ({ orb, lines, delay, onHoverStart, onHoverEnd }: OrbCardProps) => {
   const [expanded, setExpanded] = useState(false);
   const isOrbital = !!orb.pos;
 
@@ -82,8 +84,14 @@ export const OrbCard = ({ orb, lines, delay }: OrbCardProps) => {
       <motion.div
         layout
         onClick={() => setExpanded(v => !v)}
-        onHoverStart={() => setExpanded(true)}
-        onHoverEnd={() => setExpanded(false)}
+        onHoverStart={() => {
+          setExpanded(true);
+          onHoverStart?.();
+        }}
+        onHoverEnd={() => {
+          setExpanded(false);
+          onHoverEnd?.();
+        }}
         animate={expanded
           ? { borderRadius: "1.5rem", width: 260, height: "auto" }
           : { borderRadius: "9999px", width: 160, height: 160 }

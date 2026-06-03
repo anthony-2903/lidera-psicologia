@@ -53,6 +53,7 @@ const DimensionesPage = () => {
   const [search, setSearch] = useState("");
   const [selectedEntryId, setSelectedEntryId] = useState<number | null>(null);
   const [diagnosticTab, setDiagnosticTab] = useState<DiagnosticTab>("cultura");
+  const [activeOrbIndex, setActiveOrbIndex] = useState<number | null>(null);
 
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ["dimensionesData", SHEET_ID],
@@ -577,7 +578,6 @@ const DimensionesPage = () => {
 
                         <div className="space-y-4 pt-8 border-t border-slate-200/50">
                             {[
-                                { label: 'Tipo', color: 'bg-[#2DD4BF]', border: 'border-[#2DD4BF]' },
                                 { label: 'Concepto', color: 'bg-[#3B82F6]', border: 'border-[#3B82F6]' },
                                 { label: 'Riesgos o puntos críticos', color: 'bg-[#FBBF24]', border: 'border-[#FBBF24]' },
                                 { label: 'ENFOQUE DE MEJORA', color: 'bg-[#EF4444]', border: 'border-[#EF4444]' },
@@ -608,19 +608,19 @@ const DimensionesPage = () => {
                             .filter(Boolean);
 
                         const orbits = [
-                            { label: 'TIPO', text: report?.tipo || '—', color: 'from-[#2DD4BF] to-teal-700', shadow: 'shadow-[#2DD4BF]/50', pos: { x: -175, y: -175 } },
-                            { label: 'CONCEPTO', text: report?.concepto || '—', color: 'from-[#3B82F6] to-blue-800', shadow: 'shadow-[#3B82F6]/50', pos: { x: 175, y: -175 } },
-                            { label: 'Riesgos críticos', text: report?.riesgos || '—', color: 'from-[#FBBF24] to-amber-700', shadow: 'shadow-[#FBBF24]/50', pos: { x: 175, y: 175 } },
-                            { label: 'ENFOQUE DE MEJORA', text: report?.enfoque || '—', color: 'from-[#EF4444] to-red-800', shadow: 'shadow-[#EF4444]/50', pos: { x: -175, y: 175 } },
+                            { label: 'CONCEPTO', text: report?.concepto || '—', color: 'from-[#3B82F6] to-blue-800', shadow: 'shadow-[#3B82F6]/50', lineColor: '#2563EB', nodeColor: '#1D4ED8', glowColor: '#93C5FD', pos: { x: 0, y: -210 } },
+                            { label: 'Riesgos críticos', text: report?.riesgos || '—', color: 'from-[#FBBF24] to-amber-700', shadow: 'shadow-[#FBBF24]/50', lineColor: '#D97706', nodeColor: '#F59E0B', glowColor: '#FDE68A', pos: { x: 200, y: 135 } },
+                            { label: 'ENFOQUE DE MEJORA', text: report?.enfoque || '—', color: 'from-[#EF4444] to-red-800', shadow: 'shadow-[#EF4444]/50', lineColor: '#DC2626', nodeColor: '#EF4444', glowColor: '#FCA5A5', pos: { x: -200, y: 135 } },
                         ];
-
-                        const currentScore = Math.round(
-                            diagnosticTab === "percepcion"
-                                ? selectedEntry.puntuacionPercepcion
-                                : diagnosticTab === "liderazgo"
-                                  ? selectedEntry.puntuacionLiderazgo
-                                  : selectedEntry.total
-                        );
+                        const tipoLines = getLines(report?.tipo || '—');
+                        const neuralConnections = orbits.map((orb, i) => ({
+                            ...orb.pos,
+                            lineColor: orb.lineColor,
+                            nodeColor: orb.nodeColor,
+                            glowColor: orb.glowColor,
+                            curve: i === 0 ? 0 : i === 1 ? -34 : 34,
+                            delay: i * 0.7,
+                        }));
 
                         return (
                             <>
@@ -650,19 +650,101 @@ const DimensionesPage = () => {
                                         animate={{ rotate: 360 }}
                                         transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
                                     />
+                                    <svg
+                                        className="absolute z-20 w-[560px] h-[560px] overflow-visible pointer-events-none"
+                                        viewBox="-280 -280 560 560"
+                                        aria-hidden="true"
+                                    >
+                                        <defs>
+                                            <filter id="neuralGlow" x="-40%" y="-40%" width="180%" height="180%">
+                                                <feGaussianBlur stdDeviation="4" result="blur" />
+                                                <feMerge>
+                                                    <feMergeNode in="blur" />
+                                                    <feMergeNode in="SourceGraphic" />
+                                                </feMerge>
+                                            </filter>
+                                        </defs>
+
+                                        {neuralConnections.map((line, i) => {
+                                            const controlX = line.x / 2 + line.curve;
+                                            const controlY = line.y / 2 - line.curve;
+                                            const path = `M 0 0 Q ${controlX} ${controlY} ${line.x} ${line.y}`;
+                                            const isActive = activeOrbIndex === i;
+                                            const isDimmed = activeOrbIndex !== null && !isActive;
+
+                                            return (
+                                                <g key={`${line.x}-${line.y}`}>
+                                                    <motion.path
+                                                        d={path}
+                                                        fill="none"
+                                                        stroke={line.lineColor}
+                                                        strokeWidth={isActive ? 4 : 2.5}
+                                                        strokeLinecap="round"
+                                                        strokeDasharray="10 14"
+                                                        filter="url(#neuralGlow)"
+                                                        initial={{ pathLength: 0, opacity: 0.15 }}
+                                                        animate={{
+                                                            pathLength: [0.45, 1, 0.45],
+                                                            opacity: isActive ? [0.65, 1, 0.65] : isDimmed ? [0.08, 0.18, 0.08] : [0.22, 0.72, 0.22],
+                                                        }}
+                                                        transition={{ duration: 4.5, repeat: Infinity, delay: line.delay, ease: "easeInOut" }}
+                                                    />
+                                                    {[0.34, 0.62].map((point, pointIndex) => (
+                                                        <motion.circle
+                                                            key={point}
+                                                            r={isActive ? 4.5 : 3.5}
+                                                            fill={line.glowColor}
+                                                            filter="url(#neuralGlow)"
+                                                            animate={{
+                                                                cx: [line.x * point, line.x * point + line.curve * 0.15, line.x * point],
+                                                                cy: [line.y * point, line.y * point - line.curve * 0.15, line.y * point],
+                                                                opacity: isDimmed ? [0.12, 0.24, 0.12] : [0.35, 0.85, 0.35],
+                                                                scale: isActive ? [1, 1.45, 1] : [0.9, 1.15, 0.9],
+                                                            }}
+                                                            transition={{ duration: 2.4, repeat: Infinity, delay: line.delay + pointIndex * 0.45, ease: "easeInOut" }}
+                                                        />
+                                                    ))}
+                                                    <motion.circle
+                                                        r="5"
+                                                        fill={line.nodeColor}
+                                                        filter="url(#neuralGlow)"
+                                                        animate={{
+                                                            cx: [0, controlX, line.x],
+                                                            cy: [0, controlY, line.y],
+                                                            opacity: isDimmed ? [0, 0.32, 0] : [0, 0.95, 0],
+                                                            scale: isActive ? [1, 1.35, 1] : [1, 1, 1],
+                                                        }}
+                                                        transition={{ duration: 2.8, repeat: Infinity, delay: line.delay, ease: "easeInOut" }}
+                                                    />
+                                                    <motion.circle
+                                                        cx={line.x}
+                                                        cy={line.y}
+                                                        r="18"
+                                                        fill={line.glowColor}
+                                                        filter="url(#neuralGlow)"
+                                                        animate={{
+                                                            scale: isActive ? [0.9, 1.65, 0.9] : [0.7, 1.25, 0.7],
+                                                            opacity: isDimmed ? [0.08, 0.18, 0.08] : [0.16, 0.6, 0.16],
+                                                        }}
+                                                        transition={{ duration: 3.5, repeat: Infinity, delay: line.delay, ease: "easeInOut" }}
+                                                    />
+                                                </g>
+                                            );
+                                        })}
+                                    </svg>
                                     {/* Nucleus */}
                                     <div className="relative z-40">
                                         <motion.div
-                                            className="w-48 h-48 rounded-full bg-slate-900 flex flex-col items-center justify-center border-[8px] border-white relative overflow-hidden"
+                                            className="w-48 h-48 rounded-full bg-slate-900 flex flex-col items-center justify-center border-[8px] border-white relative overflow-hidden px-6 text-center"
                                             animate={{ boxShadow: ["0 0 50px rgba(45,212,191,0.2)", "0 0 100px rgba(45,212,191,0.5)", "0 0 50px rgba(45,212,191,0.2)"] }}
                                             transition={{ duration: 4, repeat: Infinity }}
                                         >
                                             <div className="absolute inset-0 bg-gradient-to-tr from-slate-900 to-slate-800" />
                                             <div className="relative z-10 flex flex-col items-center">
-                                                <span className="text-5xl font-black text-white">
-                                                    {currentScore}<span className="text-xl text-primary">%</span>
+                                                <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-2">TIPO</span>
+                                                <span className="text-[14px] font-black text-white uppercase leading-tight line-clamp-5">
+                                                    {tipoLines[0] || "—"}
                                                 </span>
-                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1">EVALUADO</span>
                                             </div>
                                         </motion.div>
                                         <motion.div
@@ -673,30 +755,49 @@ const DimensionesPage = () => {
                                     </div>
                                     {/* Orbital OrbCards */}
                                     {orbits.map((orb, i) => (
-                                        <OrbCard key={i} orb={orb} lines={getLines(orb.text)} delay={i * 0.12} />
+                                        <OrbCard
+                                            key={i}
+                                            orb={orb}
+                                            lines={getLines(orb.text)}
+                                            delay={i * 0.12}
+                                            onHoverStart={() => setActiveOrbIndex(i)}
+                                            onHoverEnd={() => setActiveOrbIndex(null)}
+                                        />
                                     ))}
                                     {/* Glow */}
                                     <div className="absolute w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px] pointer-events-none animate-pulse" />
                                 </div>
 
-                                {/* ── MOBILE (<lg): mêni núcleus + grid 2×2 ── */}
+                                {/* ── MOBILE (<lg): mêni núcleus + cards ── */}
                                 <div className="flex lg:hidden flex-col items-center gap-5 w-full">
                                     {/* Mini Nucleus */}
                                     <motion.div
-                                        className="w-28 h-28 rounded-full bg-slate-900 flex flex-col items-center justify-center border-4 border-white relative overflow-hidden"
+                                        className="w-32 h-32 rounded-full bg-slate-900 flex flex-col items-center justify-center border-4 border-white relative overflow-hidden px-4 text-center"
                                         animate={{ boxShadow: ["0 0 30px rgba(45,212,191,0.2)", "0 0 60px rgba(45,212,191,0.5)", "0 0 30px rgba(45,212,191,0.2)"] }}
                                         transition={{ duration: 3, repeat: Infinity }}
                                     >
                                         <div className="absolute inset-0 bg-gradient-to-tr from-slate-900 to-slate-800" />
                                         <div className="relative z-10 flex flex-col items-center">
-                                            <span className="text-3xl font-black text-white">
-                                                {currentScore}<span className="text-sm text-primary">%</span>
+                                            <span className="text-[8px] font-black text-primary uppercase tracking-[0.25em] mb-1">TIPO</span>
+                                            <span className="text-[11px] font-black text-white uppercase leading-tight line-clamp-4">
+                                                {tipoLines[0] || "—"}
                                             </span>
-                                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider mt-0.5">EVALUADO</span>
                                         </div>
                                     </motion.div>
-                                    {/* 2×2 Grid */}
-                                    <div className="grid grid-cols-2 gap-3 w-full">
+                                    <div className="relative h-12 w-full flex items-center justify-center -my-1 overflow-hidden">
+                                        <motion.div
+                                            className="absolute h-full w-[3px] rounded-full bg-gradient-to-b from-[#2DD4BF] via-[#2563EB] to-transparent"
+                                            animate={{ opacity: [0.25, 0.9, 0.25], scaleY: [0.72, 1, 0.72] }}
+                                            transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                                        />
+                                        <motion.div
+                                            className="absolute top-1 h-2.5 w-2.5 rounded-full bg-[#2563EB] shadow-[0_0_18px_rgba(37,99,235,0.9)]"
+                                            animate={{ y: [0, 32, 0], opacity: [0, 1, 0] }}
+                                            transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                                        />
+                                    </div>
+                                    {/* Orb cards */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
                                         {orbits.map((orb, i) => (
                                             <OrbCard
                                                 key={i}
