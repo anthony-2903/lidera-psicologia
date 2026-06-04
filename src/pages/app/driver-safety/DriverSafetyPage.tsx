@@ -158,6 +158,17 @@ const getAnalysis = (result: string, internal: number) => {
   return "SE SOLICITA APERSONARSE AL ÁREA DE GERENCIA DE SU EMPRESA PARA RECIBIR LAS INSTRUCCIONES Y DIRECTRICES CORRESPONDIENTES A SU PERFIL DE RIESGO.";
 };
 
+const normalizeFilterValue = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
+
+const formatFilterLabel = (value: string) =>
+  value.replace(/\s+/g, " ").trim().toUpperCase();
+
 // Panel Lateral de Detalle Individual
 const MultiSelectFilter = ({
   label,
@@ -1075,6 +1086,7 @@ const DriverSafetyPage = () => {
   const [conditionFilters, setConditionFilters] = useState<string[]>([]);
   const [companyFilters, setCompanyFilters] = useState<string[]>([]);
   const [levelFilters, setLevelFilters] = useState<string[]>([]);
+  const [positionFilters, setPositionFilters] = useState<string[]>([]);
   const [statusFilters, setStatusFilters] = useState<string[]>([]);
   const [selectedEntry, setSelectedEntry] = useState<DriverSafetyEntry | null>(
     null,
@@ -1094,6 +1106,7 @@ const DriverSafetyPage = () => {
       return {
         companies: [],
         levels: [],
+        positions: [],
         statuses: [],
         conditions: ["RIESGO BAJO", "RIESGO MEDIO", "RIESGO ALTO"],
       };
@@ -1108,6 +1121,23 @@ const DriverSafetyPage = () => {
     )
       .filter(Boolean)
       .sort();
+    const positionsByKey = data.entries.reduce((acc, entry) => {
+      const rawPosition = entry.position || "";
+      const key = normalizeFilterValue(rawPosition);
+      if (!key) return acc;
+
+      const label = formatFilterLabel(rawPosition);
+      const currentLabel = acc.get(key);
+      const shouldPreferLabel =
+        !currentLabel ||
+        (label.normalize("NFD") !== label && currentLabel === key);
+
+      acc.set(key, shouldPreferLabel ? label : currentLabel);
+      return acc;
+    }, new Map<string, string>());
+    const positions = Array.from(positionsByKey.values()).sort((a, b) =>
+      a.localeCompare(b, "es"),
+    );
     const statuses = Array.from(
       new Set(data.entries.map((e) => (e.status || "").trim().toUpperCase())),
     )
@@ -1117,6 +1147,7 @@ const DriverSafetyPage = () => {
     return {
       companies,
       levels,
+      positions,
       statuses,
       conditions: ["RIESGO BAJO", "RIESGO MEDIO", "RIESGO ALTO"],
     };
@@ -1272,6 +1303,8 @@ const DriverSafetyPage = () => {
       activeFilters.push(`${companyFilters.length} Emp.`);
     if (levelFilters.length > 0)
       activeFilters.push(`${levelFilters.length} Niv.`);
+    if (positionFilters.length > 0)
+      activeFilters.push(`${positionFilters.length} Puesto`);
     if (statusFilters.length > 0)
       activeFilters.push(`${statusFilters.length} Est.`);
     if (conditionFilters.length > 0)
@@ -1532,7 +1565,8 @@ const DriverSafetyPage = () => {
           entry.name.toLowerCase().includes(search.toLowerCase()) ||
           entry.dni.toLowerCase().includes(search.toLowerCase()) ||
           entry.company.toLowerCase().includes(search.toLowerCase()) ||
-          entry.area.toLowerCase().includes(search.toLowerCase());
+          entry.area.toLowerCase().includes(search.toLowerCase()) ||
+          entry.position.toLowerCase().includes(search.toLowerCase());
 
         const matchesCondition =
           conditionFilters.length === 0 ||
@@ -1543,6 +1577,13 @@ const DriverSafetyPage = () => {
         const matchesLevel =
           levelFilters.length === 0 ||
           levelFilters.includes((entry.level || "").trim().toUpperCase());
+        const matchesPosition =
+          positionFilters.length === 0 ||
+          positionFilters.some(
+            (position) =>
+              normalizeFilterValue(position) ===
+              normalizeFilterValue(entry.position || ""),
+          );
         const matchesStatus =
           statusFilters.length === 0 ||
           statusFilters.includes((entry.status || "").trim().toUpperCase());
@@ -1552,6 +1593,7 @@ const DriverSafetyPage = () => {
           matchesCondition &&
           matchesCompany &&
           matchesLevel &&
+          matchesPosition &&
           matchesStatus
         );
       })
@@ -1585,6 +1627,7 @@ const DriverSafetyPage = () => {
     conditionFilters,
     companyFilters,
     levelFilters,
+    positionFilters,
     statusFilters,
     sortBy,
   ]);
@@ -2193,7 +2236,7 @@ const DriverSafetyPage = () => {
 
         {/* Universal Filters */}
         <Card className="border-2 shadow-xl rounded-[2rem] p-6 bg-white/80 backdrop-blur-md border-primary/5">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-6">
             {/* Buscador */}
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">
@@ -2228,6 +2271,14 @@ const DriverSafetyPage = () => {
               placeholder="Todos los Niveles"
             />
 
+            <MultiSelectFilter
+              label="Puesto"
+              options={filterOptions.positions}
+              selected={positionFilters}
+              onChange={setPositionFilters}
+              placeholder="Todos los Puestos"
+            />
+
             {/* Condición */}
             <MultiSelectFilter
               label="Condición"
@@ -2256,6 +2307,7 @@ const DriverSafetyPage = () => {
                   setSearch("");
                   setCompanyFilters([]);
                   setLevelFilters([]);
+                  setPositionFilters([]);
                   setConditionFilters([]);
                   setStatusFilters([]);
                 }}
@@ -2590,44 +2642,6 @@ const DriverSafetyPage = () => {
               </Card>
             </div>
 
-            {/* Recommendations / Action Plan */}
-            <div className="space-y-8">
-              <h3 className="text-2xl font-black italic tracking-tighter uppercase px-2">
-                Acciones según Resultados
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="p-8 rounded-[2.5rem] bg-emerald-500/5 border border-emerald-500/10 space-y-4">
-                  <p className="text-[10px] font-black uppercase text-emerald-600 tracking-widest">
-                    Para Riesgo Bajo
-                  </p>
-                  <ul className="space-y-3 text-xs font-medium text-slate-600 leading-tight italic decoration-emerald-500/50">
-                    <li>• Líderes o mentores de seguridad</li>
-                    <li>• Asignación a tareas críticas</li>
-                    <li>• Seguimiento anual preventivo</li>
-                  </ul>
-                </div>
-                <div className="p-8 rounded-[2.5rem] bg-amber-500/5 border border-amber-500/10 space-y-4">
-                  <p className="text-[10px] font-black uppercase text-amber-600 tracking-widest">
-                    Para Riesgo Medio
-                  </p>
-                  <ul className="space-y-3 text-xs font-medium text-slate-600 leading-tight italic">
-                    <li>• Capacitación intensiva en seguridad</li>
-                    <li>• Seguimiento constante por supervisores</li>
-                    <li>• Reevaluación técnica en 6 meses</li>
-                  </ul>
-                </div>
-                <div className="p-8 rounded-[2.5rem] bg-red-500/5 border border-red-500/10 space-y-4">
-                  <p className="text-[10px] font-black uppercase text-red-600 tracking-widest">
-                    Para Riesgo Alto
-                  </p>
-                  <ul className="space-y-3 text-xs font-medium text-slate-600 leading-tight italic">
-                    <li>• Intervención psicológica obligatoria</li>
-                    <li>• Restricción temporal de tareas críticas</li>
-                    <li>• Seguimiento semanal y reevaluación en 3 meses</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
           </div>
         ) : (
           /* List View */
