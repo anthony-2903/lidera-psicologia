@@ -158,8 +158,8 @@ const getAnalysis = (result: string, internal: number) => {
   return "SE SOLICITA APERSONARSE AL ÁREA DE GERENCIA DE SU EMPRESA PARA RECIBIR LAS INSTRUCCIONES Y DIRECTRICES CORRESPONDIENTES A SU PERFIL DE RIESGO.";
 };
 
-const normalizeFilterValue = (value: string) =>
-  value
+const normalizeFilterValue = (value: string | number | undefined | null) =>
+  String(value ?? "")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/\s+/g, " ")
@@ -168,6 +168,24 @@ const normalizeFilterValue = (value: string) =>
 
 const formatFilterLabel = (value: string) =>
   value.replace(/\s+/g, " ").trim().toUpperCase();
+
+const buildFilterOptions = (values: Array<string | undefined | null>) => {
+  const byKey = values.reduce((acc, rawValue) => {
+    const raw = String(rawValue ?? "");
+    const key = normalizeFilterValue(raw);
+    if (!key) return acc;
+
+    const label = formatFilterLabel(raw);
+    const currentLabel = acc.get(key);
+    const shouldPreferLabel =
+      !currentLabel || (label.normalize("NFD") !== label && currentLabel === key);
+
+    acc.set(key, shouldPreferLabel ? label : currentLabel);
+    return acc;
+  }, new Map<string, string>());
+
+  return Array.from(byKey.values()).sort((a, b) => a.localeCompare(b, "es"));
+};
 
 // Panel Lateral de Detalle Individual
 const MultiSelectFilter = ({
@@ -1085,6 +1103,7 @@ const DriverSafetyPage = () => {
   const [search, setSearch] = useState("");
   const [conditionFilters, setConditionFilters] = useState<string[]>([]);
   const [companyFilters, setCompanyFilters] = useState<string[]>([]);
+  const [areaFilters, setAreaFilters] = useState<string[]>([]);
   const [levelFilters, setLevelFilters] = useState<string[]>([]);
   const [positionFilters, setPositionFilters] = useState<string[]>([]);
   const [statusFilters, setStatusFilters] = useState<string[]>([]);
@@ -1105,47 +1124,22 @@ const DriverSafetyPage = () => {
     if (!data?.entries)
       return {
         companies: [],
+        areas: [],
         levels: [],
         positions: [],
         statuses: [],
         conditions: ["RIESGO BAJO", "RIESGO MEDIO", "RIESGO ALTO"],
       };
 
-    const companies = Array.from(
-      new Set(data.entries.map((e) => (e.company || "").trim().toUpperCase())),
-    )
-      .filter(Boolean)
-      .sort();
-    const levels = Array.from(
-      new Set(data.entries.map((e) => (e.level || "").trim().toUpperCase())),
-    )
-      .filter(Boolean)
-      .sort();
-    const positionsByKey = data.entries.reduce((acc, entry) => {
-      const rawPosition = entry.position || "";
-      const key = normalizeFilterValue(rawPosition);
-      if (!key) return acc;
-
-      const label = formatFilterLabel(rawPosition);
-      const currentLabel = acc.get(key);
-      const shouldPreferLabel =
-        !currentLabel ||
-        (label.normalize("NFD") !== label && currentLabel === key);
-
-      acc.set(key, shouldPreferLabel ? label : currentLabel);
-      return acc;
-    }, new Map<string, string>());
-    const positions = Array.from(positionsByKey.values()).sort((a, b) =>
-      a.localeCompare(b, "es"),
-    );
-    const statuses = Array.from(
-      new Set(data.entries.map((e) => (e.status || "").trim().toUpperCase())),
-    )
-      .filter(Boolean)
-      .sort();
+    const companies = buildFilterOptions(data.entries.map((e) => e.company));
+    const areas = buildFilterOptions(data.entries.map((e) => e.area));
+    const levels = buildFilterOptions(data.entries.map((e) => e.level));
+    const positions = buildFilterOptions(data.entries.map((e) => e.position));
+    const statuses = buildFilterOptions(data.entries.map((e) => e.status));
 
     return {
       companies,
+      areas,
       levels,
       positions,
       statuses,
@@ -1301,6 +1295,8 @@ const DriverSafetyPage = () => {
     const activeFilters = [];
     if (companyFilters.length > 0)
       activeFilters.push(`${companyFilters.length} Emp.`);
+    if (areaFilters.length > 0)
+      activeFilters.push(`${areaFilters.length} Area`);
     if (levelFilters.length > 0)
       activeFilters.push(`${levelFilters.length} Niv.`);
     if (positionFilters.length > 0)
@@ -1559,24 +1555,53 @@ const DriverSafetyPage = () => {
 
   const filteredEntries = useMemo(() => {
     if (!data?.entries) return [];
+    const normalizedSearch = normalizeFilterValue(search);
+
     return data.entries
       .filter((entry) => {
+        const searchableText = [
+          entry.id,
+          entry.name,
+          entry.dni,
+          entry.company,
+          entry.area,
+          entry.position,
+          entry.level,
+          entry.status,
+          entry.result,
+          entry.date,
+          entry.line,
+        ]
+          .map(normalizeFilterValue)
+          .join(" ");
+
         const matchesSearch =
-          entry.name.toLowerCase().includes(search.toLowerCase()) ||
-          entry.dni.toLowerCase().includes(search.toLowerCase()) ||
-          entry.company.toLowerCase().includes(search.toLowerCase()) ||
-          entry.area.toLowerCase().includes(search.toLowerCase()) ||
-          entry.position.toLowerCase().includes(search.toLowerCase());
+          !normalizedSearch || searchableText.includes(normalizedSearch);
 
         const matchesCondition =
           conditionFilters.length === 0 ||
-          conditionFilters.includes(entry.result);
+          conditionFilters.some(
+            (condition) =>
+              normalizeFilterValue(condition) === normalizeFilterValue(entry.result),
+          );
         const matchesCompany =
           companyFilters.length === 0 ||
-          companyFilters.includes((entry.company || "").trim().toUpperCase());
+          companyFilters.some(
+            (company) =>
+              normalizeFilterValue(company) === normalizeFilterValue(entry.company),
+          );
+        const matchesArea =
+          areaFilters.length === 0 ||
+          areaFilters.some(
+            (area) =>
+              normalizeFilterValue(area) === normalizeFilterValue(entry.area),
+          );
         const matchesLevel =
           levelFilters.length === 0 ||
-          levelFilters.includes((entry.level || "").trim().toUpperCase());
+          levelFilters.some(
+            (level) =>
+              normalizeFilterValue(level) === normalizeFilterValue(entry.level),
+          );
         const matchesPosition =
           positionFilters.length === 0 ||
           positionFilters.some(
@@ -1586,12 +1611,16 @@ const DriverSafetyPage = () => {
           );
         const matchesStatus =
           statusFilters.length === 0 ||
-          statusFilters.includes((entry.status || "").trim().toUpperCase());
+          statusFilters.some(
+            (status) =>
+              normalizeFilterValue(status) === normalizeFilterValue(entry.status),
+          );
 
         return (
           matchesSearch &&
           matchesCondition &&
           matchesCompany &&
+          matchesArea &&
           matchesLevel &&
           matchesPosition &&
           matchesStatus
@@ -1626,6 +1655,7 @@ const DriverSafetyPage = () => {
     search,
     conditionFilters,
     companyFilters,
+    areaFilters,
     levelFilters,
     positionFilters,
     statusFilters,
@@ -2236,7 +2266,7 @@ const DriverSafetyPage = () => {
 
         {/* Universal Filters */}
         <Card className="border-2 shadow-xl rounded-[2rem] p-6 bg-white/80 backdrop-blur-md border-primary/5">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-7 gap-6">
             {/* Buscador */}
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">
@@ -2245,7 +2275,7 @@ const DriverSafetyPage = () => {
               <div className="relative group">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                 <Input
-                  placeholder="Nombre..."
+                  placeholder="Nombre, DNI, empresa, area..."
                   className="pl-12 h-12 bg-white/50 border-border/40 rounded-xl focus:ring-2 focus:ring-primary/20 shadow-sm"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -2260,6 +2290,14 @@ const DriverSafetyPage = () => {
               selected={companyFilters}
               onChange={setCompanyFilters}
               placeholder="Todas las Empresas"
+            />
+
+            <MultiSelectFilter
+              label="Area"
+              options={filterOptions.areas}
+              selected={areaFilters}
+              onChange={setAreaFilters}
+              placeholder="Todas las Areas"
             />
 
             {/* Nivel */}
@@ -2306,6 +2344,7 @@ const DriverSafetyPage = () => {
                 onClick={() => {
                   setSearch("");
                   setCompanyFilters([]);
+                  setAreaFilters([]);
                   setLevelFilters([]);
                   setPositionFilters([]);
                   setConditionFilters([]);
