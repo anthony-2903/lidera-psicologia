@@ -1,7 +1,66 @@
 import { useMemo } from "react";
-import type { GroupMetric } from "@/lib/sheets-adapter";
+import type { GroupMetric, SheetRow } from "@/lib/sheets-adapter";
 
-export const useDashboardSummary = (groupMetrics: GroupMetric[]) =>
+const normalizeStatus = (value: string | undefined): "completed" | "inProgress" | "pending" => {
+  const status = (value || "").toUpperCase().trim();
+
+  if (status === "COMPLETO") return "completed";
+  if (status === "PROCESO") return "inProgress";
+  return "pending";
+};
+
+const getLocation = (row: SheetRow) =>
+  (row.AREA || row["ÁREA"] || row["ÃREA"] || "Sin ubicacion").trim() || "Sin ubicacion";
+
+const buildRowSegments = (rows: SheetRow[]) => {
+  const segments = new Map<
+    string,
+    {
+      name: string;
+      total: number;
+      completed: number;
+      inProgress: number;
+      pending: number;
+      completionRate: number;
+    }
+  >();
+
+  rows.forEach((row) => {
+    const name = getLocation(row);
+    const current =
+      segments.get(name) ||
+      {
+        name,
+        total: 0,
+        completed: 0,
+        inProgress: 0,
+        pending: 0,
+        completionRate: 0,
+      };
+    const status = normalizeStatus(row.ESTADO);
+
+    current.total += 1;
+    current[status] += 1;
+    current.completionRate = current.total > 0 ? Math.round((current.completed / current.total) * 100) : 0;
+    segments.set(name, current);
+  });
+
+  return [...segments.values()].sort((a, b) => b.total - a.total || b.completionRate - a.completionRate);
+};
+
+const buildGroupSegments = (groupMetrics: GroupMetric[]) =>
+  groupMetrics
+    .map((group) => ({
+      name: group.name,
+      total: group.total,
+      completed: group.completed,
+      inProgress: group.inProgress,
+      pending: group.pending,
+      completionRate: group.total > 0 ? Math.round((group.completed / group.total) * 100) : 0,
+    }))
+    .sort((a, b) => b.total - a.total || b.completionRate - a.completionRate);
+
+export const useDashboardSummary = (groupMetrics: GroupMetric[], rawRows: SheetRow[] = []) =>
   useMemo(() => {
     if (!groupMetrics.length) {
       return {
@@ -16,6 +75,8 @@ export const useDashboardSummary = (groupMetrics: GroupMetric[]) =>
           proceso: 0,
           falta: 0,
         },
+        contractorData: [],
+        locationData: [],
       };
     }
 
@@ -41,5 +102,7 @@ export const useDashboardSummary = (groupMetrics: GroupMetric[]) =>
         percentage: totalEvaluated > 0 ? ((group.total / totalEvaluated) * 100).toFixed(1) : 0,
       })),
       statusTotals,
+      contractorData: buildGroupSegments(groupMetrics),
+      locationData: buildRowSegments(rawRows),
     };
-  }, [groupMetrics]);
+  }, [groupMetrics, rawRows]);

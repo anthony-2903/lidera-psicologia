@@ -211,6 +211,7 @@ export interface SheetRow {
   DNI: string;
   EMPRESA: string;
   AREA: string;
+  'ÁREA'?: string;
   'ÃREA'?: string;
   PUESTO: string;
   'GRADO DE INSTRUCCIÃ“N': string;
