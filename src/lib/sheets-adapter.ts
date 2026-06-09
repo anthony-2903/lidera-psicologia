@@ -188,6 +188,7 @@ export interface DimensionesEntry {
   total: number;
   nivel: string;
   perfil: string;
+  linkInforme?: string;
   genero: 'MASCULINO' | 'FEMENINO';
   // Reportes cualitativos de las hojas adicionales
   culturaReport?: DimensionReport;
@@ -1200,6 +1201,7 @@ export const fetchDimensionesData = async (sheetId: string): Promise<Dimensiones
           cargo: findColumn(["CARGO", "PUESTO"], 8),
           liderazgoTotal: findColumnIncludes(["LIDERAZGO", "TOTAL"], 10),
           percepcionTotal: findColumnIncludes(["PERCEPCION", "RIESGOS", "TOTAL"], 13),
+          linkInforme: findColumn(["LINK DE INFORME", "LINK INFORME", "INFORME"], 17),
         };
 
         for (let i = 1; i < rows.length; i++) {
@@ -1266,6 +1268,7 @@ export const fetchDimensionesData = async (sheetId: string): Promise<Dimensiones
             total,
             nivel,
             perfil: perfilLiderazgo,
+            linkInforme: (r[columns.linkInforme] || '').trim(),
             genero,
             // JOIN con las hojas de reporte cualitativo
             culturaReport: culturaMap.get(nameKey),

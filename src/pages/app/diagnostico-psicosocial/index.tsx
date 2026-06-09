@@ -240,7 +240,18 @@ const DimensionesPage = () => {
 
                         <button
                             type="button"
-                            className="group mt-8 flex items-center gap-3 rounded-full bg-slate-900 px-6 py-3 text-[10px] font-black uppercase tracking-[0.25em] text-white shadow-xl shadow-slate-900/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary hover:shadow-primary/25 active:scale-95"
+                            onClick={() => {
+                                if (!selectedEntry.linkInforme) return;
+                                window.open(selectedEntry.linkInforme, "_blank", "noopener,noreferrer");
+                            }}
+                            disabled={!selectedEntry.linkInforme}
+                            title={selectedEntry.linkInforme ? "Abrir informe del colaborador" : "Este colaborador no tiene link de informe"}
+                            className={cn(
+                                "group mt-8 flex items-center gap-3 rounded-full px-6 py-3 text-[10px] font-black uppercase tracking-[0.25em] shadow-xl transition-all duration-300 active:scale-95",
+                                selectedEntry.linkInforme
+                                    ? "bg-slate-900 text-white shadow-slate-900/15 hover:-translate-y-0.5 hover:bg-primary hover:shadow-primary/25"
+                                    : "cursor-not-allowed bg-slate-200 text-slate-400 shadow-slate-200/30"
+                            )}
                         >
                             <FileText className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" />
                             Ver informe
