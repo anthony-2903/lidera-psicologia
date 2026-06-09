@@ -40,7 +40,7 @@ export const detectGender = (fullName: string): 'MASCULINO' | 'FEMENINO' => {
     if (isFemaleEnding || mainName.endsWith('MARIA')) return 'FEMENINO';
     
     // Common female names that don't end in A
-    const femaleNames = ['LUZ', 'ESTHER', 'ISABEL', 'BEATRIZ', 'CARMEN', 'RAQUEL', 'RUTH', 'MIRIAM', 'NIEVES', 'CONCEPCION', 'MARIVÃ'];
+    const femaleNames = ['LUZ', 'ESTHER', 'ISABEL', 'BEATRIZ', 'CARMEN', 'RAQUEL', 'RUTH', 'MIRIAM', 'NIEVES', 'CONCEPCION', 'MARIVÍ'];
     if (femaleNames.includes(mainName)) return 'FEMENINO';
 
     return 'MASCULINO';
@@ -213,13 +213,12 @@ export interface SheetRow {
   EMPRESA: string;
   AREA: string;
   'ÁREA'?: string;
-  'ÃREA'?: string;
   PUESTO: string;
-  'GRADO DE INSTRUCCIÃ“N': string;
+  'GRADO DE INSTRUCCIÓN': string;
   'BATERIAS PSICOLOGICAS': string;
   'ENTREVISTA POR COMPETENCIAS': string;
   ESTADO: string;
-  'FECHA DE EVALUACIÃ“N': string;
+  'FECHA DE EVALUACIÓN': string;
   'FECHA DE EVALUACION'?: string;
 }
 
@@ -305,9 +304,9 @@ export const fetchSheetData = async (sheetId: string): Promise<GroupMetric[]> =>
               radarData: [
                 { subject: 'Liderazgo', A: 80, fullMark: 100 },
                 { subject: 'Seguridad', A: 70, fullMark: 100 },
-                { subject: 'ComunicaciÃ³n', A: 85, fullMark: 100 },
-                { subject: 'TÃ©cnico', A: 90, fullMark: 100 },
-                { subject: 'Ã‰tica', A: 95, fullMark: 100 },
+                { subject: 'Comunicación', A: 85, fullMark: 100 },
+                { subject: 'Técnico', A: 90, fullMark: 100 },
+                { subject: 'Ética', A: 95, fullMark: 100 },
               ]
             };
           }
@@ -412,18 +411,18 @@ export const fetchFinalDashboardData = async (sheetId: string): Promise<FinalDas
         
         // --- Estructuras Base ---
         const personalityCounter: Record<string, QualityCount> = {
-          'EnergÃ­a': {}, 'TesÃ³n': {}, 'Afabilidad': {}, 'Esta. Emocional': {}, 'Apertura': {}
+          'Energía': {}, 'Tesón': {}, 'Afabilidad': {}, 'Esta. Emocional': {}, 'Apertura': {}
         };
         const motivationalCounter: Record<string, QualityCount> = {
-          'AfiliaciÃ³n': {}, 'Poder': {}, 'Logro': {}, 'ExploraciÃ³n': {}, 'ContribuciÃ³n': {},
-          'AutonomÃ­a': {}, 'CooperaciÃ³n': {}, 'Hedonismo': {}, 'Seguridad': {}, 'ConservaciÃ³n': {}
+          'Afiliación': {}, 'Poder': {}, 'Logro': {}, 'Exploración': {}, 'Contribución': {},
+          'Autonomía': {}, 'Cooperación': {}, 'Hedonismo': {}, 'Seguridad': {}, 'Conservación': {}
         };
         const teamCounter: Record<string, QualityCount> = {
           'Creativo': {}, 'Evaluador': {}, 'Especialista': {}, 'Coordinador': {}, 'Cohesionador': {},
           'Recursos': {}, 'Impulsor': {}, 'Implementador': {}, 'Finalizador': {}
         };
         const projCounter: Record<string, QualityCount> = {
-          'Manejo Emociones': {}, 'Rel. interpers': {}, 'Ctrl Impulsos': {}, 'AdaptaciÃ³n': {}
+          'Manejo Emociones': {}, 'Rel. interpers': {}, 'Ctrl Impulsos': {}, 'Adaptación': {}
         };
         
         const leadCounter: QualityCount = {};
@@ -437,7 +436,7 @@ export const fetchFinalDashboardData = async (sheetId: string): Promise<FinalDas
           if (upperText.includes('EN DESAROLLO')) return 'EN DESARROLLO';
           const VALID_STATES = [
             'MUY ALTO', 'MUY BAJO', 'PROMEDIO', 'REGULAR', 
-            'EN OBSERVACION', 'EN OBSERVACIÃ“N', 'EN DESARROLLO', 
+            'EN OBSERVACION', 'EN OBSERVACIÓN', 'EN DESARROLLO', 
             'ADECUADO', 'RIESGO', 'ALTO', 'BAJO', 'MEDIO', 
             'AUTORITARIO FLEXIBLE', 'FORMADOR (COACHING)', 'PARTICIPATIVO',
             'AUTORITARIO', 'CONSULTIVO', 'COACHING', 'SOPORTE'
@@ -446,11 +445,11 @@ export const fetchFinalDashboardData = async (sheetId: string): Promise<FinalDas
           // Ordenar por longitud descendente para evitar 'ALTO' antes de 'MUY ALTO'
           const sortedStates = [...VALID_STATES].sort((a, b) => b.length - a.length);
           
-          // Buscar el estado en la cadena. Si hay mÃºltiples separados por comas, tomamos el primero para el panel individual
+          // Buscar el estado en la cadena. Si hay múltiples separados por comas, tomamos el primero para el panel individual
           // Pero para agregados sumamos todos (esto se maneja en addOccurrence)
           for (const state of sortedStates) {
             if (upperText.includes(state)) {
-              if (state === 'EN OBSERVACIÃ“N') return 'EN OBSERVACION';
+              if (state === 'EN OBSERVACIÓN') return 'EN OBSERVACION';
               if (state === 'EN DESAROLLO') return 'EN DESARROLLO';
               return state;
             }
@@ -458,7 +457,7 @@ export const fetchFinalDashboardData = async (sheetId: string): Promise<FinalDas
           return upperText; // Fallback al original si no se encuentra match
         };
 
-        // FunciÃ³n Helper para sumar ocurrencias (soporta mÃºltiples valores por celda)
+        // Función Helper para sumar ocurrencias (soporta múltiples valores por celda)
         const addOccurrence = (counter: Record<string, QualityCount> | QualityCount, category: string, value: string) => {
           if (!value || value.trim() === '') return;
           const upperValue = value.toUpperCase();
@@ -484,21 +483,21 @@ export const fetchFinalDashboardData = async (sheetId: string): Promise<FinalDas
           if (!r[1] || r[1] === '') continue;
 
           // Aggregates
-          addOccurrence(personalityCounter, 'EnergÃ­a', r[3]);
-          addOccurrence(personalityCounter, 'TesÃ³n', r[4]);
+          addOccurrence(personalityCounter, 'Energía', r[3]);
+          addOccurrence(personalityCounter, 'Tesón', r[4]);
           addOccurrence(personalityCounter, 'Afabilidad', r[5]);
           addOccurrence(personalityCounter, 'Esta. Emocional', r[6]);
           addOccurrence(personalityCounter, 'Apertura', r[7]);
-          addOccurrence(motivationalCounter, 'AfiliaciÃ³n', r[8]);
+          addOccurrence(motivationalCounter, 'Afiliación', r[8]);
           addOccurrence(motivationalCounter, 'Poder', r[9]);
           addOccurrence(motivationalCounter, 'Logro', r[10]);
-          addOccurrence(motivationalCounter, 'ExploraciÃ³n', r[11]);
-          addOccurrence(motivationalCounter, 'ContribuciÃ³n', r[12]);
-          addOccurrence(motivationalCounter, 'AutonomÃ­a', r[13]);
-          addOccurrence(motivationalCounter, 'CooperaciÃ³n', r[14]);
+          addOccurrence(motivationalCounter, 'Exploración', r[11]);
+          addOccurrence(motivationalCounter, 'Contribución', r[12]);
+          addOccurrence(motivationalCounter, 'Autonomía', r[13]);
+          addOccurrence(motivationalCounter, 'Cooperación', r[14]);
           addOccurrence(motivationalCounter, 'Hedonismo', r[15]);
           addOccurrence(motivationalCounter, 'Seguridad', r[16]);
-          addOccurrence(motivationalCounter, 'ConservaciÃ³n', r[17]);
+          addOccurrence(motivationalCounter, 'Conservación', r[17]);
           addOccurrence(teamCounter, 'Creativo', r[18]);
           addOccurrence(teamCounter, 'Evaluador', r[19]);
           addOccurrence(teamCounter, 'Especialista', r[20]);
@@ -511,7 +510,7 @@ export const fetchFinalDashboardData = async (sheetId: string): Promise<FinalDas
           addOccurrence(projCounter, 'Manejo Emociones', r[27]);
           addOccurrence(projCounter, 'Rel. interpers', r[28]);
           addOccurrence(projCounter, 'Ctrl Impulsos', r[29]);
-          addOccurrence(projCounter, 'AdaptaciÃ³n', r[30]);
+          addOccurrence(projCounter, 'Adaptación', r[30]);
           addOccurrence(leadCounter, '', r[31]);
           addOccurrence(behCounter, '', r[32]);
 
@@ -520,23 +519,23 @@ export const fetchFinalDashboardData = async (sheetId: string): Promise<FinalDas
             id: i,
             name: r[1],
             personality: [
-              { name: 'EnergÃ­a', value: extractState(r[3]) },
-              { name: 'TesÃ³n', value: extractState(r[4]) },
+              { name: 'Energía', value: extractState(r[3]) },
+              { name: 'Tesón', value: extractState(r[4]) },
               { name: 'Afabilidad', value: extractState(r[5]) },
               { name: 'Esta. Emocional', value: extractState(r[6]) },
               { name: 'Apertura', value: extractState(r[7]) }
             ],
             motivational: [
-              { name: 'AfiliaciÃ³n', value: extractState(r[8]) },
+              { name: 'Afiliación', value: extractState(r[8]) },
               { name: 'Poder', value: extractState(r[9]) },
               { name: 'Logro', value: extractState(r[10]) },
-              { name: 'ExploraciÃ³n', value: extractState(r[11]) },
-              { name: 'ContribuciÃ³n', value: extractState(r[12]) },
-              { name: 'AutonomÃ­a', value: extractState(r[13]) },
-              { name: 'CooperaciÃ³n', value: extractState(r[14]) },
+              { name: 'Exploración', value: extractState(r[11]) },
+              { name: 'Contribución', value: extractState(r[12]) },
+              { name: 'Autonomía', value: extractState(r[13]) },
+              { name: 'Cooperación', value: extractState(r[14]) },
               { name: 'Hedonismo', value: extractState(r[15]) },
               { name: 'Seguridad', value: extractState(r[16]) },
-              { name: 'ConservaciÃ³n', value: extractState(r[17]) }
+              { name: 'Conservación', value: extractState(r[17]) }
             ],
             teamwork: [
               { name: 'Creativo', value: extractState(r[18]) },
@@ -553,7 +552,7 @@ export const fetchFinalDashboardData = async (sheetId: string): Promise<FinalDas
               { name: 'Manejo Emociones', value: extractState(r[27]) },
               { name: 'Rel. interpers', value: extractState(r[28]) },
               { name: 'Ctrl Impulsos', value: extractState(r[29]) },
-              { name: 'AdaptaciÃ³n', value: extractState(r[30]) }
+              { name: 'Adaptación', value: extractState(r[30]) }
             ],
             leadership: extractState(r[31]),
             behavioral: extractState(r[32])
@@ -706,11 +705,11 @@ export const fetchRauraData = async (sheetId: string): Promise<RauraDashboardDat
 
         const categories = [
           { name: 'Liderazgo', value: avg(entries.map(e => e.dimensions.liderazgo.score)) },
-          { name: 'PercepciÃ³n', value: avg(entries.map(e => e.dimensions.percepcion.score)) },
-          { name: 'ComunicaciÃ³n', value: avg(entries.map(e => e.dimensions.comunicacion.score)) },
+          { name: 'Percepción', value: avg(entries.map(e => e.dimensions.percepcion.score)) },
+          { name: 'Comunicación', value: avg(entries.map(e => e.dimensions.comunicacion.score)) },
           { name: 'Rol Equipo', value: avg(entries.map(e => e.dimensions.rolEquipo.score)) },
           { name: 'Cultura', value: avg(entries.map(e => e.dimensions.cultura.score)) },
-          { name: 'MotivaciÃ³n', value: avg(entries.map(e => e.dimensions.motivacion.score)) }
+          { name: 'Motivación', value: avg(entries.map(e => e.dimensions.motivacion.score)) }
         ];
 
         // Group by Area
@@ -820,7 +819,7 @@ function evaluateLocusControl(answers: unknown[]) {
       answer,
       internal: 0,
       external: 0,
-      result: "RESPUESTA INVÃLIDA O VACÃA",
+      result: "RESPUESTA INVÁLIDA O VACÍA",
     };
   });
 
@@ -836,7 +835,7 @@ function evaluateLocusControl(answers: unknown[]) {
     validation:
       totalScore === 23
         ? "OK"
-        : `REVISAR: ${totalScore}/23 respuestas vÃ¡lidas`,
+        : `REVISAR: ${totalScore}/23 respuestas válidas`,
     detail,
   };
 }
@@ -894,7 +893,7 @@ export const fetchDriverSafetyData = async (sheetId: string): Promise<DriverSafe
           status: findDriverSafetyColumn(headers, ["ESTADO"], 5),
           level: findDriverSafetyColumn(headers, ["TRABAJO NIVEL", "NIVEL"], 6),
           position: findDriverSafetyColumn(headers, ["PUESTO", "CARGO"], 7),
-          line: findDriverSafetyColumn(headers, ["LINEA", "LÃNEA"], 8),
+          line: findDriverSafetyColumn(headers, ["LINEA", "LÍNEA"], 8),
         };
         const answerColumns = Array.from({ length: 23 }, (_, index) =>
           findDriverSafetyColumn(headers, [`P${index + 1}`], 9 + index),
@@ -1143,21 +1142,21 @@ export const fetchDimensionesData = async (sheetId: string): Promise<Dimensiones
         }
 
         // Column mapping based on actual Google Sheet structure:
-        // A(0): NÂ°
+        // A(0): N°
         // B(1): APELLIDOS Y NOMBRES
         // C(2): DNI
         // D(3): Sexo
         // E(4): Empresa
         // F(5): Area
-        // G(6): UBICACIÃ“N
-        // H(7): Grado de instrucciÃ³n
+        // G(6): UBICACIÓN
+        // H(7): Grado de instrucción
         // I(8): Cargo
         // J(9): LIDERAZGO - TOTAL (%)
         // K(10): Valor (Liderazgo nivel)
         // L(11): PERFIL (Liderazgo texto cualitativo)
         // M(12): PERCEPCION DE RIESGOS - TOTAL (%)
-        // N(13): Valor (PercepciÃ³n nivel)
-        // O(14): PERFIL (PercepciÃ³n texto cualitativo)
+        // N(13): Valor (Percepción nivel)
+        // O(14): PERFIL (Percepción texto cualitativo)
 
         const cleanPct = (val: string | undefined): number => {
           if (!val) return 0;
@@ -1196,8 +1195,8 @@ export const fetchDimensionesData = async (sheetId: string): Promise<Dimensiones
           dni: findColumn(["DNI", "DOCUMENTO"], 2),
           sexo: findColumn(["SEXO"], 3),
           empresa: findColumn(["EMPRESA"], 5),
-          ubicacion: findColumn(["UBICACION", "UBICACIÃ“N", "AREA", "ÃREA"], 6),
-          gradoInstruccion: findColumn(["GRADO DE INSTRUCCION", "GRADO DE INSTRUCCIÃ“N"], 7),
+          ubicacion: findColumn(["UBICACION", "UBICACIÓN", "AREA", "ÁREA"], 6),
+          gradoInstruccion: findColumn(["GRADO DE INSTRUCCION", "GRADO DE INSTRUCCIÓN"], 7),
           cargo: findColumn(["CARGO", "PUESTO"], 8),
           liderazgoTotal: findColumnIncludes(["LIDERAZGO", "TOTAL"], 10),
           percepcionTotal: findColumnIncludes(["PERCEPCION", "RIESGOS", "TOTAL"], 13),
@@ -1291,4 +1290,3 @@ export const fetchDimensionesData = async (sheetId: string): Promise<Dimensiones
     });
   });
 };
-

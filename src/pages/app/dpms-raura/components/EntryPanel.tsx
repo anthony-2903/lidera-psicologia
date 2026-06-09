@@ -26,11 +26,11 @@ export const EntryPanel = ({
   const radarData = useMemo(
     () => [
       { subject: "LIDERAZGO", A: entry.dimensions.liderazgo.score, fullMark: 100 },
-      { subject: "PERCEPCION", A: entry.dimensions.percepcion.score, fullMark: 100 },
-      { subject: "COMUNICACION", A: entry.dimensions.comunicacion.score, fullMark: 100 },
+      { subject: "PERCEPCIÓN", A: entry.dimensions.percepcion.score, fullMark: 100 },
+      { subject: "COMUNICACIÓN", A: entry.dimensions.comunicacion.score, fullMark: 100 },
       { subject: "ROL EQUIPO", A: entry.dimensions.rolEquipo.score, fullMark: 100 },
       { subject: "CULTURA", A: entry.dimensions.cultura.score, fullMark: 100 },
-      { subject: "MOTIVACION", A: entry.dimensions.motivacion.score, fullMark: 100 },
+      { subject: "MOTIVACIÓN", A: entry.dimensions.motivacion.score, fullMark: 100 },
     ],
     [entry],
   );
@@ -192,10 +192,10 @@ export const EntryPanel = ({
               </div>
               <div>
                 <h4 className="text-[10px] font-black uppercase text-indigo-300 tracking-[0.4em] italic mb-1">
-                  Diagnostico IA Psicologia Expert
+                  Diagnóstico IA Psicología Expert
                 </h4>
                 <p className="text-xs font-bold text-indigo-100/60">
-                  Analisis Conductual y Predictivo
+                  Análisis Conductual y Predictivo
                 </p>
               </div>
             </div>
@@ -210,7 +210,7 @@ export const EntryPanel = ({
                   <Zap className="w-3 h-3 fill-indigo-400" /> Foco de Mejora
                 </p>
                 <p className="text-xs font-bold text-indigo-100/80 leading-relaxed">
-                  Basado en el perfil cualitativo, se recomienda priorizar el desarrollo de competencias en las areas de menor puntuacion para equilibrar la cultura organizacional.
+                  Basado en el perfil cualitativo, se recomienda priorizar el desarrollo de competencias en las áreas de menor puntuación para equilibrar la cultura organizacional.
                 </p>
               </div>
             </div>

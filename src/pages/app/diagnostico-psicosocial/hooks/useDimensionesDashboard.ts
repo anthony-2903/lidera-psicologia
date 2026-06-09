@@ -55,11 +55,11 @@ export const useDimensionesDashboard = (
     const avg = (values: number[]) => values.length ? values.reduce((acc, value) => acc + value, 0) / values.length : 0;
     const dimensions = [
       { label: "Liderazgo", score: avg(entries.map((entry) => entry.puntuacionLiderazgo)) },
-      { label: "Percepcion", score: avg(entries.map((entry) => entry.puntuacionPercepcion)) },
+      { label: "Percepción", score: avg(entries.map((entry) => entry.puntuacionPercepcion)) },
       { label: "Cultura", score: avg(entries.map((entry) => scoreByType(entry.culturaReport?.tipo, "cultura"))) },
-      { label: "Comunicacion", score: avg(entries.map((entry) => scoreByType(entry.comunicacionReport?.tipo, "comunicacion"))) },
+      { label: "Comunicación", score: avg(entries.map((entry) => scoreByType(entry.comunicacionReport?.tipo, "comunicacion"))) },
       { label: "Rol de equipo", score: avg(entries.map((entry) => scoreByType(entry.rolEquipoReport?.tipo, "rol"))) },
-      { label: "Motivacion", score: avg(entries.map((entry) => scoreByType(entry.motivacionReport?.tipo, "motivacion"))) },
+      { label: "Motivación", score: avg(entries.map((entry) => scoreByType(entry.motivacionReport?.tipo, "motivacion"))) },
     ];
     const sortedDimensions = [...dimensions].sort((a, b) => a.score - b.score);
     const high = entries.filter((entry) => entry.total >= 67).length;

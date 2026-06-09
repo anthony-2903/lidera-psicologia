@@ -63,7 +63,7 @@ export default function DpmsRauraPage() {
       <DashboardHeader
         title={
           <>
-            DIAGNOSTICO DE PERCEPCION Y MADUREZ EN SEGURIDAD{" "}
+            DIAGNÓSTICO DE PERCEPCIÓN Y MADUREZ EN SEGURIDAD{" "}
             <span className="text-primary not-italic">Raura</span>
           </>
         }

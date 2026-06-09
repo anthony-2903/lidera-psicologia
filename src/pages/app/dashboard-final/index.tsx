@@ -35,7 +35,7 @@ const LEAD_COLORS_4 = DASHBOARD_PALETTES.lead4;
 const DASHBOARD_READING_GUIDE = [
   {
     title: "Lectura General",
-    text: "Resume el comportamiento del grupo evaluado: promedios, distribuciones y dimensiones con mayor concentracion de resultados.",
+    text: "Resume el comportamiento del grupo evaluado: promedios, distribuciones y dimensiones con mayor concentración de resultados.",
   },
   {
     title: "Barras Apiladas",
@@ -43,7 +43,7 @@ const DASHBOARD_READING_GUIDE = [
   },
   {
     title: "Casos Prioritarios",
-    text: "Ordena a los evaluados que requieren revision tecnica por menor potencial, baja completitud o ausencia de resultados clave.",
+    text: "Ordena a los evaluados que requieren revisión técnica por menor potencial, baja completitud o ausencia de resultados clave.",
   },
 ];
 
@@ -497,7 +497,7 @@ export default function FinalDashboardPage() {
                       Guia rapida de lectura
                     </CardTitle>
                     <CardDescription className="text-xs sm:text-sm font-semibold text-muted-foreground">
-                      Esta seccion ayuda a interpretar los graficos antes de revisar cada dimension.
+                      Esta sección ayuda a interpretar los gráficos antes de revisar cada dimensión.
                     </CardDescription>
                   </div>
                   <Badge className="self-start sm:self-center bg-primary/10 text-primary border-primary/20 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest">
@@ -537,7 +537,7 @@ export default function FinalDashboardPage() {
                       <CardTitle className="text-xl font-black tracking-tighter">Radar Global de Dimensiones</CardTitle>
                       <CardDescription className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/70">Foto general del grupo evaluado</CardDescription>
                       <p className="mt-2 max-w-xl text-xs font-medium leading-relaxed text-muted-foreground">
-                        Compara el promedio del grupo en personalidad, motivacion, equipo, proyectivo, liderazgo y conducta. Mientras mas cerca del borde, mayor fortaleza relativa en esa dimension.
+                        Compara el promedio del grupo en personalidad, motivación, equipo, proyectivo, liderazgo y conducta. Mientras más cerca del borde, mayor fortaleza relativa en esa dimensión.
                       </p>
                     </div>
                   </div>
@@ -566,7 +566,7 @@ export default function FinalDashboardPage() {
                         <CardTitle className="text-xl font-black tracking-tighter">Ranking de Prioridad</CardTitle>
                         <CardDescription className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/70">Casos para revisión técnica</CardDescription>
                         <p className="mt-2 max-w-2xl text-xs font-medium leading-relaxed text-muted-foreground">
-                          Lista los evaluados que requieren una mirada tecnica primero. El porcentaje resume el potencial calculado y la completitud indica cuanto avance de resultados tiene cada caso.
+                          Lista los evaluados que requieren una mirada técnica primero. El porcentaje resume el potencial calculado y la completitud indica cuánto avance de resultados tiene cada caso.
                         </p>
                       </div>
                     </div>
@@ -659,7 +659,7 @@ export default function FinalDashboardPage() {
                         <CardTitle className="text-xl lg:text-2xl font-black tracking-tighter italic">Perfil Motivacional</CardTitle>
                         <p className="text-[9px] font-bold uppercase tracking-[0.4em] text-orange-500/60 mt-1">Intrinsic Engagement Factors</p>
                         <p className="mt-2 max-w-xl text-xs font-medium leading-relaxed text-muted-foreground normal-case tracking-normal">
-                          Muestra que factores impulsan o limitan la motivacion del grupo, separando niveles para priorizar acciones.
+                          Muestra qué factores impulsan o limitan la motivación del grupo, separando niveles para priorizar acciones.
                         </p>
                       </div>
                     </div>
@@ -700,7 +700,7 @@ export default function FinalDashboardPage() {
                       <CardTitle className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tighter decoration-emerald-500/30 underline-offset-[16px] italic leading-tight">Perfil de Trabajo en Equipo</CardTitle>
                       <p className="text-xs font-black uppercase tracking-[0.5em] text-muted-foreground/60 mt-3 sm:mt-5">Team Belbin Matrix</p>
                       <p className="mt-3 max-w-2xl text-xs sm:text-sm font-medium leading-relaxed text-muted-foreground normal-case tracking-normal">
-                        Compara los roles de equipo y permite identificar si el grupo se concentra en accion, cohesion social o analisis.
+                        Compara los roles de equipo y permite identificar si el grupo se concentra en acción, cohesión social o análisis.
                       </p>
                     </div>
                   </div>
@@ -740,7 +740,7 @@ export default function FinalDashboardPage() {
               {[
                 { title: "Perfil Proyectivo", desc: "Indice de estabilidad proyectiva", helper: "Agrupa resultados segun riesgo, observacion o nivel adecuado para detectar necesidades de soporte.", data: data.projective, type: "bar", colors: PROJ_COLORS_3 },
                 { title: "Perfil Liderazgo", desc: "Mapa de alineacion", helper: "Resume estilos de liderazgo presentes en el grupo y ayuda a ver que forma de conduccion predomina.", data: data.leadership, type: "pie", colors: LEAD_COLORS_4 },
-                { title: "Perfil Conductual", desc: "Dinamica psicosocial", helper: "Muestra la distribucion de perfiles conductuales para reconocer tendencias de interaccion y respuesta.", data: data.behavioral, type: "pie", colors: PROJ_COLORS_3 },
+                { title: "Perfil Conductual", desc: "Dinámica psicosocial", helper: "Muestra la distribución de perfiles conductuales para reconocer tendencias de interacción y respuesta.", data: data.behavioral, type: "pie", colors: PROJ_COLORS_3 },
               ].map((item, i) => (
                 <Card key={i} className="border-2 bg-card/30 backdrop-blur-xl shadow-2xl rounded-3xl lg:rounded-[3rem] overflow-hidden group hover:-translate-y-2 transition-all duration-700 relative border-border/40 hover:border-primary/30">
                   <div className="absolute inset-x-0 bottom-0 h-1.5 bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>

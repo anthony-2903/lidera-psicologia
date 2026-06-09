@@ -234,7 +234,7 @@ METADATOS A EXTRAER:
     3: INDEPENDIENTE (Conducta guiada por la responsabilidad y autocontrol individual.)
     4: INTERDEPENDIENTE (Cultura de compromiso colectivo y cuidado mutuo.)
 - comentarios: Redacta un pequeño resumen o frase crítica (insight conductual) considerando estas dimensiones:
-    * PERCEPCION DE RIESGOS: REACTIVO (actúa tras incidente), NORMATIVO-PREVENTIVO (cumple por obligación), CAUTELOSO ANALITICO (evalúa antes de actuar), PROACTIVO-PREVENTIVO (se anticipa y promueve).
+    * PERCEPCIÓN DE RIESGOS: REACTIVO (actúa tras incidente), NORMATIVO-PREVENTIVO (cumple por obligación), CAUTELOSO ANALÍTICO (evalúa antes de actuar), PROACTIVO-PREVENTIVO (se anticipa y promueve).
     * LIDERAZGO: Soporte (facilita), Empowerment (delega autonomía), Coaching (guía/retroalimentación), Directivo (instrucciones claras/control).
     * COMUNICACIÓN: Asertiva (claridad/respeto), Funcional (orientada a tareas), Directa (claro/sin ambigüedad), Colaborativa (participación/equipo).
     * ROLES EQUIPO (Belbin): Acción (ejecución), Sociales (colaboración), Mentales (análisis/ideas).
@@ -269,11 +269,11 @@ INSTRUCCIONES CLAVES:
 - Si un valor numérico no se menciona ni se puede inferir, usa 0.
 - Si un texto no se menciona o no hay respuesta relevante, usa "No especificado".
 - Asegúrate de usar estas claves exactas en el JSON de salida:
-- Evalua de forma critica y conservadora: el mejor escenario permitido sin evidencias concretas, ejemplos verificables, asistencia sostenida y seguimiento documentado es DEPENDIENTE.
-- Si el entrevistado no asistio, no participo, muestra desinteres, responde de forma evasiva o la entrevista es insuficiente, clasifica como REACTIVA.
-- Para clasificar como INDEPENDIENTE exige evidencia clara de autogestion, seguimiento, aprendizaje de incidentes y responsabilidad asumida sin depender de la supervision.
-- Para clasificar como INTERDEPENDIENTE exige evidencia explicita de cuidado mutuo, intervencion entre pares, aprendizaje colectivo y liderazgo preventivo sostenido. Si falta cualquiera de estos elementos, baja al menos a DEPENDIENTE.
-- La asistencia a capacitaciones de lideres es un dato critico. Si es 0, no mencionada o baja, no puede superar DEPENDIENTE.
+- Evalúa de forma crítica y conservadora: el mejor escenario permitido sin evidencias concretas, ejemplos verificables, asistencia sostenida y seguimiento documentado es DEPENDIENTE.
+- Si el entrevistado no asistió, no participó, muestra desinterés, responde de forma evasiva o la entrevista es insuficiente, clasifica como REACTIVA.
+- Para clasificar como INDEPENDIENTE exige evidencia clara de autogestión, seguimiento, aprendizaje de incidentes y responsabilidad asumida sin depender de la supervisión.
+- Para clasificar como INTERDEPENDIENTE exige evidencia explícita de cuidado mutuo, intervención entre pares, aprendizaje colectivo y liderazgo preventivo sostenido. Si falta cualquiera de estos elementos, baja al menos a DEPENDIENTE.
+- La asistencia a capacitaciones de líderes es un dato crítico. Si es 0, no mencionada o baja, no puede superar DEPENDIENTE.
 {
   "nombre": "string",
   "empresa": "string",
@@ -393,17 +393,17 @@ const buildCriticalCultureAssessment = (source: any) => {
     flags.push("asistencia no evidenciada");
   } else if (attendance < 6) {
     cap = Math.min(cap, 2);
-    flags.push("asistencia baja a capacitaciones de lideres");
+    flags.push("asistencia baja a capacitaciones de líderes");
   }
 
   if (followUp < 6 || responsibility < 6) {
     cap = Math.min(cap, 2);
-    flags.push("seguimiento o responsabilidad por debajo del umbral critico");
+    flags.push("seguimiento o responsabilidad por debajo del umbral crítico");
   }
 
   if (rawLevel >= 4 && (attendance < 8 || followUp < 8 || responsibility < 8)) {
     cap = Math.min(cap, 2);
-    flags.push("no cumple evidencias minimas para interdependencia");
+    flags.push("no cumple evidencias mínimas para interdependencia");
   }
 
   return {
@@ -414,10 +414,10 @@ const buildCriticalCultureAssessment = (source: any) => {
 };
 
 const appendCriticalComment = (comment: string, flags: string[]) => {
-  const base = comment?.trim() || "Evaluacion critica sin comentario de origen.";
+  const base = comment?.trim() || "Evaluación crítica sin comentario de origen.";
   if (!flags.length) return base;
-  if (base.includes("Ajuste critico:")) return base;
-  return `${base} Ajuste critico: ${flags.join("; ")}.`;
+  if (base.includes("Ajuste crítico:")) return base;
+  return `${base} Ajuste crítico: ${flags.join("; ")}.`;
 };
 
 const normalizeCriticalReview = (source: any) => {
@@ -1502,7 +1502,7 @@ export default function UploadDpmsPage() {
           return acc + ((inv + seg + resp + asist + cal) / 50) * 100;
         }, 0) / interviews.length
       : 0;
-    const securityLevel = securityScore < 40 ? "CRITICO" : securityScore < 60 ? "EN RIESGO" : securityScore < 80 ? "ACEPTABLE" : "OPTIMO";
+    const securityLevel = securityScore < 40 ? "CRÍTICO" : securityScore < 60 ? "EN RIESGO" : securityScore < 80 ? "ACEPTABLE" : "ÓPTIMO";
 
     // --- PORTADA ---
     pdf.setFillColor(15, 23, 42); 
@@ -2856,9 +2856,9 @@ function ReviewForm({
                   type="number"
                   min={0}
                   max={10}
-                  value={
-                    reviewData.respuestas?.[k] ?? reviewData[k] ?? 0
-                  }
+                    value={
+                      reviewData.respuestas?.[k] ?? reviewData[k] ?? 0
+                    }
                   onChange={(e) => {
                     const val = Number(e.target.value);
                     if (reviewData.respuestas) {

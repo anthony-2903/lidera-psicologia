@@ -47,11 +47,11 @@ export const GlobalSummaryView = () => {
 
   const criticalBehaviorBars = [
     { name: "Acto inseguro", value: FINAL_RAURA_REPORT.unsafeAct, note: "Menos de la mitad interviene", color: "#dc2626" },
-    { name: "Gestion riesgo", value: FINAL_RAURA_REPORT.riskManagement, note: "Falla casi en la mitad", color: "#ea580c" },
+    { name: "Gestión riesgo", value: FINAL_RAURA_REPORT.riskManagement, note: "Falla casi en la mitad", color: "#ea580c" },
     { name: "Liderazgo efectivo", value: FINAL_RAURA_REPORT.effectiveLeadership, note: "Discurso no baja a campo", color: "#f59e0b" },
-    { name: "Cap. Planta", value: FINAL_RAURA_REPORT.trainingPlanta, note: "Participacion critica", color: "#dc2626" },
+    { name: "Cap. Planta", value: FINAL_RAURA_REPORT.trainingPlanta, note: "Participación crítica", color: "#dc2626" },
     { name: "Cap. Mina", value: FINAL_RAURA_REPORT.trainingMina, note: "Brecha de formacion", color: "#ea580c" },
-    { name: "Comunicacion", value: 70.5, note: "Silencio operativo", color: "#f59e0b" },
+    { name: "Comunicación", value: 70.5, note: "Silencio operativo", color: "#f59e0b" },
     { name: "Reconocimiento", value: 71.71, note: "Refuerzo bajo", color: "#f59e0b" },
   ];
 
@@ -82,15 +82,15 @@ export const GlobalSummaryView = () => {
                   <span className="text-red-600 not-italic">Reactiva</span>
                 </h2>
                 <p className="mt-4 max-w-3xl text-sm font-semibold leading-relaxed text-slate-600">
-                  La lectura final se sostiene por conducta real ante riesgo. La percepcion
-                  favorable no valida madurez cuando la intervencion ante acto inseguro cae
-                  por debajo del umbral critico.
+                  La lectura final se sostiene por conducta real ante riesgo. La percepción
+                  favorable no valida madurez cuando la intervención ante acto inseguro cae
+                  por debajo del umbral crítico.
                 </p>
               </div>
 
               <div className="rounded-2xl bg-red-50 px-6 py-5 text-right">
                 <p className="text-[10px] font-black uppercase tracking-widest text-red-500">
-                  Brecha percepcion/conducta
+                  Brecha percepción/conducta
                 </p>
                 <p className="mt-1 text-4xl font-black italic text-red-600 tabular-nums">
                   {perceptionGap}
@@ -194,7 +194,7 @@ export const GlobalSummaryView = () => {
                     <p className="text-sm font-black uppercase text-slate-700">{level.name}</p>
                   </div>
                   <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: level.color }}>
-                    {level.active ? "Ubicacion actual" : "Meta evolutiva"}
+                    {level.active ? "Ubicación actual" : "Meta evolutiva"}
                   </span>
                 </div>
                 <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white">
@@ -216,10 +216,10 @@ export const GlobalSummaryView = () => {
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <Badge className="rounded-md border-0 bg-red-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-red-700 shadow-none">
-                  Diagnostico final TXT
+                  Diagnóstico final TXT
                 </Badge>
                 <CardTitle className="mt-4 text-2xl lg:text-3xl font-black uppercase italic text-slate-900">
-                  Brechas conductuales criticas
+                  Brechas conductuales críticas
                 </CardTitle>
                 <CardDescription className="mt-1 text-xs font-bold uppercase tracking-[0.24em] text-red-500/70">
                   Lo que ocurre ante el riesgo real
@@ -269,7 +269,7 @@ export const GlobalSummaryView = () => {
               <div className="rounded-2xl border border-red-100 bg-red-50 p-4">
                 <p className="text-[10px] font-black uppercase tracking-widest text-red-700">Lectura ejecutiva</p>
                 <p className="mt-2 text-sm font-semibold leading-relaxed text-slate-700">
-                  El 79.40% refleja percepcion positiva, pero la conducta observada no sostiene una cultura madura.
+                  El 79.40% refleja percepción positiva, pero la conducta observada no sostiene una cultura madura.
                   El resultado final ubica a Raura en etapa reactiva.
                 </p>
               </div>
@@ -318,7 +318,7 @@ export const GlobalSummaryView = () => {
             <div className="rounded-2xl border border-slate-100 bg-slate-50 p-5">
               <div className="flex items-end justify-between gap-4">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Percepcion favorable</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Percepción favorable</p>
                   <p className="mt-1 text-4xl font-black italic text-slate-900 tabular-nums">{FINAL_RAURA_REPORT.perception}%</p>
                 </div>
                 <div className="text-right">
@@ -332,7 +332,7 @@ export const GlobalSummaryView = () => {
                 <div className="h-full rounded-full bg-red-600" style={{ width: `${FINAL_RAURA_REPORT.verdictScore}%` }} />
               </div>
               <p className="mt-3 text-xs font-semibold leading-relaxed text-slate-500">
-                La percepcion no equivale a madurez preventiva; el criterio decisivo es la respuesta ante actos inseguros.
+                La percepción no equivale a madurez preventiva; el criterio decisivo es la respuesta ante actos inseguros.
               </p>
             </div>
 
@@ -417,9 +417,9 @@ export const GlobalSummaryView = () => {
         <Card className="rounded-[2rem] border-2 border-slate-200 bg-white/90 shadow-2xl">
           <CardHeader className="p-7 pb-3">
             <CardTitle className="text-xl font-black uppercase italic text-slate-900">
-              Items de menor desempeno
+              Ítems de menor desempeño
             </CardTitle>
-            <CardDescription>Senales de silencio operativo y baja participacion.</CardDescription>
+            <CardDescription>Señales de silencio operativo y baja participación.</CardDescription>
           </CardHeader>
           <CardContent className="p-7 pt-0 space-y-4">
             {FINAL_RAURA_LOW_ITEMS.map((item) => (

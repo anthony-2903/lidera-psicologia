@@ -10,7 +10,7 @@ const normalizeStatus = (value: string | undefined): "completed" | "inProgress" 
 };
 
 const getLocation = (row: SheetRow) =>
-  (row.AREA || row["ÁREA"] || row["ÃREA"] || "Sin ubicacion").trim() || "Sin ubicacion";
+  (row.AREA || row["ÁREA"] || "Sin ubicación").trim() || "Sin ubicación";
 
 const buildRowSegments = (rows: SheetRow[]) => {
   const segments = new Map<

@@ -15,7 +15,7 @@ export const getHeatColor = (score: number) => {
 export const getTrafficConfig = (score: number) => {
   if (score >= 75) return { label: "Estable", color: "bg-emerald-500", text: "text-emerald-600", bg: "bg-emerald-500/10" };
   if (score >= 60) return { label: "Vigilancia", color: "bg-amber-400", text: "text-amber-600", bg: "bg-amber-500/10" };
-  return { label: "Critico", color: "bg-rose-500", text: "text-rose-600", bg: "bg-rose-500/10" };
+  return { label: "Crítico", color: "bg-rose-500", text: "text-rose-600", bg: "bg-rose-500/10" };
 };
 
 export const scoreByType = (value: string | undefined, dimension: DiagnosticTab) => {

@@ -61,11 +61,11 @@ export const useDpmsRauraDashboard = (
 
     const categories = [
       { name: "Liderazgo", value: toPercent(avg(filteredEntries.map((e) => e.dimensions.liderazgo.score))) },
-      { name: "Percepcion", value: toPercent(avg(filteredEntries.map((e) => e.dimensions.percepcion.score))) },
-      { name: "Comunicacion", value: toPercent(avg(filteredEntries.map((e) => e.dimensions.comunicacion.score))) },
+      { name: "Percepción", value: toPercent(avg(filteredEntries.map((e) => e.dimensions.percepcion.score))) },
+      { name: "Comunicación", value: toPercent(avg(filteredEntries.map((e) => e.dimensions.comunicacion.score))) },
       { name: "Rol Equipo", value: toPercent(avg(filteredEntries.map((e) => e.dimensions.rolEquipo.score))) },
       { name: "Cultura", value: toPercent(avg(filteredEntries.map((e) => e.dimensions.cultura.score))) },
-      { name: "Motivacion", value: toPercent(avg(filteredEntries.map((e) => e.dimensions.motivacion.score))) },
+      { name: "Motivación", value: toPercent(avg(filteredEntries.map((e) => e.dimensions.motivacion.score))) },
     ];
 
     const areaGroups: Record<string, number[]> = {};
@@ -100,7 +100,7 @@ export const useDpmsRauraDashboard = (
         name: "Dependiente",
         value: 0,
         color: "#f59e0b",
-        desc: "Cultura basada en supervision y reglas. Se cumple por temor a la sancion.",
+        desc: "Cultura basada en supervisión y reglas. Se cumple por temor a la sanción.",
       },
       {
         name: "Independiente",

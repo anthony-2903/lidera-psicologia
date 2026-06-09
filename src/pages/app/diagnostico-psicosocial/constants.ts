@@ -25,10 +25,10 @@ export type DiagnosticTab =
 export const DIAGNOSTIC_TABS = [
   { id: "cultura", label: "Cultura de seguridad", icon: Zap, color: "text-amber-500" },
   { id: "rol", label: "Rol de equipo", icon: Users, color: "text-cyan-500" },
-  { id: "comunicacion", label: "Comunicaci?n", icon: Shield, color: "text-indigo-500" },
-  { id: "percepcion", label: "Percepci?n de riesgos", icon: LayoutDashboard, color: "text-primary" },
+  { id: "comunicacion", label: "Comunicación", icon: Shield, color: "text-indigo-500" },
+  { id: "percepcion", label: "Percepción de riesgos", icon: LayoutDashboard, color: "text-primary" },
   { id: "liderazgo", label: "Liderazgo", icon: Activity, color: "text-rose-500" },
-  { id: "motivacion", label: "Motivaci?n", icon: Star, color: "text-violet-500" },
+  { id: "motivacion", label: "Motivación", icon: Star, color: "text-violet-500" },
 ] satisfies {
   id: DiagnosticTab;
   label: string;

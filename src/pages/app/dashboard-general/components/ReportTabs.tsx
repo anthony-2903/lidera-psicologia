@@ -56,9 +56,9 @@ interface ReportTabsProps {
 
 const areaLinks = [
   { label: "Dashboard General", path: "/app/dashboard", icon: LayoutDashboard },
-  { label: "Seguimiento de Aplicacion", path: "/app/diagnostic", icon: ClipboardCheck },
+  { label: "Seguimiento de Aplicación", path: "/app/diagnostic", icon: ClipboardCheck },
   { label: "Dashboard Final", path: "/app/final-dashboard", icon: FileBarChart },
-  { label: "Diagnostico Psicosocial", path: "/app/dimensiones", icon: BarChart3 },
+  { label: "Diagnóstico Psicosocial", path: "/app/dimensiones", icon: BarChart3 },
 ];
 
 const statusChartColors = {
@@ -74,7 +74,7 @@ const getPerformanceLabel = (rate: number) => {
   if (rate >= 85) return "avance solido";
   if (rate >= 60) return "avance controlado";
   if (rate >= 35) return "avance en desarrollo";
-  return "avance critico";
+  return "avance crítico";
 };
 
 const getTopSegment = (segments: ReportSegment[]) =>
@@ -350,9 +350,9 @@ export const ReportTabs = ({
         <Card className="rounded-lg border bg-white shadow-sm">
           <CardHeader className="space-y-2">
             <Badge variant="outline" className="w-fit rounded-md border-primary/20 bg-primary/5 text-primary">
-              Vision ejecutiva
+              Visión ejecutiva
             </Badge>
-            <CardTitle className="text-2xl font-black tracking-tight">Reporte general de aplicacion</CardTitle>
+            <CardTitle className="text-2xl font-black tracking-tight">Reporte general de aplicación</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="h-[280px]">
@@ -398,7 +398,7 @@ export const ReportTabs = ({
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-xl font-black">
                 <Building2 className="h-5 w-5 text-primary" />
-                Participacion y avance por contratista
+                Participación y avance por contratista
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -407,11 +407,11 @@ export const ReportTabs = ({
           </Card>
           <Card className="rounded-lg border bg-white shadow-sm">
             <CardHeader>
-              <CardTitle className="text-xl font-black">Analisis por contratista</CardTitle>
+              <CardTitle className="text-xl font-black">Análisis por contratista</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm leading-6 text-muted-foreground">
-                {topContractor ? `${topContractor.name} lidera el avance con ${topContractor.completionRate}% de evaluaciones aplicadas.` : "Aun no hay contratistas disponibles para analizar."}
+                {topContractor ? `${topContractor.name} lidera el avance con ${topContractor.completionRate}% de evaluaciones aplicadas.` : "Aún no hay contratistas disponibles para analizar."}
               </p>
               <p className="text-sm leading-6 text-muted-foreground">
                 {pendingContractor ? `El mayor volumen pendiente se concentra en ${pendingContractor.name}, con ${pendingContractor.pending} registros por completar.` : "No se registran pendientes por contratista."}
@@ -421,7 +421,7 @@ export const ReportTabs = ({
           </Card>
         </div>
         <div className="grid gap-6 xl:grid-cols-2">
-          <ChartPanel title="Composicion de estados por contratista" icon={BarChart3}>
+          <ChartPanel title="Composición de estados por contratista" icon={BarChart3}>
             <SegmentStackedStatusChart data={contractorData} />
           </ChartPanel>
           <ChartPanel title="Ranking porcentual de cumplimiento" icon={TrendingUp}>
@@ -437,7 +437,7 @@ export const ReportTabs = ({
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-xl font-black">
                 <MapPin className="h-5 w-5 text-primary" />
-                Cobertura por zona o ubicacion
+                Cobertura por zona o ubicación
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -446,24 +446,24 @@ export const ReportTabs = ({
           </Card>
           <Card className="rounded-lg border bg-white shadow-sm">
             <CardHeader>
-              <CardTitle className="text-xl font-black">Analisis territorial</CardTitle>
+              <CardTitle className="text-xl font-black">Análisis territorial</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm leading-6 text-muted-foreground">
-                {topLocation ? `${topLocation.name} muestra el mejor avance territorial con ${topLocation.completionRate}% de aplicacion.` : "Aun no hay zonas disponibles para analizar."}
+                {topLocation ? `${topLocation.name} muestra el mejor avance territorial con ${topLocation.completionRate}% de aplicación.` : "Aún no hay zonas disponibles para analizar."}
               </p>
               <p className="text-sm leading-6 text-muted-foreground">
-                {pendingLocation ? `La ubicacion que requiere mayor seguimiento es ${pendingLocation.name}, con ${pendingLocation.pending} evaluaciones pendientes.` : "No se registran pendientes por zona."}
+                {pendingLocation ? `La ubicación que requiere mayor seguimiento es ${pendingLocation.name}, con ${pendingLocation.pending} evaluaciones pendientes.` : "No se registran pendientes por zona."}
               </p>
               <SegmentTable data={locationData} />
             </CardContent>
           </Card>
         </div>
         <div className="grid gap-6 xl:grid-cols-2">
-          <ChartPanel title="Composicion de estados por zona" icon={BarChart3}>
+          <ChartPanel title="Composición de estados por zona" icon={BarChart3}>
             <SegmentStackedStatusChart data={locationData} />
           </ChartPanel>
-          <ChartPanel title="Ranking porcentual por ubicacion" icon={TrendingUp}>
+          <ChartPanel title="Ranking porcentual por ubicación" icon={TrendingUp}>
             <SegmentCompletionChart data={locationData} color="#0f766e" />
           </ChartPanel>
         </div>

@@ -12,10 +12,10 @@ export const getInterpretation = (val: string) => {
   }
 
   const map: Record<string, string> = {
-    "1": "Nivel Reactivo - Accion basada en instinto y miedo.",
-    "2": "Nivel Dependiente - Accion basada en supervision y reglas.",
-    "3": "Nivel Independiente - Accion basada en autovigilancia y conviccion.",
-    "4": "Nivel Interdependiente - Accion basada en el cuidado mutuo y proactividad.",
+    "1": "Nivel Reactivo - Acción basada en instinto y miedo.",
+    "2": "Nivel Dependiente - Acción basada en supervisión y reglas.",
+    "3": "Nivel Independiente - Acción basada en autovigilancia y convicción.",
+    "4": "Nivel Interdependiente - Acción basada en el cuidado mutuo y proactividad.",
     "5": "Excelente / Liderazgo - Cultura preventiva plenamente integrada y ejemplar.",
   };
   return map[v] || val;
@@ -58,10 +58,10 @@ export const getFinalReportSummary = (
 
   const technicalInterpretation =
     avg > 75
-      ? "Los valores cuantitativos ubican el entorno en una condicion Interdependiente. La organizacion muestra una base preventiva solida y un comportamiento alineado con practicas sostenibles."
+      ? "Los valores cuantitativos ubican el entorno en una condición Interdependiente. La organización muestra una base preventiva sólida y un comportamiento alineado con prácticas sostenibles."
       : avg > 50
-        ? "El informe final valida una situacion intermedia: existe avance real, pero todavia conviven conductas preventivas con brechas de estandarizacion y liderazgo visible."
-        : "El informe final confirma un entorno reactivo: los datos cuantitativos refuerzan la urgencia de mejorar liderazgo, comunicacion y cultura preventiva.";
+        ? "El informe final valida una situación intermedia: existe avance real, pero todavía conviven conductas preventivas con brechas de estandarización y liderazgo visible."
+        : "El informe final confirma un entorno reactivo: los datos cuantitativos refuerzan la urgencia de mejorar liderazgo, comunicación y cultura preventiva.";
 
   return {
     resultLabel,
@@ -71,7 +71,7 @@ export const getFinalReportSummary = (
     topDimensions,
     bottomDimensions,
     technicalInterpretation,
-    executiveConclusion: `El informe final concluye que el entorno en seguridad debe leerse desde la escala porcentual real del instrumento, no desde una cifra fija. El posicionamiento tecnico queda alineado al nivel ${finalPosition}.`,
+    executiveConclusion: `El informe final concluye que el entorno en seguridad debe leerse desde la escala porcentual real del instrumento, no desde una cifra fija. El posicionamiento técnico queda alineado al nivel ${finalPosition}.`,
     strengths: topDimensions,
     gaps: bottomDimensions,
     opportunities: bottomDimensions.map((dim) => `Aumentar enfoque en ${dim.toLowerCase()}`),
@@ -81,9 +81,9 @@ export const getFinalReportSummary = (
       { name: "Entorno seguridad", value: environmentScore, color: "#ef4444" },
     ],
     recommendations: [
-      "Alinear la interpretacion tecnica con los hallazgos cuantitativos para evitar conclusiones demasiado optimistas.",
-      "Fortalecer liderazgo visible y comunicacion alineada a la cultura preventiva.",
-      "Priorizar la gestion de brechas normativas y el compromiso de mandos medios.",
+      "Alinear la interpretación técnica con los hallazgos cuantitativos para evitar conclusiones demasiado optimistas.",
+      "Fortalecer liderazgo visible y comunicación alineada a la cultura preventiva.",
+      "Priorizar la gestión de brechas normativas y el compromiso de mandos medios.",
     ],
   };
 };
@@ -96,9 +96,9 @@ export const buildEntryAnalysis = (entry: RauraEntry) => {
   let analysis = `El perfil presenta una madurez operativa destacada en **${highest[0].toUpperCase()}** (${Math.round(highest[1].score)}%), categorizado como **${highest[1].perfil}**. `;
 
   if (lowest[1].score < 50) {
-    analysis += `Sin embargo, se detecta un area critica en **${lowest[0].toUpperCase()}** (${Math.round(lowest[1].score)}%), donde el perfil actual es **${lowest[1].perfil}**. Esto sugiere la necesidad de una intervencion inmediata para elevar el nivel de madurez organizacional.`;
+    analysis += `Sin embargo, se detecta un área crítica en **${lowest[0].toUpperCase()}** (${Math.round(lowest[1].score)}%), donde el perfil actual es **${lowest[1].perfil}**. Esto sugiere la necesidad de una intervención inmediata para elevar el nivel de madurez organizacional.`;
   } else {
-    analysis += `Incluso en su punto mas bajo (**${lowest[0].toUpperCase()}**), mantiene un nivel aceptable de **${lowest[1].perfil}**, lo que refleja una cultura de seguridad robusta.`;
+    analysis += `Incluso en su punto más bajo (**${lowest[0].toUpperCase()}**), mantiene un nivel aceptable de **${lowest[1].perfil}**, lo que refleja una cultura de seguridad robusta.`;
   }
 
   return { analysis };
