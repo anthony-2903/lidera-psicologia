@@ -130,7 +130,7 @@ const DimensionesPage = () => {
                 <motion.div 
                     initial={{ opacity: 0, scale: 0.98 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center bg-white/40 backdrop-blur-3xl rounded-[3rem] p-10 border border-white shadow-2xl overflow-hidden relative"
+                    className="relative grid grid-cols-1 items-center gap-6 overflow-hidden rounded-[2rem] border border-white bg-white/40 p-4 shadow-2xl backdrop-blur-3xl sm:gap-8 sm:p-6 lg:grid-cols-12 lg:gap-10 lg:rounded-[3rem] lg:p-10"
                 >
                     <div className="absolute -top-40 -left-40 w-96 h-96 bg-primary/20 rounded-full blur-[100px] pointer-events-none animate-pulse" />
                     <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-indigo-500/20 rounded-full blur-[100px] pointer-events-none animate-pulse" />
@@ -182,7 +182,7 @@ const DimensionesPage = () => {
                     </div>
 
                     {/* LEFT: INFO */}
-                    <div className="lg:col-span-3 space-y-4 relative z-10">
+                    <div className="relative z-10 space-y-4 lg:col-span-3">
                         <h4 className="text-[10px] font-black uppercase text-primary/70 tracking-[0.4em] mb-4 text-center lg:text-left italic">
                             Identidad del Evaluado
                         </h4>
@@ -213,16 +213,16 @@ const DimensionesPage = () => {
                     </div>
 
                     {/* CENTER: SILHOUETTE */}
-                    <div className="lg:col-span-5 flex flex-col items-center justify-center relative py-10 z-10">
+                    <div className="relative z-10 flex min-w-0 flex-col items-center justify-center py-6 sm:py-8 lg:col-span-5 lg:py-10">
                         <motion.div 
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="text-center mb-10"
+                            className="mb-4 text-center sm:mb-6 lg:mb-10"
                         >
                             <span className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-400 mb-3 block italic">Colaborador Evaluado</span>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <h2 className="text-3xl font-black uppercase tracking-tighter text-slate-800 leading-none drop-shadow-sm cursor-help hover:text-primary transition-colors">
+                                    <h2 className="max-w-[min(92vw,560px)] text-2xl font-black uppercase tracking-tighter text-slate-800 leading-none drop-shadow-sm transition-colors hover:text-primary sm:text-3xl">
                                         {selectedEntry.nombre}
                                     </h2>
                                 </TooltipTrigger>
