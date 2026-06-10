@@ -5,7 +5,14 @@ import { getTrafficConfig, scoreByType } from "../utils";
 export const useDimensionesDashboard = (
   data: DimensionesDashboardData | undefined,
   search: string,
-  selectedEntryId: number | null
+  selectedEntryId: number | null,
+  filters?: {
+    empresa?: string;
+    area?: string;
+    cargo?: string;
+    nivel?: string;
+    genero?: string;
+  }
 ) => {
   const filteredEntries = useMemo(() => {
     if (!data?.entries) return [];
@@ -17,11 +24,27 @@ export const useDimensionesDashboard = (
         .trim();
 
     const searchClean = normalizeSearch(search);
-    if (!searchClean) return data.entries;
+    const filterValues = {
+      empresa: normalizeSearch(filters?.empresa),
+      area: normalizeSearch(filters?.area),
+      cargo: normalizeSearch(filters?.cargo),
+      nivel: normalizeSearch(filters?.nivel),
+      genero: normalizeSearch(filters?.genero),
+    };
 
     const searchAsDni = searchClean.replace(/O/g, "0");
 
     return data.entries.filter((entry) => {
+      const matchesFilters =
+        (!filterValues.empresa || normalizeSearch(entry.empresa) === filterValues.empresa) &&
+        (!filterValues.area || normalizeSearch(entry.area) === filterValues.area) &&
+        (!filterValues.cargo || normalizeSearch(entry.cargo) === filterValues.cargo) &&
+        (!filterValues.nivel || normalizeSearch(entry.nivel) === filterValues.nivel) &&
+        (!filterValues.genero || normalizeSearch(entry.genero) === filterValues.genero);
+
+      if (!matchesFilters) return false;
+      if (!searchClean) return true;
+
       const searchableText = [
         entry.nombre,
         entry.dni,
@@ -48,7 +71,7 @@ export const useDimensionesDashboard = (
         normalizeSearch(entry.dni).includes(searchAsDni)
       );
     });
-  }, [data, search]);
+  }, [data, search, filters]);
 
   const executiveSummary = useMemo(() => {
     const entries = data?.entries || [];

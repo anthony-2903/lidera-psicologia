@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchRawRows, fetchSheetData, GroupMetric } from "@/lib/sheets-adapter";
+import { fetchDimensionesData, fetchRawRows, fetchSheetData, GroupMetric } from "@/lib/sheets-adapter";
 import { SHEET_ID } from "./constants";
+import { SHEET_ID as DIMENSIONES_SHEET_ID } from "../diagnostico-psicosocial/constants";
 import { DashboardHeaderSection } from "./components/DashboardHeaderSection";
 import { DetailView } from "./components/DetailView";
 import { ErrorState } from "./components/ErrorState";
@@ -24,6 +25,11 @@ const DashboardPage = () => {
 
       return { groupMetrics, rawRows };
     },
+  });
+
+  const { data: resultData } = useQuery({
+    queryKey: ["dashboardGeneralResultados", DIMENSIONES_SHEET_ID],
+    queryFn: () => fetchDimensionesData(DIMENSIONES_SHEET_ID),
   });
 
   const groupMetrics = data?.groupMetrics ?? [];
@@ -58,6 +64,7 @@ const DashboardPage = () => {
         contractorData={summaryData.contractorData}
         locationData={summaryData.locationData}
         groupMetrics={groupMetrics}
+        resultEntries={resultData?.entries ?? []}
         onGroupClick={handleGroupClick}
       />
     </div>

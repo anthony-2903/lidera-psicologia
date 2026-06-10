@@ -26,7 +26,7 @@ export const navItems = [
   { group: "Catalina Huanca", label: "Dashboard General", icon: LayoutDashboard, path: "/app/dashboard" },
   { group: "Catalina Huanca", label: "Seguimiento de Aplicación", icon: BarChart3, path: "/app/diagnostic" },
   { group: "Catalina Huanca", label: "Dashboard Final", icon: LayoutDashboard, path: "/app/final-dashboard" },
-  { group: "Catalina Huanca", label: "Diagnóstico Psicosocial", icon: Layers, path: "/app/dimensiones" },
+  { group: "Catalina Huanca", label: "Resultados Individuales", icon: Layers, path: "/app/dimensiones" },
   { group: "Raura", label: "DPMS-Raura", icon: Activity, path: "/app/dpms-raura" },
   { group: "Raura", label: "Carga de Entrevistas DPMS", icon: FileText, path: "/app/dpms-raura/upload-interview" },
   { group: "Raura", label: "Driver Safety", icon: Brain, path: "/app/driver-safety" },

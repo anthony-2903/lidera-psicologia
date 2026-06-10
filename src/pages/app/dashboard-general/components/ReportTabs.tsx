@@ -28,9 +28,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { GroupMetric } from "@/lib/sheets-adapter";
+import type { DimensionesEntry, GroupMetric } from "@/lib/sheets-adapter";
 import { COMPANY_BAR_COLORS } from "../constants";
 import { GroupBreakdown } from "./GroupBreakdown";
+import { ResultsGeneralTab } from "./ResultsGeneralTab";
 
 export interface ReportSegment {
   name: string;
@@ -51,6 +52,7 @@ interface ReportTabsProps {
   contractorData: ReportSegment[];
   locationData: ReportSegment[];
   groupMetrics: GroupMetric[];
+  resultEntries: DimensionesEntry[];
   onGroupClick: (group: GroupMetric) => void;
 }
 
@@ -58,7 +60,7 @@ const areaLinks = [
   { label: "Dashboard General", path: "/app/dashboard", icon: LayoutDashboard },
   { label: "Seguimiento de Aplicación", path: "/app/diagnostic", icon: ClipboardCheck },
   { label: "Dashboard Final", path: "/app/final-dashboard", icon: FileBarChart },
-  { label: "Diagnóstico Psicosocial", path: "/app/dimensiones", icon: BarChart3 },
+  { label: "Resultados Individuales", path: "/app/dimensiones", icon: BarChart3 },
 ];
 
 const statusChartColors = {
@@ -316,6 +318,7 @@ export const ReportTabs = ({
   contractorData,
   locationData,
   groupMetrics,
+  resultEntries,
   onGroupClick,
 }: ReportTabsProps) => {
   const statusData = [
@@ -331,10 +334,14 @@ export const ReportTabs = ({
 
   return (
     <Tabs defaultValue="general" className="space-y-6">
-      <TabsList className="grid h-auto w-full grid-cols-1 gap-2 rounded-lg border bg-white p-2 shadow-sm md:grid-cols-3">
+      <TabsList className="grid h-auto w-full grid-cols-1 gap-2 rounded-lg border bg-white p-2 shadow-sm md:grid-cols-4">
         <TabsTrigger value="general" className="h-11 gap-2 rounded-md text-xs font-black uppercase data-[state=active]:bg-primary data-[state=active]:text-white">
           <PieChartIcon className="h-4 w-4" />
           Reporte general
+        </TabsTrigger>
+        <TabsTrigger value="results" className="h-11 gap-2 rounded-md text-xs font-black uppercase data-[state=active]:bg-primary data-[state=active]:text-white">
+          <BarChart3 className="h-4 w-4" />
+          Resultados generales
         </TabsTrigger>
         <TabsTrigger value="contractor" className="h-11 gap-2 rounded-md text-xs font-black uppercase data-[state=active]:bg-primary data-[state=active]:text-white">
           <Building2 className="h-4 w-4" />
@@ -390,6 +397,14 @@ export const ReportTabs = ({
           </ChartPanel>
         </div>
         <RelatedLinks />
+      </TabsContent>
+
+      <TabsContent value="results" className="space-y-6">
+        <ResultsGeneralTab
+          entries={resultEntries}
+          totalProgrammed={totalEvaluated}
+          appliedCount={statusTotals.completo || resultEntries.length}
+        />
       </TabsContent>
 
       <TabsContent value="contractor" className="space-y-6">

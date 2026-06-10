@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
@@ -9,7 +9,6 @@ import {
   ChevronRight,
   RefreshCw,
   Search,
-  LayoutDashboard,
   Filter,
   ArrowLeft,
   Info,
@@ -40,8 +39,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { DIAGNOSTIC_TABS, GROUPS, ROLES, SHEET_ID, type DiagnosticTab } from "./constants";
-import { getHeatColor, getLevelConfig } from "./utils";
+import { DIAGNOSTIC_TABS, ROLES, SHEET_ID, type DiagnosticTab } from "./constants";
+import { getLevelConfig } from "./utils";
 import { Gauge } from "./components/Gauge";
 import { OrbCard } from "./components/OrbCard";
 import { Silhouette } from "./components/Silhouette";
@@ -49,9 +48,15 @@ import { useDimensionesDashboard } from "./hooks/useDimensionesDashboard";
 
 const DimensionesPage = () => {
   const [view, setView] = useState<"table" | "analysis">("table");
-  const [selectedGroup, setSelectedGroup] = useState("catalina");
   const [selectedRole, setSelectedRole] = useState("supervisor");
   const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState({
+    empresa: "",
+    area: "",
+    cargo: "",
+    nivel: "",
+    genero: "",
+  });
   const [selectedEntryId, setSelectedEntryId] = useState<number | null>(null);
   const [diagnosticTab, setDiagnosticTab] = useState<DiagnosticTab>("cultura");
   const [activeOrbIndex, setActiveOrbIndex] = useState<number | null>(null);
@@ -61,8 +66,29 @@ const DimensionesPage = () => {
     queryFn: () => fetchDimensionesData(SHEET_ID),
   });
 
-  const { executiveSummary, filteredEntries, heatmapData, selectedEntry } =
-    useDimensionesDashboard(data, search, selectedEntryId);
+  const { filteredEntries, selectedEntry } =
+    useDimensionesDashboard(data, search, selectedEntryId, filters);
+
+  const filterOptions = useMemo(() => {
+    const entries = data?.entries || [];
+    const unique = (values: string[]) =>
+      Array.from(new Set(values.map((value) => value.trim()).filter(Boolean))).sort((a, b) =>
+        a.localeCompare(b, "es", { sensitivity: "base" })
+      );
+
+    return {
+      empresas: unique(entries.map((entry) => entry.empresa)),
+      areas: unique(entries.map((entry) => entry.area)),
+      cargos: unique(entries.map((entry) => entry.cargo)),
+      niveles: unique(entries.map((entry) => entry.nivel)),
+      generos: unique(entries.map((entry) => entry.genero)),
+    };
+  }, [data]);
+
+  const hasActiveFilters = Object.values(filters).some(Boolean);
+  const updateFilter = (key: keyof typeof filters, value: string) => {
+    setFilters((current) => ({ ...current, [key]: value }));
+  };
 
   if (isLoading) {
     return (
@@ -71,7 +97,7 @@ const DimensionesPage = () => {
             <RefreshCw className="w-12 h-12 text-primary" />
         </motion.div>
         <p className="text-xs font-black tracking-[0.5em] text-muted-foreground uppercase animate-pulse text-center">
-            Analizando Diagnóstico Psicosocial...
+            Cargando resultados individuales...
         </p>
       </div>
     );
@@ -85,8 +111,8 @@ const DimensionesPage = () => {
       <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-500/5 rounded-full blur-[120px] -z-10" />
 
       <DashboardHeader
-        title={<>Diagnóstico <span className="text-primary not-italic tracking-tighter">Psicosocial</span></>}
-        subtitle={view === "table" ? "Registro general de colaboradores evaluados." : "Análisis conductual y predictivo individual."}
+        title={<>Resultados <span className="text-primary not-italic tracking-tighter">Individuales</span></>}
+        subtitle={view === "table" ? "Registro individual de colaboradores evaluados." : "Análisis conductual y predictivo por colaborador."}
         onRefresh={refetch}
         isFetching={isFetching}
         view={view}
@@ -104,7 +130,7 @@ const DimensionesPage = () => {
                         className="group flex items-center gap-3 px-6 py-2.5 bg-white shadow-xl hover:shadow-2xl rounded-full border border-slate-100 text-slate-500 hover:text-primary transition-all font-black uppercase text-[10px] tracking-widest active:scale-95 self-start"
                     >
                         <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-                        Volver al Listado
+                        Volver a resultados
                     </button>
 
                     <div className="flex items-center gap-4 bg-white/50 backdrop-blur-md p-1.5 rounded-full border border-white/40 shadow-sm">
@@ -143,15 +169,15 @@ const DimensionesPage = () => {
                         
                         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
                             <div className="space-y-1 text-center md:text-left min-w-[200px]">
-                                <h4 className="text-[11px] font-black uppercase text-slate-800 tracking-[0.4em]">Arquitectura Psicométrica</h4>
-                                <p className="text-[10px] font-bold text-slate-400 italic">Análisis ponderado de competencias.</p>
+                                <h4 className="text-[11px] font-black uppercase text-slate-800 tracking-[0.4em]">Resultado Individual</h4>
+                                <p className="text-[10px] font-bold text-slate-400 italic">Lectura ponderada del colaborador seleccionado.</p>
                             </div>
 
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-6 flex-1 w-full">
                                 {[
                                     { label: "Liderazgo", wt: "50%", val: selectedEntry.puntuacionLiderazgo, nivel: selectedEntry.nivelLiderazgo, c: "text-blue-600", bg: "bg-blue-500/10", bdr: "border-blue-200" },
                                     { label: "Percepción de Riesgos", wt: "50%", val: selectedEntry.puntuacionPercepcion, nivel: selectedEntry.nivelPercepcion, c: "text-indigo-600", bg: "bg-indigo-500/10", bdr: "border-indigo-200" },
-                                    { label: "Total General", wt: "100%", val: selectedEntry.total, nivel: selectedEntry.nivel, c: "text-white", bg: "bg-primary shadow-lg shadow-primary/30", bdr: "border-primary", isTotal: true },
+                                    { label: "Resultado Integral", wt: "100%", val: selectedEntry.total, nivel: selectedEntry.nivel, c: "text-white", bg: "bg-primary shadow-lg shadow-primary/30", bdr: "border-primary", isTotal: true },
                                 ].map((s, i) => (
                                     <div key={i} className={cn(
                                         "flex flex-col items-center gap-2.5 p-5 rounded-3xl transition-all hover:scale-105 border",
@@ -261,7 +287,7 @@ const DimensionesPage = () => {
 
                     {/* RIGHT: RESULTS */}
                     <div className="lg:col-span-4 space-y-6 relative z-10">
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.6em] text-center text-slate-400 italic mb-4">Análisis Predictivo</h3>
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.6em] text-center text-slate-400 italic mb-4">Lectura del Perfil</h3>
                         
                         <div className="grid grid-cols-1 gap-4">
                             {[
@@ -332,128 +358,63 @@ const DimensionesPage = () => {
             </div>
         ) : (
             <div className="space-y-8 animate-in fade-in slide-in-from-right-12 duration-1000">
-                <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-                    <GlassCard className="xl:col-span-4 rounded-[2rem] border border-white bg-white/85 shadow-xl p-6">
-                        <div className="flex items-start justify-between gap-4">
-                            <div>
-                                <p className="text-[9px] font-black uppercase tracking-[0.35em] text-slate-400">Semáforo ejecutivo</p>
-                                <h3 className="text-3xl font-black text-slate-900 tracking-tighter mt-2">
-                                    {Math.round(executiveSummary.overall)}%
-                                </h3>
-                                <p className={cn("text-[10px] font-black uppercase tracking-widest mt-1", executiveSummary.traffic.text)}>
-                                    {executiveSummary.traffic.label}
-                                </p>
-                            </div>
-                            <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg", executiveSummary.traffic.bg)}>
-                                <div className={cn("w-5 h-5 rounded-full", executiveSummary.traffic.color)} />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-3 mt-6">
-                            {[
-                                { label: "Alto", value: executiveSummary.high, cls: "text-emerald-600 bg-emerald-500/10" },
-                                { label: "Medio", value: executiveSummary.medium, cls: "text-amber-600 bg-amber-500/10" },
-                                { label: "Bajo", value: executiveSummary.low, cls: "text-rose-600 bg-rose-500/10" },
-                            ].map((item) => (
-                                <div key={item.label} className={cn("rounded-2xl p-4 text-center", item.cls)}>
-                                    <p className="text-2xl font-black leading-none">{item.value}</p>
-                                    <p className="text-[8px] font-black uppercase tracking-widest mt-2">{item.label}</p>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5">
-                            <div className="rounded-2xl bg-slate-50 p-4 border border-slate-100">
-                                <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">Fortaleza</p>
-                                <p className="text-xs font-black text-slate-800 mt-1">{executiveSummary.strongest?.label || "—"}</p>
-                                <p className="text-[10px] font-bold text-emerald-600 mt-1">{Math.round(executiveSummary.strongest?.score || 0)}%</p>
-                            </div>
-                            <div className="rounded-2xl bg-slate-50 p-4 border border-slate-100">
-                                <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">Prioridad</p>
-                                <p className="text-xs font-black text-slate-800 mt-1">{executiveSummary.weakest?.label || "—"}</p>
-                                <p className="text-[10px] font-bold text-rose-600 mt-1">{Math.round(executiveSummary.weakest?.score || 0)}%</p>
-                            </div>
-                        </div>
-                    </GlassCard>
-
-                    <GlassCard className="xl:col-span-8 rounded-[2rem] border border-white bg-white/85 shadow-xl p-6">
-                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-5">
-                            <div>
-                                <p className="text-[9px] font-black uppercase tracking-[0.35em] text-slate-400">Mapa de calor</p>
-                                <h3 className="text-xl font-black text-slate-900 tracking-tight mt-1">Áreas y empresas críticas</h3>
-                            </div>
-                            <div className="flex items-center gap-3 text-[9px] font-black uppercase tracking-widest text-slate-400">
-                                <span className="flex items-center gap-1"><i className="w-2.5 h-2.5 rounded-full bg-rose-500" /> Crítico</span>
-                                <span className="flex items-center gap-1"><i className="w-2.5 h-2.5 rounded-full bg-amber-400" /> Vigilar</span>
-                                <span className="flex items-center gap-1"><i className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Estable</span>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                            {[
-                                { title: "Por área", rows: heatmapData.areas.slice(0, 6) },
-                                { title: "Por empresa", rows: heatmapData.empresas.slice(0, 6) },
-                            ].map((section) => (
-                                <div key={section.title} className="space-y-3">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{section.title}</p>
-                                    <div className="overflow-x-auto">
-                                        <div className="min-w-[520px] space-y-2">
-                                            {section.rows.map((row) => (
-                                                <div key={row.name} className="grid grid-cols-[120px_repeat(6,1fr)_58px] gap-1 items-center">
-                                                    <div className="min-w-0">
-                                                        <p className="text-[10px] font-black text-slate-700 uppercase truncate">{row.name}</p>
-                                                        <p className="text-[8px] font-bold text-slate-400">{row.count} eval.</p>
-                                                    </div>
-                                                    {row.metrics.map((metric) => (
-                                                        <Tooltip key={`${row.name}-${metric.key}`}>
-                                                            <TooltipTrigger asChild>
-                                                                <div className={cn("h-9 rounded-lg flex items-center justify-center text-[9px] font-black cursor-help", getHeatColor(metric.score))}>
-                                                                    {Math.round(metric.score)}
-                                                                </div>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent className="bg-slate-900 text-white border-none rounded-xl text-[10px] font-bold">
-                                                                {metric.key}: {metric.score.toFixed(1)}%
-                                                            </TooltipContent>
-                                                        </Tooltip>
-                                                    ))}
-                                                    <div className="text-right">
-                                                        <p className="text-[10px] font-black text-slate-800">{Math.round(row.overall)}%</p>
-                                                        <p className="text-[7px] font-black uppercase text-slate-400 truncate">{row.weakest.key}</p>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </GlassCard>
-                </div>
-
-                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div className="relative flex-1 max-w-xl group">
+                <div className="flex flex-col gap-4 rounded-[2rem] border border-white bg-white/50 p-3 shadow-xl backdrop-blur-md xl:flex-row xl:items-center">
+                    <div className="relative min-w-[260px] flex-1 group">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-hover:text-primary transition-colors" />
                         <Input 
-                            className="pl-12 h-14 bg-white border-white rounded-[1.5rem] shadow-xl focus:ring-primary/20 transition-all font-black uppercase text-xs tracking-widest placeholder:text-slate-200"
-                            placeholder="Buscar en el registro maestro..."
+                            className="pl-12 h-14 bg-white border-white rounded-[1.5rem] shadow-sm focus:ring-primary/20 transition-all font-black uppercase text-xs tracking-widest placeholder:text-slate-200"
+                            placeholder="Buscar colaborador, DNI o cargo..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
 
-                    <div className="flex flex-wrap gap-3 bg-white/50 backdrop-blur-sm p-2 rounded-[2rem] border border-white">
-                        {GROUPS.map((group) => (
+                    <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 xl:w-auto xl:grid-cols-5">
+                        {[
+                            { key: "empresa", label: "Empresa", options: filterOptions.empresas },
+                            { key: "area", label: "Área", options: filterOptions.areas },
+                            { key: "cargo", label: "Cargo", options: filterOptions.cargos },
+                            { key: "nivel", label: "Nivel", options: filterOptions.niveles },
+                            { key: "genero", label: "Género", options: filterOptions.generos },
+                        ].map((filter) => (
+                            <label key={filter.key} className="min-w-0">
+                                <span className="sr-only">{filter.label}</span>
+                                <select
+                                    value={filters[filter.key as keyof typeof filters]}
+                                    onChange={(event) => updateFilter(filter.key as keyof typeof filters, event.target.value)}
+                                    className="h-12 w-full rounded-[1rem] border border-white bg-white px-3 text-[10px] font-black uppercase tracking-widest text-slate-500 shadow-sm outline-none transition-all hover:text-primary focus:ring-2 focus:ring-primary/20 xl:w-40"
+                                >
+                                    <option value="">{filter.label}</option>
+                                    {filter.options.map((option) => (
+                                        <option key={option} value={option}>
+                                            {option}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                        ))}
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3 xl:w-auto xl:justify-end">
+                        <span className="rounded-full bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400 shadow-sm">
+                            {filteredEntries.length} resultados
+                        </span>
                         <button
-                            key={group.id}
-                            onClick={() => setSelectedGroup(group.id)}
+                            type="button"
+                            onClick={() => {
+                                setSearch("");
+                                setFilters({ empresa: "", area: "", cargo: "", nivel: "", genero: "" });
+                            }}
+                            disabled={!search && !hasActiveFilters}
                             className={cn(
-                            "px-6 py-2.5 rounded-[1.2rem] flex items-center gap-2 transition-all duration-300 font-black text-[10px] uppercase tracking-widest",
-                            selectedGroup === group.id ? `${group.color} text-white shadow-lg scale-105` : "text-slate-400 hover:bg-white"
+                                "h-12 rounded-[1rem] px-4 text-[10px] font-black uppercase tracking-widest transition-all",
+                                search || hasActiveFilters
+                                    ? "bg-slate-900 text-white shadow-lg hover:bg-primary"
+                                    : "cursor-not-allowed bg-white text-slate-300"
                             )}
                         >
-                            {group.label}
+                            Limpiar
                         </button>
-                        ))}
                     </div>
                 </div>
 
@@ -468,11 +429,19 @@ const DimensionesPage = () => {
                                 <TableHead className="font-black uppercase text-[10px] tracking-widest text-slate-400 py-4 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Cargo Actual</TableHead>
                                 <TableHead className="font-black uppercase text-[10px] tracking-widest text-slate-400 py-4 text-center sticky top-0 bg-slate-100/90 z-40 shadow-sm">Liderazgo</TableHead>
                                 <TableHead className="font-black uppercase text-[10px] tracking-widest text-slate-400 py-4 text-center sticky top-0 bg-slate-100/90 z-40 shadow-sm">Percepción</TableHead>
-                                <TableHead className="font-black uppercase text-[10px] tracking-widest text-slate-400 py-4 text-right px-10 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Diagnóstico</TableHead>
+                                <TableHead className="font-black uppercase text-[10px] tracking-widest text-slate-400 py-4 text-right px-10 sticky top-0 bg-slate-100/90 z-40 shadow-sm">Resultado</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filteredEntries.map((e) => (
+                            {filteredEntries.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="py-16 text-center">
+                                        <p className="text-xs font-black uppercase tracking-[0.3em] text-slate-400">
+                                            No hay colaboradores con los filtros seleccionados
+                                        </p>
+                                    </TableCell>
+                                </TableRow>
+                            ) : filteredEntries.map((e) => (
                                 <TableRow 
                                     key={e.id} 
                                     className="hover:bg-primary/5 transition-all border-b border-slate-50 cursor-pointer group/row"
@@ -535,15 +504,15 @@ const DimensionesPage = () => {
             </div>
         )}
 
-        {/* --- DIAGNÓSTICO SISTÉMICO AVANZADO --- */}
+        {/* --- RESULTADO INDIVIDUAL DETALLADO --- */}
         {view === "analysis" && selectedEntry && data && (
             <div className="max-w-6xl mx-auto space-y-12 pb-24 mt-20 relative px-4">
                 <div className="text-center space-y-4">
                     <h3 className="text-2xl md:text-4xl font-black uppercase tracking-[0.2em] text-slate-800">
-                        Diagnóstico Sistémico Avanzado
+                        Resultado Individual Detallado
                     </h3>
                     <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] italic">
-                        Análisis comparativo de alta fidelidad basado en metodología TASC
+                        Lectura individual por dimensiones y recomendaciones TASC
                     </p>
                 </div>
 
@@ -835,7 +804,7 @@ const DimensionesPage = () => {
                 </div>
 
                 <div className="bg-white/40 p-10 rounded-[3rem] border border-white shadow-xl text-center italic text-slate-400 text-xs font-bold leading-relaxed max-w-3xl mx-auto">
-                    "El análisis sistémico compara el perfil individual contra métricas agregadas de alta relevancia operativa. Este modelo permite identificar brechas críticas frente al estándar del proyecto y promedios de la industria."
+                    "Esta ficha consolida el resultado del colaborador seleccionado y organiza sus hallazgos por dimensión para facilitar decisiones de seguimiento individual."
                 </div>
             </div>
         )}
@@ -843,7 +812,7 @@ const DimensionesPage = () => {
         {/* --- FOOTER: TASC --- */}
         <div className="max-w-4xl mx-auto space-y-6 pt-10 border-t border-slate-100">
             <h4 className="text-center font-black uppercase tracking-widest text-primary/40 text-[10px] italic">
-                {view === "analysis" ? "Resumen de Identificación de Riesgos" : "Gestión General de Diagnóstico Psicosocial"}
+                {view === "analysis" ? "Ficha de Resultado Individual" : "Registro de Resultados Individuales"}
             </h4>
         </div>
       </div>
