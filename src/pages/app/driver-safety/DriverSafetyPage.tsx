@@ -74,6 +74,7 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { ChevronsUpDown, Check as CheckIcon } from "lucide-react";
+import { jsPDF } from "jspdf";
 
 const SHEET_ID = "1nrHMcI8fWlBKIWIv9aprjElPhY-ccmXX";
 
@@ -1289,10 +1290,7 @@ const DriverSafetyPage = () => {
   };
 
   const handlePrintFilteredReport = () => {
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-
-    const activeFilters = [];
+    const activeFilters: string[] = [];
     if (companyFilters.length > 0)
       activeFilters.push(`${companyFilters.length} Emp.`);
     if (areaFilters.length > 0)
@@ -1308,196 +1306,191 @@ const DriverSafetyPage = () => {
 
     const filterTitle =
       activeFilters.length > 0
-        ? activeFilters.join(" — ")
+        ? activeFilters.join(" - ")
         : "Consolidado General";
-    const totalN = filteredEntries.length;
-
-    const bajoCount = filteredEntries.filter(
-      (e) => e.result === "RIESGO BAJO",
-    ).length;
-    const medioCount = filteredEntries.filter(
-      (e) => e.result === "RIESGO MEDIO",
-    ).length;
-    const altoCount = filteredEntries.filter(
-      (e) => e.result === "RIESGO ALTO",
-    ).length;
-    const bajoPct =
-      totalN > 0 ? ((bajoCount / totalN) * 100).toFixed(1) : "0.0";
-    const medioPct =
-      totalN > 0 ? ((medioCount / totalN) * 100).toFixed(1) : "0.0";
-    const altoPct =
-      totalN > 0 ? ((altoCount / totalN) * 100).toFixed(1) : "0.0";
-
-    const MONTHS_ES = [
-      "Enero",
-      "Febrero",
-      "Marzo",
-      "Abril",
-      "Mayo",
-      "Junio",
-      "Julio",
-      "Agosto",
-      "Septiembre",
-      "Octubre",
-      "Noviembre",
-      "Diciembre",
-    ];
-    const currentMonth = MONTHS_ES[new Date().getMonth()];
-    const currentYear = new Date().getFullYear();
-
-    // Agrupar por empresa (normalizando el nombre para evitar duplicados)
-    const groupedByCompany = filteredEntries.reduce(
-      (acc, entry) => {
-        const comp = (entry.company || "SIN EMPRESA").trim().toUpperCase();
-        if (!acc[comp]) acc[comp] = [];
-        acc[comp].push(entry);
-        return acc;
+    const total = filteredEntries.length;
+    const counts = {
+      low: filteredEntries.filter((entry) => entry.result === "RIESGO BAJO")
+        .length,
+      medium: filteredEntries.filter(
+        (entry) => entry.result === "RIESGO MEDIO",
+      ).length,
+      high: filteredEntries.filter((entry) => entry.result === "RIESGO ALTO")
+        .length,
+      review: filteredEntries.filter((entry) => entry.result === "ERROR")
+        .length,
+    };
+    const groupedEntries = filteredEntries.reduce(
+      (groups, entry) => {
+        const company = (entry.company || "SIN EMPRESA").trim().toUpperCase();
+        (groups[company] ??= []).push(entry);
+        return groups;
       },
-      {} as Record<string, typeof filteredEntries>,
+      {} as Record<string, DriverSafetyEntry[]>,
     );
 
-    const sortedCompanies = Object.keys(groupedByCompany).sort();
+    const pdf = new jsPDF("portrait", "mm", "a4");
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 14;
+    const contentWidth = pageWidth - margin * 2;
+    const tableTop = 58;
+    const bottomLimit = pageHeight - 16;
+    const columns = [10, 55, 32, contentWidth - 97];
+    let y = tableTop;
 
-    const reportHtml = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Informe Driver Safety - ${filterTitle}</title>
-          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
-          <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-          <style>
-            body { font-family: 'Inter', sans-serif; color: #1e293b; margin: 0; padding: 0; background: #f8fafc; }
-            .page { background: white; width: 210mm; min-height: 297mm; padding: 15mm; margin: 0 auto; box-sizing: border-box; }
-            .header-info { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; }
-            .header-info p { margin: 5px 0; color: #64748b; font-size: 14px; font-weight: 600; }
-            .main-title { font-size: 24px; font-weight: 900; color: #1e1b4b; text-transform: uppercase; margin: 0; letter-spacing: -0.5px; }
-            
-            .summary-container { display: grid; grid-cols: 3; display: flex; gap: 15px; margin-bottom: 30px; }
-            .summary-box { flex: 1; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid rgba(0,0,0,0.05); }
-            .summary-box.bajo { background: #f0fdf4; border-color: #bcf0da; }
-            .summary-box.medio { background: #fffbeb; border-color: #fde68a; }
-            .summary-box.alto { background: #fef2f2; border-color: #fecaca; }
-            
-            .summary-label { font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; }
-            .summary-value { font-size: 32px; font-weight: 900; margin: 0; }
-            .summary-pct { font-size: 12px; font-weight: 600; opacity: 0.8; }
-            
-            .bajo .summary-label, .bajo .summary-value { color: #15803d; }
-            .medio .summary-label, .medio .summary-value { color: #b45309; }
-            .alto .summary-label, .alto .summary-value { color: #b91c1c; }
+    const drawPageHeader = (company: string) => {
+      pdf.setFillColor(30, 27, 75);
+      pdf.rect(0, 0, pageWidth, 28, "F");
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(15);
+      pdf.text("INFORME DRIVER SAFETY", margin, 10);
+      pdf.setFontSize(10);
+      pdf.text(`EMPRESA: ${company}`, margin, 17);
+      pdf.setFontSize(8);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(`Filtros: ${filterTitle}`, margin, 23);
+      pdf.text(
+        `Registros empresa: ${groupedEntries[company].length} | Total: ${total}`,
+        pageWidth - margin,
+        23,
+        {
+          align: "right",
+        },
+      );
 
-            .legend { text-align: center; font-size: 12px; font-weight: 700; background: #f1f5f9; padding: 10px; border-radius: 8px; margin-bottom: 30px; }
-            
-            table { width: 100%; border-collapse: collapse; font-size: 11px; }
-            th { background: #1e1b4b; color: white; text-transform: uppercase; padding: 12px 8px; text-align: left; font-weight: 800; border: 1px solid #1e1b4b; }
-            td { padding: 10px 8px; border: 1px solid #e2e8f0; line-height: 1.4; vertical-align: top; }
-            
-            .row-number { text-align: center; font-weight: 700; width: 30px; }
-            .name-cell { font-weight: 700; text-transform: uppercase; width: 200px; }
-            .result-badge { padding: 4px 8px; border-radius: 6px; font-weight: 800; text-align: center; display: inline-block; min-width: 80px; }
-            
-            .badge-bajo { background: #d1fae5; color: #065f46; }
-            .badge-medio { background: #fef3c7; color: #92400e; }
-            .badge-alto { background: #fee2e2; color: #991b1b; }
-            
-            .action-cell { color: #475569; font-style: italic; }
+      const summary = [
+        ["RIESGO BAJO", counts.low, [21, 128, 61]],
+        ["RIESGO MEDIO", counts.medium, [180, 83, 9]],
+        ["RIESGO ALTO", counts.high, [185, 28, 28]],
+        ["REVISAR", counts.review, [71, 85, 105]],
+      ] as const;
+      const boxWidth = contentWidth / summary.length;
+      summary.forEach(([label, value, color], index) => {
+        const x = margin + index * boxWidth;
+        pdf.setFillColor(color[0], color[1], color[2]);
+        pdf.rect(x, 32, boxWidth - 2, 16, "F");
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(8);
+        pdf.text(label, x + 3, 38);
+        pdf.setFontSize(13);
+        pdf.text(String(value), x + boxWidth - 5, 44, { align: "right" });
+      });
+    };
 
-            @media print {
-              body { background: white; }
-              .page { box-shadow: none; margin: 0; width: 100%; }
-            }
-          </style>
-        </head>
-        <body>
-          <div id="report-content" class="page">
-            <div class="header-info">
-              <h1 class="main-title">Prueba Psicométrica: Locus de Control (Escala I-E)</h1>
-              <p>Filtros Activos: ${filterTitle} | N = ${totalN} | ${currentMonth} ${currentYear}</p>
-            </div>
+    const drawTableHeader = () => {
+      const labels = ["N", "APELLIDOS Y NOMBRES", "RESULTADO", "ACCION RECOMENDADA"];
+      let x = margin;
+      pdf.setFillColor(30, 27, 75);
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(7);
+      labels.forEach((label, index) => {
+        pdf.rect(x, y, columns[index], 8, "F");
+        pdf.text(label, x + 2, y + 5);
+        x += columns[index];
+      });
+      y += 8;
+    };
 
-            <div class="summary-container">
-              <div class="summary-box bajo">
-                <div class="summary-label">RIESGO BAJO</div>
-                <div class="summary-value">${bajoCount}</div>
-                <div class="summary-pct">${bajoPct}% del total</div>
-              </div>
-              <div class="summary-box medio">
-                <div class="summary-label">RIESGO MEDIO</div>
-                <div class="summary-value">${medioCount}</div>
-                <div class="summary-pct">${medioPct}% del total</div>
-              </div>
-              <div class="summary-box alto">
-                <div class="summary-label">RIESGO ALTO</div>
-                <div class="summary-value">${altoCount}</div>
-                <div class="summary-pct">${altoPct}% del total</div>
-              </div>
-            </div>
+    const addPage = (company: string) => {
+      pdf.addPage();
+      drawPageHeader(company);
+      y = tableTop;
+      drawTableHeader();
+    };
 
+    Object.keys(groupedEntries)
+      .sort()
+      .forEach((company, companyIndex) => {
+        if (companyIndex > 0) pdf.addPage();
+        drawPageHeader(company);
+        y = tableTop;
+        drawTableHeader();
 
-            <table>
-              <thead>
-                <tr>
-                  <th style="text-align: center">Nº</th>
-                  <th>Apellidos y Nombres</th>
-                  <th style="text-align: center">Resultado</th>
-                  <th>Acción Recomendada</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${sortedCompanies
-                  .map(
-                    (company) => `
-                  <tr>
-                    <td colspan="4" style="background: #f1f5f9; color: #0f172a; font-weight: 900; text-transform: uppercase; padding: 10px 12px; font-size: 12px; border: 1px solid #cbd5e1; border-top: 2px solid #94a3b8;">
-                      EMPRESA: ${company} <span style="font-size: 10px; font-weight: 600; float: right; color: #64748b; margin-top: 2px;">(${groupedByCompany[company].length} registros)</span>
-                    </td>
-                  </tr>
-                  ${groupedByCompany[company]
-                    .map(
-                      (e, i) => `
-                    <tr>
-                      <td class="row-number">${i + 1}</td>
-                      <td class="name-cell">${e.name}</td>
-                      <td style="text-align: center">
-                        <span class="result-badge ${e.result === "RIESGO BAJO" ? "badge-bajo" : e.result === "RIESGO MEDIO" ? "badge-medio" : "badge-alto"}">
-                          ${e.result === "RIESGO BAJO" ? "Riesgo Bajo" : e.result === "RIESGO MEDIO" ? "Riesgo Medio" : "Riesgo Alto"}
-                        </span>
-                      </td>
-                      <td class="action-cell">
-                        ${REPORT_ACTIONS[e.result as keyof typeof REPORT_ACTIONS]}
-                      </td>
-                    </tr>
-                  `,
-                    )
-                    .join("")}
-                `,
-                  )
-                  .join("")}
-              </tbody>
-            </table>
-          </div>
+        pdf.setFillColor(226, 232, 240);
+        pdf.setTextColor(15, 23, 42);
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(8);
+        pdf.rect(margin, y, contentWidth, 8, "F");
+        pdf.text(
+          `EMPRESA: ${company} (${groupedEntries[company].length} registros)`,
+          margin + 2,
+          y + 5,
+        );
+        y += 8;
 
-          <script>
-            window.onload = () => {
-              const element = document.getElementById('report-content');
-              const opt = {
-                margin: 0,
-                filename: 'Informe_Driver_Safety_Filtrado_${filterTitle.replace(/\s+/g, "_")}.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-              };
-              html2pdf().from(element).set(opt).save().then(() => {
-                setTimeout(() => window.close(), 1000);
-              });
-            };
-          </script>
-        </body>
-      </html>
-    `;
+        groupedEntries[company].forEach((entry, index) => {
+          const action =
+            REPORT_ACTIONS[entry.result as keyof typeof REPORT_ACTIONS] ??
+            REPORT_ACTIONS.ERROR;
+          const nameLines = pdf.splitTextToSize(entry.name || "-", columns[1] - 4);
+          const resultLines = pdf.splitTextToSize(entry.result || "ERROR", columns[2] - 4);
+          const actionLines = pdf.splitTextToSize(action, columns[3] - 4);
+          const lineCount = Math.max(
+            nameLines.length,
+            resultLines.length,
+            actionLines.length,
+          );
+          const rowHeight = Math.max(9, lineCount * 4 + 4);
 
-    printWindow.document.write(reportHtml);
-    printWindow.document.close();
+          if (y + rowHeight > bottomLimit) addPage(company);
+
+          let x = margin;
+          pdf.setDrawColor(203, 213, 225);
+          pdf.setLineWidth(0.15);
+          columns.forEach((width) => {
+            pdf.rect(x, y, width, rowHeight);
+            x += width;
+          });
+
+          pdf.setFontSize(7);
+          pdf.setTextColor(51, 65, 85);
+          pdf.setFont("helvetica", "normal");
+          pdf.text(String(index + 1), margin + columns[0] / 2, y + 5, {
+            align: "center",
+          });
+          pdf.setFont("helvetica", "bold");
+          pdf.text(nameLines, margin + columns[0] + 2, y + 5);
+
+          const resultColor =
+            entry.result === "RIESGO BAJO"
+              ? [5, 150, 105]
+              : entry.result === "RIESGO MEDIO"
+                ? [217, 119, 6]
+                : entry.result === "RIESGO ALTO"
+                  ? [220, 38, 38]
+                  : [100, 116, 139];
+          pdf.setTextColor(resultColor[0], resultColor[1], resultColor[2]);
+          pdf.text(resultLines, margin + columns[0] + columns[1] + 2, y + 5);
+          pdf.setFont("helvetica", "normal");
+          pdf.setTextColor(71, 85, 105);
+          pdf.text(
+            actionLines,
+            margin + columns[0] + columns[1] + columns[2] + 2,
+            y + 5,
+          );
+          y += rowHeight;
+        });
+      });
+
+    const pageCount = pdf.getNumberOfPages();
+    for (let page = 1; page <= pageCount; page += 1) {
+      pdf.setPage(page);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(7);
+      pdf.setTextColor(100, 116, 139);
+      pdf.text(`Pagina ${page} de ${pageCount}`, pageWidth - margin, pageHeight - 7, {
+        align: "right",
+      });
+    }
+
+    const safeFilterTitle = filterTitle
+      .replace(/[^a-zA-Z0-9_-]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+    pdf.save(`Informe_Driver_Safety_${safeFilterTitle || "General"}.pdf`);
   };
 
   const handlePrintDashboard = () => {
