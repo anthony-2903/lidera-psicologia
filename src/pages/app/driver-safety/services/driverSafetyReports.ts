@@ -16,6 +16,8 @@ interface PrintFilteredReportOptions {
   positionFilters: string[];
   statusFilters: string[];
   conditionFilters: string[];
+  mode?: "consolidated" | "byCompany";
+  fileName?: string;
 }
 
 export const downloadExcelDashboard = async (filteredEntries: DriverSafetyEntry[]) => {
@@ -168,6 +170,8 @@ export const printFilteredReport = ({
   positionFilters,
   statusFilters,
   conditionFilters,
+  mode = "consolidated",
+  fileName,
 }: PrintFilteredReportOptions) => {
     const activeFilters: string[] = [];
     if (companyFilters.length > 0)
@@ -207,6 +211,33 @@ export const printFilteredReport = ({
       },
       {} as Record<string, DriverSafetyEntry[]>,
     );
+
+    if (mode === "byCompany") {
+      Object.keys(groupedEntries)
+        .sort()
+        .forEach((company, index) => {
+          const safeCompany = company
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-zA-Z0-9_-]+/g, "_")
+            .replace(/^_+|_+$/g, "");
+
+          window.setTimeout(() => {
+            printFilteredReport({
+              filteredEntries: groupedEntries[company],
+              companyFilters,
+              areaFilters,
+              levelFilters,
+              positionFilters,
+              statusFilters,
+              conditionFilters,
+              mode: "consolidated",
+              fileName: `Informe_Driver_Safety_${safeCompany || "SIN_EMPRESA"}.pdf`,
+            });
+          }, index * 250);
+        });
+      return;
+    }
 
     const pdf = new jsPDF("portrait", "mm", "a4");
     const pageWidth = pdf.internal.pageSize.getWidth();
@@ -369,7 +400,9 @@ export const printFilteredReport = ({
     const safeFilterTitle = filterTitle
       .replace(/[^a-zA-Z0-9_-]+/g, "_")
       .replace(/^_+|_+$/g, "");
-    pdf.save(`Informe_Driver_Safety_${safeFilterTitle || "General"}.pdf`);
+    pdf.save(
+      fileName || `Informe_Driver_Safety_${safeFilterTitle || "General"}.pdf`,
+    );
 };
 
 export const printDashboard = () => {

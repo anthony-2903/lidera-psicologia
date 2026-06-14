@@ -3,7 +3,10 @@ import {
   AlertCircle,
   ArrowRight,
   Brain,
+  Building2,
+  ChevronDown,
   FileDown,
+  Files,
   FileSpreadsheet,
   Filter,
   Globe,
@@ -37,6 +40,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -98,7 +107,7 @@ const DriverSafetyPage = () => {
   const handleDownloadExcelDashboard = () =>
     downloadExcelDashboard(filteredEntries);
 
-  const handlePrintFilteredReport = () =>
+  const handlePrintFilteredReport = (mode: "consolidated" | "byCompany") =>
     printFilteredReport({
       filteredEntries,
       companyFilters,
@@ -107,6 +116,7 @@ const DriverSafetyPage = () => {
       positionFilters,
       statusFilters,
       conditionFilters,
+      mode,
     });
 
   const handlePrintDashboard = () => printDashboard();
@@ -433,17 +443,55 @@ const DriverSafetyPage = () => {
                   </span>
                 </Button>
 
-                <Button
-                  onClick={handlePrintFilteredReport}
-                  size="sm"
-                  variant="outline"
-                  className="h-9 px-4 rounded-xl border-primary/20 hover:bg-primary/5 text-primary shadow-lg shadow-primary/5 gap-2 group transition-all active:scale-95"
-                >
-                  <FileDown className="w-4 h-4" />
-                  <span className="text-[10px] font-black tracking-tighter uppercase italic">
-                    Informe PDF
-                  </span>
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={filteredEntries.length === 0}
+                      className="h-9 px-4 rounded-xl border-primary/20 hover:bg-primary/5 text-primary shadow-lg shadow-primary/5 gap-2 group transition-all active:scale-95"
+                    >
+                      <FileDown className="w-4 h-4" />
+                      <span className="text-[10px] font-black tracking-tighter uppercase italic">
+                        Informe PDF
+                      </span>
+                      <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-64 rounded-2xl p-2 shadow-2xl"
+                  >
+                    <DropdownMenuItem
+                      onClick={() => handlePrintFilteredReport("consolidated")}
+                      className="cursor-pointer gap-3 rounded-xl p-3"
+                    >
+                      <Files className="h-4 w-4 text-primary" />
+                      <div>
+                        <p className="text-xs font-black uppercase">
+                          Documento consolidado
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">
+                          Todas las empresas en un solo PDF
+                        </p>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handlePrintFilteredReport("byCompany")}
+                      className="cursor-pointer gap-3 rounded-xl p-3"
+                    >
+                      <Building2 className="h-4 w-4 text-primary" />
+                      <div>
+                        <p className="text-xs font-black uppercase">
+                          Un PDF por empresa
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">
+                          Genera un archivo independiente por empresa
+                        </p>
+                      </div>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             )}
           </div>
