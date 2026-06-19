@@ -63,7 +63,7 @@ export const RECOMMENDATIONS = {
 
 export const REPORT_ACTIONS = {
   "RIESGO BAJO":
-    "Sin restricciones operacionales. Candidato a mentor/referente de seguridad. Reevaluación a 12 meses.",
+    "Sin restricciones operacionales. Reevaluación 12 meses.",
   "RIESGO MEDIO":
     "Taller de autorresponsabilidad en seguridad. Monitoreo trimestral. Reevaluación a 3 meses(90 dias).",
   "RIESGO ALTO":
