@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   ActivityIcon,
   AlertCircle,
@@ -42,8 +43,11 @@ import {
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -63,6 +67,8 @@ import { DriverSafetyIndividualPanel } from "./components/DriverSafetyIndividual
 import { MultiSelectFilter } from "./components/MultiSelectFilter";
 import { useDriverSafetyDashboard } from "./hooks/useDriverSafetyDashboard";
 import {
+  DRIVER_SAFETY_EXCEL_COLUMNS,
+  type DriverSafetyExcelColumnKey,
   downloadExcelDashboard,
   exportBulkExcel,
   printDashboard,
@@ -103,6 +109,9 @@ const DriverSafetyPage = () => {
     filteredResultCounts,
     stats,
   } = useDriverSafetyDashboard();
+  const [excelColumnKeys, setExcelColumnKeys] = useState<
+    DriverSafetyExcelColumnKey[]
+  >(DRIVER_SAFETY_EXCEL_COLUMNS.map((column) => column.key));
 
   const handleDownloadExcelDashboard = () =>
     downloadExcelDashboard(filteredEntries);
@@ -121,7 +130,20 @@ const DriverSafetyPage = () => {
 
   const handlePrintDashboard = () => printDashboard();
 
-  const handleExportBulkExcel = () => exportBulkExcel(filteredEntries);
+  const handleExportBulkExcel = () =>
+    exportBulkExcel(filteredEntries, excelColumnKeys);
+
+  const toggleExcelColumn = (columnKey: DriverSafetyExcelColumnKey) => {
+    setExcelColumnKeys((currentKeys) => {
+      if (currentKeys.includes(columnKey)) {
+        return currentKeys.length === 1
+          ? currentKeys
+          : currentKeys.filter((key) => key !== columnKey);
+      }
+
+      return [...currentKeys, columnKey];
+    });
+  };
 
   if (isLoading) {
     return (
@@ -432,16 +454,68 @@ const DriverSafetyPage = () => {
 
             {view === "list" && (
               <div className="flex items-center gap-3">
-                <Button
-                  onClick={handleExportBulkExcel}
-                  size="sm"
-                  className="h-9 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20 gap-2 group transition-all active:scale-95 border-0"
-                >
-                  <FileSpreadsheet className="w-4 h-4" />
-                  <span className="text-[10px] font-black tracking-tighter uppercase italic">
-                    Excel Grupal
-                  </span>
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      size="sm"
+                      disabled={filteredEntries.length === 0}
+                      className="h-9 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20 gap-2 group transition-all active:scale-95 border-0"
+                    >
+                      <FileSpreadsheet className="w-4 h-4" />
+                      <span className="text-[10px] font-black tracking-tighter uppercase italic">
+                        Excel Grupal
+                      </span>
+                      <ChevronDown className="h-3.5 w-3.5 opacity-80" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-72 rounded-2xl p-2 shadow-2xl"
+                  >
+                    <DropdownMenuLabel className="px-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                      Columnas a exportar
+                    </DropdownMenuLabel>
+                    <div className="max-h-72 overflow-y-auto pr-1">
+                      {DRIVER_SAFETY_EXCEL_COLUMNS.map((column) => (
+                        <DropdownMenuCheckboxItem
+                          key={column.key}
+                          checked={excelColumnKeys.includes(column.key)}
+                          onCheckedChange={() => toggleExcelColumn(column.key)}
+                          onSelect={(event) => event.preventDefault()}
+                          className="cursor-pointer rounded-xl py-2 text-xs font-bold"
+                        >
+                          {column.label}
+                        </DropdownMenuCheckboxItem>
+                      ))}
+                    </div>
+                    <DropdownMenuSeparator />
+                    <div className="grid grid-cols-2 gap-2 p-1">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setExcelColumnKeys(
+                            DRIVER_SAFETY_EXCEL_COLUMNS.map(
+                              (column) => column.key,
+                            ),
+                          )
+                        }
+                        className="h-9 rounded-xl text-[10px] font-black uppercase"
+                      >
+                        Todas
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={handleExportBulkExcel}
+                        className="h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-[10px] font-black uppercase"
+                      >
+                        Exportar
+                      </Button>
+                    </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
