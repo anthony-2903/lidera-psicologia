@@ -14,6 +14,7 @@ const breadcrumbMap: Record<string, string> = {
   dimensiones: "Resultados Individuales",
   "dpms-raura": "DPMS-Raura",
   "driver-safety": "Driver Safety",
+  "protocolo-diagnostico": "Protocolo Diagnóstico",
 };
 
 const AppLayout = () => {

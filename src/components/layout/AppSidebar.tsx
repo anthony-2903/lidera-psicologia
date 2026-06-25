@@ -29,6 +29,7 @@ export const navItems = [
   { group: "Catalina Huanca", label: "Resultados Individuales", icon: Layers, path: "/app/dimensiones" },
   { group: "Raura", label: "DPMS-Raura", icon: Activity, path: "/app/dpms-raura" },
   { group: "Raura", label: "Carga de Entrevistas DPMS", icon: FileText, path: "/app/dpms-raura/upload-interview" },
+  { group: "Raura", label: "Protocolo Diagnóstico", icon: ClipboardCheck, path: "/app/protocolo-diagnostico" },
   { group: "Raura", label: "Driver Safety", icon: Brain, path: "/app/driver-safety" },
 ];
 
