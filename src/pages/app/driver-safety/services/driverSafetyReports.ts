@@ -20,6 +20,47 @@ interface PrintFilteredReportOptions {
   fileName?: string;
 }
 
+export type DriverSafetyExcelColumnKey =
+  | "id"
+  | "name"
+  | "dni"
+  | "company"
+  | "area"
+  | "level"
+  | "position"
+  | "line"
+  | "date"
+  | "status"
+  | "internalScore"
+  | "externalScore"
+  | "totalScore"
+  | "validation"
+  | "result";
+
+export interface DriverSafetyExcelColumn {
+  key: DriverSafetyExcelColumnKey;
+  label: string;
+  width: number;
+}
+
+export const DRIVER_SAFETY_EXCEL_COLUMNS: DriverSafetyExcelColumn[] = [
+  { key: "id", label: "ID", width: 12 },
+  { key: "name", label: "Evaluado", width: 45 },
+  { key: "dni", label: "DNI", width: 16 },
+  { key: "company", label: "Empresa", width: 35 },
+  { key: "area", label: "Area", width: 28 },
+  { key: "level", label: "Trabajo Nivel", width: 22 },
+  { key: "position", label: "Puesto", width: 28 },
+  { key: "line", label: "Linea", width: 18 },
+  { key: "date", label: "Fecha", width: 16 },
+  { key: "status", label: "Estado", width: 18 },
+  { key: "internalScore", label: "Interno", width: 14 },
+  { key: "externalScore", label: "Externo", width: 14 },
+  { key: "totalScore", label: "Total", width: 14 },
+  { key: "validation", label: "Validacion", width: 18 },
+  { key: "result", label: "Condicion", width: 22 },
+];
+
 export const downloadExcelDashboard = async (filteredEntries: DriverSafetyEntry[]) => {
     const excelWindow = window.open("", "_blank");
     if (!excelWindow) return;
@@ -458,9 +499,20 @@ export const printDashboard = () => {
     printWindow.document.close();
 };
 
-export const exportBulkExcel = async (filteredEntries: DriverSafetyEntry[]) => {
+export const exportBulkExcel = async (
+  filteredEntries: DriverSafetyEntry[],
+  selectedColumnKeys: DriverSafetyExcelColumnKey[] = DRIVER_SAFETY_EXCEL_COLUMNS.map(
+    (column) => column.key,
+  ),
+) => {
     const excelWindow = window.open("", "_blank");
     if (!excelWindow) return;
+
+    const requestedColumns = DRIVER_SAFETY_EXCEL_COLUMNS.filter((column) =>
+      selectedColumnKeys.includes(column.key),
+    );
+    const selectedColumns =
+      requestedColumns.length > 0 ? requestedColumns : DRIVER_SAFETY_EXCEL_COLUMNS;
 
     excelWindow.document.write(`
       <html>
@@ -490,16 +542,48 @@ export const exportBulkExcel = async (filteredEntries: DriverSafetyEntry[]) => {
                 if (!window.ExcelJS) throw new Error("No se pudo cargar ExcelJS");
 
                 const entries = ${JSON.stringify(filteredEntries)};
+                const selectedColumns = ${JSON.stringify(selectedColumns)};
+                const companyCounts = entries.reduce((counts, entry) => {
+                  const company = entry.company || "Sin empresa";
+                  counts[company] = (counts[company] || 0) + 1;
+                  return counts;
+                }, {});
+                const sortedEntries = [...entries].sort((a, b) => {
+                  const companyA = a.company || "Sin empresa";
+                  const companyB = b.company || "Sin empresa";
+                  const countDiff = (companyCounts[companyB] || 0) - (companyCounts[companyA] || 0);
+                  if (countDiff !== 0) return countDiff;
+                  const companyDiff = companyA.localeCompare(companyB, "es", { sensitivity: "base" });
+                  if (companyDiff !== 0) return companyDiff;
+                  return (a.name || "").localeCompare(b.name || "", "es", { sensitivity: "base" });
+                });
+                const valueByKey = {
+                  id: (entry) => entry.id ? "#" + entry.id : "",
+                  name: (entry) => entry.name || "",
+                  dni: (entry) => entry.dni || "No registrado",
+                  company: (entry) => entry.company || "Sin empresa",
+                  area: (entry) => entry.area || "",
+                  level: (entry) => entry.level || "",
+                  position: (entry) => entry.position || "",
+                  line: (entry) => entry.line || "",
+                  date: (entry) => entry.date || "",
+                  status: (entry) => entry.status || "",
+                  internalScore: (entry) => entry.internalScore ?? "",
+                  externalScore: (entry) => entry.externalScore ?? "",
+                  totalScore: (entry) => typeof entry.totalScore === "number" ? entry.totalScore + "/23" : "",
+                  validation: (entry) => entry.validation || "",
+                  result: (entry) => entry.result || "",
+                };
                 const workbook = new ExcelJS.Workbook();
                 workbook.creator = "LideraMina";
                 workbook.created = new Date();
 
                 const worksheet = workbook.addWorksheet("Evaluados");
-                worksheet.columns = [
-                  { header: "Evaluado", key: "evaluado", width: 45 },
-                  { header: "DNI", key: "dni", width: 16 },
-                  { header: "Empresa", key: "empresa", width: 35 },
-                ];
+                worksheet.columns = selectedColumns.map((column) => ({
+                  header: column.label,
+                  key: column.key,
+                  width: column.width,
+                }));
 
                 worksheet.getRow(1).eachCell((cell) => {
                   cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
@@ -517,12 +601,12 @@ export const exportBulkExcel = async (filteredEntries: DriverSafetyEntry[]) => {
                   };
                 });
 
-                entries.forEach((entry) => {
-                  worksheet.addRow({
-                    evaluado: entry.name || "",
-                    dni: entry.dni || "No registrado",
-                    empresa: entry.company || "",
+                sortedEntries.forEach((entry) => {
+                  const row = {};
+                  selectedColumns.forEach((column) => {
+                    row[column.key] = valueByKey[column.key](entry);
                   });
+                  worksheet.addRow(row);
                 });
 
                 worksheet.eachRow((row, rowNumber) => {
@@ -535,15 +619,30 @@ export const exportBulkExcel = async (filteredEntries: DriverSafetyEntry[]) => {
                       right: { style: "thin" },
                     };
                     cell.alignment = { vertical: "middle" };
+                    if (rowNumber > 1 && cell.value === "RIESGO BAJO") {
+                      cell.font = { bold: true, color: { argb: "FF047857" } };
+                    }
+                    if (rowNumber > 1 && cell.value === "RIESGO MEDIO") {
+                      cell.font = { bold: true, color: { argb: "FFD97706" } };
+                    }
+                    if (rowNumber > 1 && cell.value === "RIESGO ALTO") {
+                      cell.font = { bold: true, color: { argb: "FFDC2626" } };
+                    }
                   });
                 });
+
+                worksheet.autoFilter = {
+                  from: { row: 1, column: 1 },
+                  to: { row: 1, column: selectedColumns.length },
+                };
+                worksheet.views = [{ state: "frozen", ySplit: 1 }];
 
                 const buffer = await workbook.xlsx.writeBuffer();
                 saveAs(
                   new Blob([buffer], {
                     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                   }),
-                  "Driver_Safety_Evaluado_DNI_Empresa.xlsx"
+                  "Driver_Safety_Grupal.xlsx"
                 );
                 setTimeout(() => window.close(), 1200);
               } catch (err) {
