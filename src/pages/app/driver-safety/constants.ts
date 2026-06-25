@@ -67,6 +67,6 @@ export const REPORT_ACTIONS = {
   "RIESGO MEDIO":
     "Taller de autorresponsabilidad en seguridad. Monitoreo trimestral. Reevaluación a 3 meses(90 dias).",
   "RIESGO ALTO":
-    "SE SOLICITA APERSONARSE AL ÁREA DE GERENCIA PARA RECIBIR LAS INSTRUCCIONES Y DIRECTRICES CORRESPONDIENTES.",
+    "SE SOLICITA APERSONARSE AL ÁREA DE SU GERENCIA PARA RECIBIR LAS INSTRUCCIONES Y DIRECTRICES CORRESPONDIENTES.",
   ERROR: "Registro no válido. Revisar base de datos.",
 };
