@@ -1,184 +1,237 @@
-import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Brain, ShieldCheck, Zap, ArrowRight, X } from "lucide-react";
-import { useState, useEffect } from "react";
-import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import {
+  Activity,
+  ArrowRight,
+  BarChart3,
+  Brain,
+  CheckCircle2,
+  Radar,
+  ShieldCheck,
+} from "lucide-react";
 
 interface WelcomeHeroProps {
   email: string;
   onDismiss: () => void;
 }
 
-export const WelcomeHero = ({ email, onDismiss }: WelcomeHeroProps) => {
-  // Extract name from email (e.g., "anthony.gonzalez@lidera.com" -> "Anthony")
-  const extractName = (email: string) => {
-    if (!email) return "Invitado";
-    const namePart = email.split("@")[0];
-    const name = namePart.split(".")[0];
-    return name.charAt(0).toUpperCase() + name.slice(1);
-  };
+const extractName = (email: string) => {
+  if (!email) return "Invitado";
+  const namePart = email.split("@")[0];
+  const name = namePart.split(".")[0].replace(/[-_]/g, " ");
+  return name.charAt(0).toUpperCase() + name.slice(1);
+};
 
+const insightCards = [
+  {
+    icon: Brain,
+    title: "Modelo psicologico",
+    value: "6 dimensiones",
+    color: "text-sky-700",
+    bg: "bg-sky-50",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Prevencion operacional",
+    value: "riesgo priorizado",
+    color: "text-emerald-700",
+    bg: "bg-emerald-50",
+  },
+  {
+    icon: Radar,
+    title: "Senales tempranas",
+    value: "monitoreo activo",
+    color: "text-amber-700",
+    bg: "bg-amber-50",
+  },
+];
+
+const barData = [72, 86, 64, 91, 78, 88, 69, 95];
+
+export const WelcomeHero = ({ email, onDismiss }: WelcomeHeroProps) => {
   const name = extractName(email);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
+    <motion.section
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
       exit={{ opacity: 0, scale: 0.98 }}
-      className="relative flex-1 flex items-center justify-center p-2 md:p-4 min-h-0"
+      className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-[#f4f7fb] px-4 py-5 sm:px-6 lg:px-8"
     >
-      {/* Background Glows (Decorative) */}
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[150px] -z-10 animate-pulse" />
-      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-indigo-500/10 rounded-full blur-[150px] -z-10" />
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(15,23,42,0.055)_1px,transparent_1px),linear-gradient(90deg,rgba(15,23,42,0.055)_1px,transparent_1px)] bg-[size:44px_44px]" />
+      <motion.div
+        aria-hidden="true"
+        className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent"
+        animate={{ opacity: [0.35, 0.9, 0.35] }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+      />
 
-      <motion.div className="relative w-full max-w-5xl h-fit max-h-full bg-white/60 backdrop-blur-3xl shadow-[0_32px_120px_-20px_rgba(0,0,0,0.12)] rounded-[2rem] md:rounded-[3rem] overflow-hidden border border-white/50 flex flex-col">
-        <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch min-h-0">
-          {/* LEFT: CONTENT (7 columns) */}
-          <div className="lg:col-span-7 p-6 sm:p-8 lg:p-10 xl:p-12 space-y-4 lg:space-y-6 flex flex-col justify-center min-h-0">
-            <div className="space-y-4">
-              <motion.div
-                initial={{ x: -20, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="flex items-center gap-3 text-primary font-black uppercase tracking-[0.4em] text-[11px]"
+      <motion.div
+        initial={{ y: 18, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.65, ease: [0.19, 1, 0.22, 1] }}
+        className="relative z-10 grid w-full max-w-6xl overflow-hidden rounded-[1.75rem] border border-white/80 bg-white/90 shadow-[0_30px_100px_-45px_rgba(15,23,42,0.45)] backdrop-blur-xl lg:grid-cols-[1.02fr_0.98fr]"
+      >
+        <div className="flex min-h-[520px] flex-col justify-between p-6 sm:p-8 lg:p-10 xl:p-12">
+          <div className="space-y-8">
+            <motion.div
+              initial={{ x: -18, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.12, duration: 0.55 }}
+              className="flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.32em] text-primary"
+            >
+              <span className="h-px w-10 bg-primary" />
+              Sistema inteligente Lidera Mina
+            </motion.div>
+
+            <div className="space-y-5">
+              <motion.h1
+                initial={{ y: 18, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.22, duration: 0.6 }}
+                className="max-w-2xl text-4xl font-black leading-[0.98] tracking-normal text-slate-950 sm:text-5xl lg:text-6xl"
               >
-                <div className="w-10 h-[2px] bg-primary" />
-                SISTEMA INTELIGENTE LIDERA MINA
-              </motion.div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-black tracking-tighter text-slate-800 leading-[1] lg:leading-[0.95]">
-                Hola, <span className="text-primary italic">{name}</span>.{" "}
-                <br />
-                <span className="text-slate-400">Bienvenido/a.</span>
-              </h1>
+                Hola, <span className="text-primary">{name}</span>.
+                <span className="block text-slate-500">
+                  Bienvenido al centro de inteligencia.
+                </span>
+              </motion.h1>
+
+              <motion.p
+                initial={{ y: 16, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.32, duration: 0.6 }}
+                className="max-w-xl text-base font-medium leading-7 text-slate-600 sm:text-lg"
+              >
+                Accede a una lectura ejecutiva del comportamiento, la seguridad
+                y los factores criticos que impulsan decisiones preventivas en
+                la operacion.
+              </motion.p>
             </div>
 
-            <p className="max-w-xl text-sm sm:text-base lg:text-lg xl:text-xl text-slate-400 font-medium leading-relaxed tracking-tight italic">
-              "Estás a punto de acceder al más avanzado{" "}
-              <span className="text-slate-600 font-bold">
-                ecosistema de gestión psicológica y operacional
-              </span>
-              . Nuestra IA experta está lista para analizar cada dimensión
-              conductual de tu equipo."
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pb-4">
-              {[
-                {
-                  icon: Brain,
-                  label: "IA Psicológica",
-                  desc: "Expert Analysis",
-                },
-                {
-                  icon: ShieldCheck,
-                  label: "Prevención Operacional",
-                  desc: "Risk Management",
-                },
-              ].map((feat, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-5 p-2 transition-all"
+            <div className="grid gap-3 sm:grid-cols-3">
+              {insightCards.map((item, index) => (
+                <motion.div
+                  key={item.title}
+                  initial={{ y: 18, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.42 + index * 0.08, duration: 0.5 }}
+                  className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm"
                 >
-                  <div className="w-14 h-14 rounded-3xl bg-white shadow-xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform flex-shrink-0">
-                    <feat.icon className="w-6 h-6" />
+                  <div
+                    className={`mb-4 flex h-10 w-10 items-center justify-center rounded-lg ${item.bg} ${item.color}`}
+                  >
+                    <item.icon className="h-5 w-5" />
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-[12px] font-black uppercase tracking-widest text-slate-800">
-                      {feat.label}
-                    </p>
-                    <p className="text-[10px] font-bold text-slate-400 tracking-tighter">
-                      {feat.desc}
-                    </p>
-                  </div>
-                </div>
+                  <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
+                    {item.title}
+                  </p>
+                  <p className="mt-1 text-sm font-black text-slate-900">
+                    {item.value}
+                  </p>
+                </motion.div>
               ))}
             </div>
-
-            <button
-              onClick={onDismiss}
-              className="w-full sm:w-fit px-8 py-4 sm:px-10 sm:py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[11px] sm:text-[12px] shadow-xl shadow-primary/20 hover:shadow-primary/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 group mt-2"
-            >
-              Ingresar al Dashboard
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
-            </button>
           </div>
 
-          {/* RIGHT: VISUAL (5 columns) */}
-          <div className="lg:col-span-5 relative bg-slate-50/30 flex items-center justify-center p-6 lg:p-8 overflow-hidden border-t lg:border-t-0 lg:border-l border-white/30 min-h-0">
-            <div className="w-full relative max-w-sm">
-              <motion.div
-                animate={{
-                  y: [0, -15, 0],
-                  rotate: [0, 3, 0],
-                }}
-                transition={{
-                  duration: 8,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-                className="relative z-10 aspect-[4/4.5] bg-white shadow-[0_40px_80px_-15px_rgba(0,0,0,0.08)] rounded-[2rem] md:rounded-[2.5rem] border border-white p-6 sm:p-7 flex flex-col justify-between scale-85 lg:scale-100 origin-center"
-              >
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className="w-16 h-16 rounded-3xl bg-primary/10 flex items-center justify-center text-primary">
-                      <Brain className="w-8 h-8" />
-                    </div>
-                    <div className="flex -space-x-3">
-                      {[1, 2, 3].map((i) => (
-                        <div
-                          key={i}
-                          className="w-10 h-10 rounded-xl bg-slate-100 border-2 border-white shadow-sm"
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <h3 className="text-2xl font-black tracking-tight text-slate-800">
-                      IA Activa
-                    </h3>
-                    <p className="text-sm font-semibold text-slate-400 leading-relaxed italic">
-                      Analizando patrones psicométricos y operacionales en
-                      tiempo real para optimizar la toma de decisiones
-                      preventiva.
-                    </p>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="w-full h-2 bg-slate-50 rounded-full overflow-hidden">
-                    <motion.div
-                      animate={{ width: ["0%", "100%", "0%"] }}
-                      transition={{ duration: 4, repeat: Infinity }}
-                      className="h-full bg-primary"
-                    />
-                  </div>
-                  <div className="flex items-center justify-between font-black text-[9px] uppercase tracking-widest text-slate-300">
-                    <span>Estado: Optimizado</span>
-                    <span>Fidelidad: 99.8%</span>
-                  </div>
-                </div>
-              </motion.div>
+          <motion.button
+            initial={{ y: 14, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.72, duration: 0.5 }}
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onDismiss}
+            className="mt-8 inline-flex w-full items-center justify-center gap-3 rounded-xl bg-primary px-7 py-4 text-[12px] font-black uppercase tracking-[0.22em] text-white shadow-[0_18px_35px_-18px_hsl(var(--primary))] transition hover:bg-primary/95 sm:w-fit"
+          >
+            Ingresar al dashboard
+            <ArrowRight className="h-4 w-4" />
+          </motion.button>
+        </div>
 
-              {/* Decorative elements */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] h-[110%] bg-primary/5 rounded-full blur-[80px] -z-10" />
-              <motion.div
-                animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.6, 0.3] }}
-                transition={{ duration: 5, repeat: Infinity }}
-                className="absolute -bottom-10 -right-10 w-40 h-40 bg-indigo-500/20 rounded-full blur-3xl"
-              />
+        <div className="relative flex min-h-[520px] items-center justify-center overflow-hidden border-t border-slate-200/70 bg-slate-950 p-6 sm:p-8 lg:border-l lg:border-t-0">
+          <motion.div
+            className="absolute inset-0 opacity-35"
+            style={{
+              background:
+                "linear-gradient(115deg, transparent 0%, rgba(14,165,233,0.22) 38%, transparent 62%), radial-gradient(circle at 70% 20%, rgba(34,197,94,0.22), transparent 34%)",
+            }}
+            animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
+            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.075)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.075)_1px,transparent_1px)] bg-[size:36px_36px]" />
+
+          <motion.div
+            initial={{ y: 22, opacity: 0, rotateX: 10 }}
+            animate={{ y: 0, opacity: 1, rotateX: 0 }}
+            transition={{ delay: 0.26, duration: 0.75, ease: "easeOut" }}
+            className="relative w-full max-w-md rounded-2xl border border-white/10 bg-white/[0.08] p-5 shadow-2xl backdrop-blur-xl"
+          >
+            <div className="mb-6 flex items-start justify-between">
+              <div>
+                <h2 className="text-2xl font-black tracking-normal text-white">
+                  Lectura operacional en vivo
+                </h2>
+              </div>
             </div>
-          </div>
+
+            <div className="rounded-xl border border-white/10 bg-slate-900/70 p-4">
+              <div className="mb-5 flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
+                    Indice preventivo
+                  </p>
+                  <p className="mt-1 text-4xl font-black text-white">89%</p>
+                </div>
+                <Activity className="h-8 w-8 text-emerald-300" />
+              </div>
+
+              <div className="flex h-28 items-end gap-2">
+                {barData.map((height, index) => (
+                  <motion.div
+                    key={`${height}-${index}`}
+                    className="flex-1 rounded-t-md bg-gradient-to-t from-primary to-sky-300"
+                    initial={{ height: 8 }}
+                    animate={{ height: `${height}%` }}
+                    transition={{
+                      delay: 0.6 + index * 0.06,
+                      duration: 0.75,
+                      repeat: Infinity,
+                      repeatType: "mirror",
+                      repeatDelay: 2.4,
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <motion.div
+                animate={{ y: [0, -5, 0] }}
+                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                className="rounded-xl border border-white/10 bg-white/[0.07] p-4"
+              >
+                <CheckCircle2 className="mb-3 h-5 w-5 text-emerald-300" />
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
+                  Estado
+                </p>
+                <p className="mt-1 text-sm font-black text-white">
+                  Optimizado
+                </p>
+              </motion.div>
+              <motion.div
+                animate={{ y: [0, 5, 0] }}
+                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                className="rounded-xl border border-white/10 bg-white/[0.07] p-4"
+              >
+                <BarChart3 className="mb-3 h-5 w-5 text-sky-300" />
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
+                  Fidelidad
+                </p>
+                <p className="mt-1 text-sm font-black text-white">99.8%</p>
+              </motion.div>
+            </div>
+          </motion.div>
         </div>
       </motion.div>
-    </motion.div>
+    </motion.section>
   );
 };
-
-const Badge = ({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) => (
-  <div className={cn("px-2 py-1 rounded-full text-xs font-medium", className)}>
-    {children}
-  </div>
-);
